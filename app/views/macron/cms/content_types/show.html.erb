@@ -22,9 +22,10 @@
           <%= pluralize(field_list.count, "field") %>
         </span>
       </div>
-      <p class="text-xs text-zinc-500">
-        Created on <%= @content_type.created_at.strftime("%B %d, %Y at %H:%M UTC") rescue "—" %> &middot; Updated <%= time_ago_in_words(@content_type.updated_at) rescue "—" %> ago
-      </p>
+      <div class="text-xs text-zinc-500 space-y-0.5">
+        <p>Created: <%= @content_type.created_at.strftime("%B %d, %Y at %H:%M UTC") rescue "—" %></p>
+        <p>Updated: <%= @content_type.updated_at ? "#{time_ago_in_words(@content_type.updated_at)} ago" : "—" rescue "—" %></p>
+      </div>
     </div>
 
     <!-- Actions -->

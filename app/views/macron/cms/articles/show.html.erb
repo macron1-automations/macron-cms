@@ -12,9 +12,10 @@
           <%= @article.slug %>
         </span>
       </div>
-      <p class="text-xs text-zinc-500">
-        Created on <%= @article.created_at.strftime("%B %d, %Y at %H:%M UTC") %> &middot; Updated <%= time_ago_in_words(@article.updated_at) %> ago
-      </p>
+      <div class="text-xs text-zinc-500 space-y-0.5">
+        <p>Created: <%= @article.created_at.strftime("%B %d, %Y at %H:%M UTC") %></p>
+        <p>Updated: <%= time_ago_in_words(@article.updated_at) %> ago</p>
+      </div>
     </div>
 
     <!-- Actions -->
