@@ -5,18 +5,16 @@ Gem::Specification.new do |spec|
   spec.version     = Macron::Cms::VERSION
   spec.authors     = [ "Leonid Medovyy" ]
   spec.email       = [ "leonid@macron1.io" ]
-  spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Macron::Cms."
-  spec.description = "TODO: Description of Macron::Cms."
+  spec.homepage    = "https://github.com/macron1-automations/macron-cms"
+  spec.summary     = "Simple CMS for building highly interactive content."
+  spec.description = "A flexible Rails CMS engine designed for building highly interactive content with a wp_loop-inspired data architecture, Hotwire and React/Three.js hydration, and an AI-friendly migration API."
   spec.license     = "MIT"
 
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+  spec.metadata["source_code_uri"] = "https://github.com/macron1-automations/macron-cms"
+  spec.metadata["changelog_uri"] = "https://github.com/macron1-automations/macron-cms/blob/main/CHANGELOG.md"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
