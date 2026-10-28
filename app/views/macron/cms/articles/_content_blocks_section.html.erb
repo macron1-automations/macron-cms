@@ -20,12 +20,12 @@
   <div
     id="content-blocks-list"
     data-reorder-url="<%= reorder_article_article_contents_path(article) %>"
-    class="space-y-4"
+    class="space-y-2"
   >
     <% if article_contents.any? %>
       <!-- Inserter above first block (Position 1) -->
-      <div id="inserter-zone-top" class="block-inserter-zone py-1.5" data-position="1">
-        <div class="block-inserter-divider relative py-1 flex items-center justify-center group">
+      <div id="inserter-zone-top" class="block-inserter-zone py-0.5" data-position="1">
+        <div class="block-inserter-divider relative py-0.5 flex items-center justify-center group">
           <div class="absolute inset-0 flex items-center" aria-hidden="true">
             <div class="w-full border-t border-dashed border-zinc-200 group-hover:border-zinc-300 transition-colors"></div>
           </div>
@@ -174,8 +174,8 @@
         </div>
 
         <!-- Inserter after block #<%= index + 1 %> (Position <%= index + 2 %>) -->
-        <div class="block-inserter-zone py-1.5" data-position="<%= index + 2 %>" data-block-id="<%= ac.id %>">
-          <div class="block-inserter-divider relative py-1 flex items-center justify-center group">
+        <div class="block-inserter-zone py-0.5" data-position="<%= index + 2 %>" data-block-id="<%= ac.id %>">
+          <div class="block-inserter-divider relative py-0.5 flex items-center justify-center group">
             <div class="absolute inset-0 flex items-center" aria-hidden="true">
               <div class="w-full border-t border-dashed border-zinc-200 group-hover:border-zinc-300 transition-colors"></div>
             </div>
