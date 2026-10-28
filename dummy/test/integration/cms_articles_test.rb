@@ -130,6 +130,34 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select ".rounded-xl", /Article was successfully deleted\./
   end
 
+  test "delete buttons in table and show view include confirmation dialog with article title" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: 'Special "Guide" Article', name: "special-guide-article")
+    expected_confirm = %(Are you sure you want to delete "Special "Guide" Article"?)
+
+    # Table view on articles index
+    get "/cms/articles"
+    assert_response :success
+    assert_select "form.inline button[data-turbo-confirm=?]", expected_confirm
+    assert_select "form.inline button" do |buttons|
+      table_btn = buttons.find { |b| b.text.strip == "Delete" }
+      assert table_btn
+      assert_includes table_btn["onclick"], 'return confirm('
+      assert_includes table_btn["onclick"], 'Special'
+    end
+
+    # Show view
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+    assert_select "form button[data-turbo-confirm=?]", expected_confirm
+    assert_select "form button" do |buttons|
+      show_btn = buttons.find { |b| b.text.strip == "Delete" }
+      assert show_btn
+      assert_includes show_btn["onclick"], 'return confirm('
+      assert_includes show_btn["onclick"], 'Special'
+    end
+  end
+
   test "dashboard displays correct article count and links" do
     sign_in @admin
     Macron::Cms::Article.delete_all
