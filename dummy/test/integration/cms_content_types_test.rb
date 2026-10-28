@@ -36,8 +36,7 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     Macron::Cms::Content.delete_all
     heading = Macron::Cms::Content.create!(
       name: "heading",
-      fields: { "name" => "title", "kind" => "string" },
-      payload: {}
+      fields: { "name" => "title", "kind" => "string" }
     )
 
     get "/cms/content_types"
@@ -54,7 +53,6 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     sign_in @admin
     heading = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
       c.fields = { "name" => "title", "kind" => "string" }
-      c.payload = {}
     end
 
     get "/cms/content_types/#{heading.id}"

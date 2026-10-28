@@ -142,8 +142,8 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "form.inline button" do |buttons|
       table_btn = buttons.find { |b| b.text.strip == "Delete" }
       assert table_btn
-      assert_includes table_btn["onclick"], 'return confirm('
-      assert_includes table_btn["onclick"], 'Special'
+      assert_includes table_btn["onclick"], "return confirm("
+      assert_includes table_btn["onclick"], "Special"
     end
 
     # Show view
@@ -153,8 +153,8 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "form button" do |buttons|
       show_btn = buttons.find { |b| b.text.strip == "Delete" }
       assert show_btn
-      assert_includes show_btn["onclick"], 'return confirm('
-      assert_includes show_btn["onclick"], 'Special'
+      assert_includes show_btn["onclick"], "return confirm("
+      assert_includes show_btn["onclick"], "Special"
     end
   end
 
@@ -252,5 +252,146 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
       assert_select "span", text: "Edit"
     end
     assert_select "main nav", count: 0
+  end
+
+  test "admin can add a content block to an article and dynamic fields are populated into payload" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Block Showcase", name: "block-showcase")
+    content_type = Macron::Cms::Content.create!(
+      name: "heading",
+      fields: [
+        { "name" => "title", "kind" => "string" },
+        { "name" => "level", "kind" => "string" }
+      ]
+    )
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+    assert_select "h2", "Article Content Blocks"
+    assert_select "select#new_content_type_select"
+    assert_select "form[action=?]", "/cms/articles/#{article.slug}/article_contents"
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: content_type.id,
+          payload: {
+            "title" => "Hero Section Heading",
+            "level" => "h1",
+            "unpermitted_key" => "should_be_stripped"
+          }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select ".rounded-xl", /Content block was successfully added\./
+
+    block = article.article_contents.last
+    assert_equal 1, block.sort_order
+    assert_equal "Hero Section Heading", block.payload["title"]
+    assert_equal "h1", block.payload["level"]
+    assert_nil block.payload["unpermitted_key"]
+
+    # Verify rendered on show page
+    assert_select "#article-content-#{block.id}" do
+      assert_select ".position-badge", "#1"
+      assert_select "span", text: "heading"
+      assert_select "dd", text: /Hero Section Heading/
+      assert_select "dd", text: /h1/
+    end
+  end
+
+  test "admin can edit and update a content block payload inline" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Editable Article", name: "editable-article")
+    content_type = Macron::Cms::Content.create!(
+      name: "paragraph",
+      fields: [ { "name" => "content", "kind" => "text" } ]
+    )
+    block = Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: content_type,
+      payload: { "content" => "Old content paragraph" }
+    )
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}", params: {
+      article_content: {
+        payload: { "content" => "Updated content paragraph body text" }
+      }
+    }
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select ".rounded-xl", /Content block was successfully updated\./
+
+    block.reload
+    assert_equal "Updated content paragraph body text", block.payload["content"]
+  end
+
+  test "admin can delete a content block from an article and remaining blocks renormalize sort_order" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Deletable Article", name: "deletable-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1)
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2)
+    block3 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 3)
+
+    assert_difference -> { article.article_contents.count }, -1 do
+      delete "/cms/articles/#{article.slug}/article_contents/#{block2.id}"
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select ".rounded-xl", /Content block was successfully removed\./
+
+    assert_equal [ block1.id, block3.id ], article.article_contents.pluck(:id)
+    assert_equal [ 1, 2 ], article.article_contents.pluck(:sort_order)
+  end
+
+  test "admin can move content blocks up and down" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Movable Article", name: "movable-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "One" })
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Two" })
+
+    # Move down block 1
+    patch "/cms/articles/#{article.slug}/article_contents/#{block1.id}/move", params: { direction: "down" }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+
+    assert_equal [ block2.id, block1.id ], article.article_contents.reload.pluck(:id)
+    assert_equal 1, block2.reload.sort_order
+    assert_equal 2, block1.reload.sort_order
+
+    # Move up block 1
+    patch "/cms/articles/#{article.slug}/article_contents/#{block1.id}/move", params: { direction: "up" }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+
+    assert_equal [ block1.id, block2.id ], article.article_contents.reload.pluck(:id)
+  end
+
+  test "reorder endpoint persists drag-and-drop order via JSON" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Drag Drop Article", name: "drag-drop-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1)
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2)
+    block3 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 3)
+
+    patch "/cms/articles/#{article.slug}/article_contents/reorder",
+          params: { ordered_ids: [ block3.id, block1.id, block2.id ] }.to_json,
+          headers: { "Content-Type" => "application/json", "Accept" => "application/json" }
+
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal "ok", json["status"]
+
+    assert_equal [ block3.id, block1.id, block2.id ], article.article_contents.reload.pluck(:id)
+    assert_equal [ 1, 2, 3 ], [ block3.reload.sort_order, block1.reload.sort_order, block2.reload.sort_order ]
   end
 end

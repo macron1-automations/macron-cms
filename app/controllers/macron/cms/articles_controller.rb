@@ -8,6 +8,8 @@ module Macron
       end
 
       def show
+        @article_contents = @article.article_contents.includes(:content).order(:sort_order, :id)
+        @content_types = Content.order(:name)
       end
 
       def new

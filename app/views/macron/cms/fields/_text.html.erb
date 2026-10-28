@@ -1,0 +1,13 @@
+<div class="space-y-1.5">
+  <label for="<%= input_id %>" class="block text-xs font-mono font-semibold text-zinc-700">
+    <%= field_name %>
+    <span class="ml-1 text-[10px] font-normal text-zinc-400">(text)</span>
+  </label>
+  <textarea
+    name="<%= input_name %>"
+    id="<%= input_id %>"
+    rows="4"
+    class="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-2xs placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+    placeholder="Enter <%= field_name.to_s.humanize.downcase %>..."
+  ><%= value %></textarea>
+</div>

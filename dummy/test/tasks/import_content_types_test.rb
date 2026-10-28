@@ -17,7 +17,6 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
       { "name" => "level", "kind" => "string" }
     ]
     assert_equal expected_fields, heading.fields
-    assert_equal({}, heading.payload)
   end
 
   test "import task is idempotent and updates existing records" do
