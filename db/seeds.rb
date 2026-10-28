@@ -18,3 +18,24 @@ articles.each do |title|
 end
 
 puts "Seeded #{Macron::Cms::Article.count} Macron::Cms articles."
+
+user_class_name = Macron::Cms.configuration.user_class
+user_class = user_class_name.safe_constantize
+
+if user_class
+  admin_flag = Macron::Cms.configuration.admin_flag
+
+  admin_user = user_class.find_or_initialize_by(email: "admin@example.com")
+  admin_user.password = "password" if admin_user.respond_to?(:password=)
+  admin_user.password_confirmation = "password" if admin_user.respond_to?(:password_confirmation=)
+  admin_user.public_send(:"#{admin_flag}=", true) if admin_user.respond_to?(:"#{admin_flag}=")
+  admin_user.save!
+
+  regular_user = user_class.find_or_initialize_by(email: "user@example.com")
+  regular_user.password = "password" if regular_user.respond_to?(:password=)
+  regular_user.password_confirmation = "password" if regular_user.respond_to?(:password_confirmation=)
+  regular_user.public_send(:"#{admin_flag}=", false) if regular_user.respond_to?(:"#{admin_flag}=")
+  regular_user.save!
+
+  puts "Seeded test users (admin: admin@example.com, regular: user@example.com)."
+end
