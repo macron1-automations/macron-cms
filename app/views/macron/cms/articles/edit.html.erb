@@ -1,16 +1,9 @@
 <% content_for :title, "Edit Article - Macron CMS" %>
-<% content_for :header_title, "Articles / Edit" %>
+<% cms_breadcrumb "Articles", articles_path %>
+<% cms_breadcrumb @article.title, article_path(@article) %>
+<% cms_breadcrumb "Edit" %>
 
 <div class="max-w-2xl space-y-6">
-  <!-- Breadcrumb & Back Link -->
-  <nav class="flex items-center gap-2 text-sm text-zinc-500">
-    <%= link_to "Articles", articles_path, class: "hover:text-zinc-900 transition-colors" %>
-    <span>/</span>
-    <%= link_to @article.title, article_path(@article), class: "hover:text-zinc-900 transition-colors" %>
-    <span>/</span>
-    <span class="font-medium text-zinc-900">Edit</span>
-  </nav>
-
   <div class="border-b border-zinc-200 pb-4">
     <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Edit Article</h1>
     <p class="mt-1 text-sm text-zinc-500">Modify article information and update URL identifiers.</p>

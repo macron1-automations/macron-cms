@@ -1,0 +1,14 @@
+<% if cms_breadcrumbs.any? %>
+  <% cms_breadcrumbs.each_with_index do |crumb, index| %>
+    <% if index > 0 %>
+      <span class="text-zinc-400 select-none">/</span>
+    <% end %>
+    <% if index == cms_breadcrumbs.size - 1 || crumb[:path].blank? %>
+      <span class="font-medium text-zinc-900 truncate max-w-xs sm:max-w-md"><%= crumb[:label] %></span>
+    <% else %>
+      <%= link_to crumb[:label], crumb[:path], class: "hover:text-zinc-900 transition-colors" %>
+    <% end %>
+  <% end %>
+<% else %>
+  <span class="font-medium text-zinc-900"><%= content_for(:header_title) || "Overview" %></span>
+<% end %>
