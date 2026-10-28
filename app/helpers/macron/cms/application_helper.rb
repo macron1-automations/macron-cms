@@ -26,6 +26,15 @@ module Macron
           "#{base} text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
         end
       end
+
+      def cms_breadcrumb(label, path = nil)
+        @_cms_breadcrumbs ||= []
+        @_cms_breadcrumbs << { label: label, path: path }
+      end
+
+      def cms_breadcrumbs
+        @_cms_breadcrumbs ||= []
+      end
     end
   end
 end

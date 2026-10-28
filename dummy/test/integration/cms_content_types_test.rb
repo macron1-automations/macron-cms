@@ -67,6 +67,19 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     assert_select "table tbody td span", text: /string/
     assert_select "code", /"name":\s*"title"/
     assert_select "a[href=?]", "/cms/content_types", text: /Back to Content Types/
+
+    # Top header breadcrumb
+    assert_select "header nav[aria-label='Breadcrumb']" do
+      assert_select "span", text: "MacronCMS"
+      assert_select "a[href=?]", "/cms/content_types", text: "Content Types"
+      assert_select "span", text: "heading"
+    end
+
+    # No duplicate breadcrumbs in main content
+    assert_select "main nav", count: 0
+
+    # Content stretched without max-w-4xl constraint
+    assert_select ".max-w-4xl", count: 0
   end
 
   test "sidebar displays content types navigation link" do

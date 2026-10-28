@@ -149,4 +149,51 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "p", "Create your first article to begin managing content."
     assert_select "a[href=?]", "/cms/articles/new", text: /Create First Article/
   end
+
+  test "article show view displays header breadcrumb with links and stretches full width" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Breadcrumb Test Article", name: "breadcrumb-test-article")
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+
+    # Top header breadcrumb
+    assert_select "header nav[aria-label='Breadcrumb']" do
+      assert_select "span", text: "MacronCMS"
+      assert_select "a[href=?]", "/cms/articles", text: "Articles"
+      assert_select "span", text: "Breadcrumb Test Article"
+    end
+
+    # No duplicate breadcrumbs in main content
+    assert_select "main nav", count: 0
+
+    # Content stretched without max-w-4xl constraint
+    assert_select ".max-w-4xl", count: 0
+  end
+
+  test "article new and edit views display header breadcrumbs and no duplicate in-page breadcrumbs" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Edit Breadcrumb Article", name: "edit-breadcrumb-article")
+
+    # New view
+    get "/cms/articles/new"
+    assert_response :success
+    assert_select "header nav[aria-label='Breadcrumb']" do
+      assert_select "span", text: "MacronCMS"
+      assert_select "a[href=?]", "/cms/articles", text: "Articles"
+      assert_select "span", text: "New Article"
+    end
+    assert_select "main nav", count: 0
+
+    # Edit view
+    get "/cms/articles/#{article.slug}/edit"
+    assert_response :success
+    assert_select "header nav[aria-label='Breadcrumb']" do
+      assert_select "span", text: "MacronCMS"
+      assert_select "a[href=?]", "/cms/articles", text: "Articles"
+      assert_select "a[href=?]", "/cms/articles/#{article.slug}", text: "Edit Breadcrumb Article"
+      assert_select "span", text: "Edit"
+    end
+    assert_select "main nav", count: 0
+  end
 end
