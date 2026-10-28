@@ -1,0 +1,154 @@
+<% content_for :title, "#{@content_type.name.titleize} - Content Types - Macron CMS" %>
+<% content_for :header_title, "Content Types / #{@content_type.name}" %>
+
+<%
+  field_list = if @content_type.fields.is_a?(Array)
+    @content_type.fields
+  elsif @content_type.fields.is_a?(Hash) && @content_type.fields.present?
+    [@content_type.fields]
+  else
+    []
+  end
+%>
+
+<div class="max-w-4xl space-y-6">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-zinc-500">
+    <%= link_to "Content Types", content_types_path, class: "hover:text-zinc-900 transition-colors" %>
+    <span>/</span>
+    <span class="font-medium text-zinc-900 font-mono"><%= @content_type.name %></span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-zinc-200 pb-6">
+    <div class="space-y-2">
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl font-mono"><%= @content_type.name %></h1>
+        <span class="inline-flex items-center rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-800 ring-1 ring-inset ring-zinc-300">
+          <%= pluralize(field_list.count, "field") %>
+        </span>
+      </div>
+      <p class="text-xs text-zinc-500">
+        Created on <%= @content_type.created_at.strftime("%B %d, %Y at %H:%M UTC") rescue "—" %> &middot; Updated <%= time_ago_in_words(@content_type.updated_at) rescue "—" %> ago
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <%= link_to content_types_path, class: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors" do %>
+        <svg class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        Back to Content Types
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Record Information Card -->
+  <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+    <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+      <h3 class="text-sm font-semibold text-zinc-900">Record Information</h3>
+    </div>
+    <dl class="divide-y divide-zinc-200">
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Record ID</dt>
+        <dd class="mt-1 text-sm font-mono text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.id %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Content Type Name</dt>
+        <dd class="mt-1 text-sm font-mono font-medium text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.name %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Field Count</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= field_list.count %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Created At</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.created_at.to_fs(:long) rescue @content_type.created_at.to_s %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Last Updated</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.updated_at.to_fs(:long) rescue @content_type.updated_at.to_s %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Field Details Card -->
+  <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+    <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-zinc-900">Defined Fields</h3>
+        <p class="text-xs text-zinc-500 mt-0.5">Attributes and input types schema configured for this content type.</p>
+      </div>
+      <span class="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-800 ring-1 ring-inset ring-zinc-300">
+        <%= pluralize(field_list.count, "attribute") %>
+      </span>
+    </div>
+
+    <% if field_list.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-zinc-200 text-left text-sm">
+          <thead class="bg-zinc-50/50 text-zinc-700 font-semibold text-xs uppercase tracking-wider">
+            <tr>
+              <th scope="col" class="px-6 py-3">Field Name</th>
+              <th scope="col" class="px-6 py-3">Kind / Type</th>
+              <th scope="col" class="px-6 py-3">Additional Attributes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-200">
+            <% field_list.each do |field| %>
+              <%
+                fname = field["name"] || field[:name] || "—"
+                fkind = field["kind"] || field[:kind] || "string"
+                extra_keys = field.reject { |k, _| %w[name kind].include?(k.to_s) }
+              %>
+              <tr class="hover:bg-zinc-50/60 transition-colors">
+                <td class="px-6 py-3.5 font-mono font-medium text-zinc-900 whitespace-nowrap">
+                  <%= fname %>
+                </td>
+                <td class="px-6 py-3.5 whitespace-nowrap">
+                  <span class="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-0.5 text-xs font-mono font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                    <%= fkind %>
+                  </span>
+                </td>
+                <td class="px-6 py-3.5 text-xs text-zinc-600">
+                  <% if extra_keys.any? %>
+                    <dl class="flex flex-wrap gap-x-4 gap-y-1">
+                      <% extra_keys.each do |k, v| %>
+                        <div class="flex items-center gap-1">
+                          <dt class="font-mono text-zinc-500"><%= k %>:</dt>
+                          <dd class="font-mono font-medium text-zinc-800"><%= v.inspect %></dd>
+                        </div>
+                      <% end %>
+                    </dl>
+                  <% else %>
+                    <span class="text-zinc-600 italic">None</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="p-6 text-center text-sm text-zinc-500 italic">
+        No field schema definitions present.
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Raw JSON Schema Preview Card -->
+  <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+    <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-zinc-900">Raw Field Schema (JSON)</h3>
+      <span class="text-xs font-mono text-zinc-600">application/json</span>
+    </div>
+    <div class="p-6 bg-zinc-900 overflow-x-auto">
+      <pre class="font-mono text-xs text-zinc-200 leading-relaxed"><code><%= JSON.pretty_generate(@content_type.fields) rescue @content_type.fields.inspect %></code></pre>
+    </div>
+  </div>
+
+  <div class="pt-2">
+    <%= link_to "&larr; Back to all content types".html_safe, content_types_path, class: "text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors" %>
+  </div>
+</div>
