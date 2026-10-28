@@ -64,6 +64,36 @@ $ gem install macron-cms
 
 ---
 
+## Local Development & Dummy App
+
+To test MacronCMS locally using the included dummy host application:
+
+1. **Set up the database and seed records:**
+   ```bash
+   cd dummy
+   bin/rails db:prepare
+   bin/rails db:seed
+   ```
+
+2. **Start the local server:**
+   ```bash
+   bin/rails dev # or bin/rails server
+   ```
+
+3. **Access the CMS:**
+   Visit [`http://localhost:3000/cms`](http://localhost:3000/cms). If you are not signed in, Devise will automatically redirect you to the sign-in page (`/users/sign_in`).
+
+### Test User Credentials
+
+The database seeds create two test users:
+
+| Email | Password | Role / Access | Behavior at `/cms` |
+|---|---|---|---|
+| `admin@example.com` | `password` | **Admin** (`admin: true`) | Grants access to `/cms` (CMS Dashboard) |
+| `user@example.com` | `password` | **Regular User** (`admin: false`) | Denied access; redirected to `/` with alert |
+
+---
+
 ## Contributing
 
 Contributions, feedback, and discussions are welcome! Since the project is in early rapid development, please open an issue first to discuss architectural changes or ideas before submitting a pull request.
