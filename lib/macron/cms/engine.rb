@@ -8,6 +8,12 @@ module Macron
           app.config.paths["db/migrate"] << expanded_path
         end
       end
+
+      initializer "macron_cms.helpers" do
+        ActiveSupport.on_load(:action_view) do
+          include Macron::Cms::SeoHelper
+        end
+      end
     end
   end
 end

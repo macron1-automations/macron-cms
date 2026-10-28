@@ -35,6 +35,29 @@
     <p class="mt-1 text-xs text-zinc-500">Unique identifier used by FriendlyId to generate clean URLs.</p>
   </div>
 
+  <div class="pt-6 border-t border-zinc-200 space-y-4">
+    <div>
+      <h3 class="text-sm font-semibold text-zinc-900">SEO Settings</h3>
+      <p class="text-xs text-zinc-500">Optional search engine and social metadata overrides.</p>
+    </div>
+
+    <div>
+      <%= form.label :meta_title, "Meta Title", class: "block text-sm font-medium text-zinc-700" %>
+      <div class="mt-1.5">
+        <%= form.text_field :meta_title, placeholder: "Defaults to article title if left blank", class: "block w-full rounded-lg border border-zinc-300 px-3.5 py-2 text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 text-sm" %>
+      </div>
+      <p class="mt-1 text-xs text-zinc-500">Custom title for &lt;title&gt; and Open Graph cards.</p>
+    </div>
+
+    <div>
+      <%= form.label :meta_description, "Meta Description", class: "block text-sm font-medium text-zinc-700" %>
+      <div class="mt-1.5">
+        <%= form.text_area :meta_description, rows: 3, placeholder: "Brief summary of the article for search results...", class: "block w-full rounded-lg border border-zinc-300 px-3.5 py-2 text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 text-sm" %>
+      </div>
+      <p class="mt-1 text-xs text-zinc-500">Recommended length: 150–160 characters.</p>
+    </div>
+  </div>
+
   <div class="flex items-center gap-4 pt-4 border-t border-zinc-200">
     <%= form.submit class: "rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 cursor-pointer transition-colors" %>
     <%= link_to "Cancel", (article.persisted? ? article_path(article) : articles_path), class: "text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors" %>

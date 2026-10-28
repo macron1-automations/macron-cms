@@ -40,7 +40,9 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
       post "/cms/articles", params: {
         article: {
           title: "Tailwind CMS Guide",
-          name: "tailwind-cms-guide"
+          name: "tailwind-cms-guide",
+          meta_title: "Guide to Tailwind CMS",
+          meta_description: "Learn how to use Tailwind with Macron CMS."
         }
       }
     end
@@ -48,6 +50,8 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     article = Macron::Cms::Article.find_by(name: "tailwind-cms-guide")
     assert_not_nil article
     assert_equal "tailwind-cms-guide", article.slug
+    assert_equal "Guide to Tailwind CMS", article.meta_title
+    assert_equal "Learn how to use Tailwind with Macron CMS.", article.meta_description
     assert_redirected_to "/cms/articles/#{article.slug}"
     follow_redirect!
     assert_response :success
@@ -65,13 +69,17 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     patch "/cms/articles/#{article.slug}", params: {
       article: {
-        title: "Updated Title"
+        title: "Updated Title",
+        meta_title: "Updated SEO Title",
+        meta_description: "Updated SEO Description"
       }
     }
 
     assert_redirected_to "/cms/articles/#{article.slug}"
     article.reload
     assert_equal "Updated Title", article.title
+    assert_equal "Updated SEO Title", article.meta_title
+    assert_equal "Updated SEO Description", article.meta_description
     follow_redirect!
     assert_select ".rounded-xl", /Article was successfully updated\./
   end
