@@ -12,7 +12,9 @@ articles = [
 ]
 
 articles.each do |title|
-  Macron::Cms::Article.find_or_create_by!(title: title)
+  Macron::Cms::Article.find_or_create_by!(name: title.parameterize) do |article|
+    article.title = title
+  end
 end
 
 puts "Seeded #{Macron::Cms::Article.count} Macron::Cms articles."
