@@ -22,4 +22,9 @@
       <%= @article.title %>
     </h1>
   </header>
+
+  <!-- Article Content Widgets -->
+  <div class="space-y-4">
+    <%= cms_render_article_contents(@article) %>
+  </div>
 </div>

@@ -12,6 +12,7 @@ module Macron
       initializer "macron_cms.helpers" do
         ActiveSupport.on_load(:action_view) do
           include Macron::Cms::SeoHelper
+          include Macron::Cms::ContentHelper
         end
       end
     end

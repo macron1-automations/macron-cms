@@ -28,6 +28,15 @@ class ContentTypeGeneratorTest < Rails::Generators::TestCase
       YAML
       assert_equal expected, content
     end
+
+    assert_file "app/components/widgets/article_component.rb" do |content|
+      assert_includes content, "module Widgets"
+      assert_includes content, "class ArticleComponent < Macron::Cms::WidgetComponent"
+    end
+
+    assert_file "app/components/widgets/article_component.html.erb" do |content|
+      assert_includes content, "<%= title %>"
+    end
   end
 
   test "generates content type with multiple fields in array format" do

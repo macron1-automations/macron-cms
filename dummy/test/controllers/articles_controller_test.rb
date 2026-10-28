@@ -43,4 +43,32 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     get article_url(id: "non-existent-slug")
     assert_response :not_found
   end
+
+  test "should render ordered content block widgets on public show page" do
+    article = Macron::Cms::Article.create!(title: "Rich Content Article", name: "rich-content-article")
+    heading_type = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
+      c.fields = [ { "name" => "title", "kind" => "string" }, { "name" => "level", "kind" => "string" } ]
+    end
+    paragraph_type = Macron::Cms::Content.find_or_create_by!(name: "paragraph") do |c|
+      c.fields = [ { "name" => "content", "kind" => "text" } ]
+    end
+
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: heading_type,
+      sort_order: 1,
+      payload: { "title" => "Subheading Title", "level" => "h2" }
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: paragraph_type,
+      sort_order: 2,
+      payload: { "content" => "This is a body paragraph in the article." }
+    )
+
+    get article_url(article)
+    assert_response :success
+    assert_select "h2", text: "Subheading Title"
+    assert_select "p", text: "This is a body paragraph in the article."
+  end
 end
