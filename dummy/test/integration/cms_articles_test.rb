@@ -537,4 +537,84 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_equal "New Bottom Block", blocks[2].payload["title"]
     assert_equal 3, blocks[2].sort_order
   end
+
+  test "cms layout includes turbo_include_tags via Propshaft" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Asset Article", name: "turbo-asset-article")
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+    assert_select "head script[type='module'][src*='turbo']"
+    assert_select "#flash-messages"
+  end
+
+  test "admin can add a content block inline via Turbo Stream without full page reload" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Add Article", name: "turbo-add-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents",
+           as: :turbo_stream,
+           params: {
+             article_content: {
+               content_id: ct.id,
+               insert_at: 1,
+               payload: { "title" => "Live Stream Block" }
+             }
+           }
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+
+    # Verify turbo-stream actions
+    assert_select "turbo-stream[action='update'][target='content-blocks-section']"
+    assert_select "turbo-stream[action='update'][target='flash-messages']"
+
+    # Verify stream body contents
+    assert_includes response.body, "Live Stream Block"
+    assert_includes response.body, "Content block was successfully added."
+    assert_includes response.body, "data-position=\"1\""
+  end
+
+  test "admin can move a content block inline via Turbo Stream" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Move Article", name: "turbo-move-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "First" })
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Second" })
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block1.id}/move",
+          as: :turbo_stream,
+          params: { direction: "down" }
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_select "turbo-stream[action='update'][target='content-blocks-section']"
+    assert_select "turbo-stream[action='update'][target='flash-messages']"
+    assert_includes response.body, "Content block order updated."
+
+    assert_equal [ block2.id, block1.id ], article.article_contents.reload.pluck(:id)
+  end
+
+  test "admin can delete a content block inline via Turbo Stream" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Delete Article", name: "turbo-delete-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
+
+    assert_difference -> { article.article_contents.count }, -1 do
+      delete "/cms/articles/#{article.slug}/article_contents/#{block1.id}", as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_select "turbo-stream[action='update'][target='content-blocks-section']"
+    assert_select "turbo-stream[action='update'][target='flash-messages']"
+    assert_includes response.body, "Content block was successfully removed."
+    assert_includes response.body, "No content blocks yet"
+  end
 end

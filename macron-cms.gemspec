@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3.1"
+  spec.add_dependency "turbo-rails", ">= 2.0"
   spec.add_dependency "friendly_id", "~> 5.5"
   spec.add_dependency "devise", ">= 4.9"
   spec.add_dependency "view_component", ">= 3.0"
