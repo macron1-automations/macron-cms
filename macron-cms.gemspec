@@ -21,4 +21,5 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 8.1.3.1"
+  spec.add_dependency "friendly_id", "~> 5.5"
 end

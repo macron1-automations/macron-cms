@@ -1,3 +1,4 @@
+require "friendly_id"
 require "macron/cms/version"
 require "macron/cms/engine"
 
