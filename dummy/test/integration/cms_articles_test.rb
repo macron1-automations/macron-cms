@@ -169,6 +169,14 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     # Content stretched without max-w-4xl constraint
     assert_select ".max-w-4xl", count: 0
+
+    # Record Information card contains only Record ID and Title
+    assert_select "dt", text: "Record ID"
+    assert_select "dt", text: "Title"
+    assert_select "dt", text: "Identifier (Name)", count: 0
+    assert_select "dt", text: "Friendly URL Slug", count: 0
+    assert_select "dt", text: "Created At", count: 0
+    assert_select "dt", text: "Last Updated", count: 0
   end
 
   test "article new and edit views display header breadcrumbs and no duplicate in-page breadcrumbs" do
