@@ -7,6 +7,9 @@ module Macron
       validates :title, presence: true
       validates :name, presence: true, uniqueness: true
 
+      has_many :article_contents, -> { order(:sort_order) }, class_name: "Macron::Cms::ArticleContent", dependent: :destroy
+      has_many :contents, through: :article_contents
+
       def seo_title
         meta_title.presence || title
       end

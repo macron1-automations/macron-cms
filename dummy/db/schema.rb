@@ -14,6 +14,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_084434) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
+  create_table "macron_cms_article_contents", force: :cascade do |t|
+    t.bigint "article_id", null: false
+    t.bigint "content_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "article_id", "sort_order" ], name: "index_macron_cms_article_contents_on_article_id_and_sort_order"
+    t.index [ "article_id" ], name: "index_macron_cms_article_contents_on_article_id"
+    t.index [ "content_id" ], name: "index_macron_cms_article_contents_on_content_id"
+  end
+
   create_table "macron_cms_articles", force: :cascade do |t|
     t.string "title", null: false
     t.datetime "created_at", null: false
@@ -24,6 +35,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_084434) do
     t.text "meta_description"
     t.index [ "name" ], name: "index_macron_cms_articles_on_name", unique: true
     t.index [ "slug" ], name: "index_macron_cms_articles_on_slug", unique: true
+  end
+
+  create_table "macron_cms_contents", force: :cascade do |t|
+    t.string "name", null: false
+    t.jsonb "fields", default: {}, null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index [ "name" ], name: "index_macron_cms_contents_on_name", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -38,4 +58,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_084434) do
     t.index [ "email" ], name: "index_users_on_email", unique: true
     t.index [ "reset_password_token" ], name: "index_users_on_reset_password_token", unique: true
   end
+
+  add_foreign_key "macron_cms_article_contents", "macron_cms_articles", column: "article_id"
+  add_foreign_key "macron_cms_article_contents", "macron_cms_contents", column: "content_id"
 end
