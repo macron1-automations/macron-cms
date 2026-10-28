@@ -7,6 +7,7 @@
   <%= csp_meta_tag %>
 
   <%= stylesheet_link_tag "macron/cms/application", media: "all" %>
+  <%= turbo_include_tags %>
   <%= yield :head %>
 </head>
 <body class="min-h-screen text-zinc-900 antialiased flex bg-zinc-50">
@@ -100,24 +101,8 @@
     </header>
 
     <!-- Flash Notifications -->
-    <div class="max-w-7xl w-full mx-auto px-6 sm:px-8 pt-6">
-      <% if notice.present? %>
-        <div class="p-4 mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-3">
-          <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
-          <span class="font-medium"><%= notice %></span>
-        </div>
-      <% end %>
-
-      <% if alert.present? %>
-        <div class="p-4 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-3">
-          <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-          </svg>
-          <span class="font-medium"><%= alert %></span>
-        </div>
-      <% end %>
+    <div id="flash-messages" class="max-w-7xl w-full mx-auto px-6 sm:px-8 pt-6">
+      <%= render "macron/cms/shared/flash" %>
     </div>
 
     <!-- Main Content Canvas -->
