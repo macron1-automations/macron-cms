@@ -34,6 +34,11 @@ A simple, flexible CMS for building highly interactive content.
 - **Configurable Access Guard**: Protect the `/cms` engine namespace behind host application authentication.
 - **Role Customization**: Configure custom user models (`user_class`) and admin flags (`admin_flag`) via initializers.
 
+### 🧩 Declarative Content Types
+- **YAML-Defined Schemas**: Define structured content types with typed fields (`name:kind`) stored directly in source control (`config/content_types/*.yml`).
+- **Built-in Rails Generator**: Rapidly scaffold content types via `bin/rails generate macron:cms:content_type`.
+- **Rake Import Pipeline**: Sync YAML definitions into `Macron::Cms::Content` records with automatic schema introspection and admin dashboard views.
+
 ---
 
 ## Upcoming Features
@@ -92,6 +97,66 @@ Copy and run the engine migrations:
 ```bash
 $ bin/rails macron_cms:install:migrations
 $ bin/rails db:migrate
+```
+
+---
+
+## Content Types
+
+MacronCMS allows you to define content types declaratively using YAML files in `config/content_types/`.
+
+### Generating a Content Type
+
+Scaffold content type definitions using the built-in Rails generator:
+
+```bash
+$ bin/rails generate macron:cms:content_type NAME [field:kind ...]
+```
+
+For example, to generate a `heading` or a `hero` content type:
+
+```bash
+$ bin/rails generate macron:cms:content_type heading title:string level:string
+$ bin/rails generate macron:cms:content_type hero title:string subtitle:text image_url:string
+```
+
+This generates `config/content_types/heading.yml`:
+
+```yaml
+fields:
+  - name: 'title'
+    kind: 'string'
+  - name: 'level'
+    kind: 'string'
+```
+
+Fields must follow the `name:kind` format (e.g., `title:string`, `body:text`, `count:integer`).
+
+### Importing Content Types
+
+Import all YAML content type definitions into the database (`Macron::Cms::Content`):
+
+```bash
+$ bin/rails macron:cms:import_content_types
+```
+
+Or using the shorter alias:
+
+```bash
+$ bin/rails macron:cms:content:import
+```
+
+The import task is idempotent and creates or updates existing records. Once imported, content types can be viewed and inspected in the CMS admin dashboard at `/cms/content_types`.
+
+### Custom Directory Configuration
+
+By default, YAML files are read from and generated to `config/content_types/`. You can customize this path in an initializer:
+
+```ruby
+# config/initializers/macron_cms.rb
+Macron::Cms.configure do |config|
+  config.content_types_path = Rails.root.join("custom", "content_types")
+end
 ```
 
 ---

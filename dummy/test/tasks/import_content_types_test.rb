@@ -12,7 +12,11 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     Rake::Task["macron:cms:import_content_types"].invoke
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
-    assert_equal({ "name" => "title", "kind" => "string" }, heading.fields)
+    expected_fields = [
+      { "name" => "title", "kind" => "string" },
+      { "name" => "level", "kind" => "string" }
+    ]
+    assert_equal expected_fields, heading.fields
     assert_equal({}, heading.payload)
   end
 
@@ -27,12 +31,40 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     end
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
-    assert_equal({ "name" => "title", "kind" => "string" }, heading.fields)
+    expected_fields = [
+      { "name" => "title", "kind" => "string" },
+      { "name" => "level", "kind" => "string" }
+    ]
+    assert_equal expected_fields, heading.fields
   end
 
   test "content:import alias runs import_content_types" do
     Rake::Task["macron:cms:content:import"].invoke
 
     assert Macron::Cms::Content.exists?(name: "heading")
+  end
+
+  test "imports legacy hash format fields for backwards compatibility" do
+    temp_dir = Dir.mktmpdir("content_types_test")
+    legacy_file = File.join(temp_dir, "legacy_card.yml")
+    File.write(legacy_file, <<~YAML)
+      fields:
+        name: 'header'
+        kind: 'string'
+    YAML
+
+    original_path = Macron::Cms.configuration.content_types_path
+    Macron::Cms.configuration.content_types_path = temp_dir
+
+    begin
+      Rake::Task["macron:cms:import_content_types"].reenable
+      Rake::Task["macron:cms:import_content_types"].invoke
+
+      card = Macron::Cms::Content.find_by!(name: "legacy_card")
+      assert_equal({ "name" => "header", "kind" => "string" }, card.fields)
+    ensure
+      Macron::Cms.configuration.content_types_path = original_path
+      FileUtils.remove_entry(temp_dir)
+    end
   end
 end
