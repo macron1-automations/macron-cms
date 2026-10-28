@@ -28,6 +28,17 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "aside", /MacronCMS/
     assert_select "aside", /Dashboard/
     assert_select "aside", /Articles/
+
+    # Verify table headers and absence of identifier/slug column
+    assert_select "table thead th", text: "Title"
+    assert_select "table thead th", text: "Created At"
+    assert_select "table thead th", text: "Actions"
+    assert_select "table thead th", text: /Identifier|Slug/, count: 0
+
+    # Verify actions contain Show, Edit, Delete and Delete is an inline form
+    assert_select "table tbody td a", text: "Show"
+    assert_select "table tbody td a", text: "Edit"
+    assert_select "table tbody td form.inline button", text: "Delete"
   end
 
   test "admin can create a new article" do
@@ -108,5 +119,16 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "dd", "1"
     assert_select "td", "Dashboard Showcase"
     assert_select "a[href=?]", "/cms/articles/new"
+
+    # Verify table headers and absence of slug column
+    assert_select "table thead th", text: "Title"
+    assert_select "table thead th", text: "Created At"
+    assert_select "table thead th", text: "Actions"
+    assert_select "table thead th", text: /Slug/, count: 0
+
+    # Verify actions contain Show, Edit, Delete and Delete is an inline form
+    assert_select "table tbody td a", text: "Show"
+    assert_select "table tbody td a", text: "Edit"
+    assert_select "table tbody td form.inline button", text: "Delete"
   end
 end

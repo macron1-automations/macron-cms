@@ -31,7 +31,6 @@
           <thead class="bg-zinc-50 text-zinc-700 font-semibold text-xs uppercase tracking-wider">
             <tr>
               <th scope="col" class="px-6 py-3.5">Title</th>
-              <th scope="col" class="px-6 py-3.5">Identifier / Slug</th>
               <th scope="col" class="px-6 py-3.5">Created At</th>
               <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
             </tr>
@@ -42,19 +41,18 @@
                 <td class="px-6 py-4 font-semibold text-zinc-900 whitespace-nowrap">
                   <%= link_to article.title, article_path(article), class: "hover:underline" %>
                 </td>
-                <td class="px-6 py-4 text-zinc-500 font-mono text-xs whitespace-nowrap">
-                  <%= article.slug %>
-                </td>
                 <td class="px-6 py-4 text-zinc-500 text-xs whitespace-nowrap">
                   <%= article.created_at.strftime("%b %d, %Y") %>
                 </td>
-                <td class="px-6 py-4 text-right text-xs font-medium space-x-3 whitespace-nowrap">
-                  <% if main_app.respond_to?(:article_path) %>
-                    <%= link_to "Public View", main_app.article_path(article), class: "text-zinc-600 hover:text-zinc-900 hover:underline", target: "_blank", rel: "noopener" %>
-                  <% end %>
-                  <%= link_to "Show", article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
-                  <%= link_to "Edit", edit_article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
-                  <%= button_to "Delete", article_path(article), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this article?" }, class: "inline text-rose-600 hover:text-rose-800 hover:underline cursor-pointer" %>
+                <td class="px-6 py-4 text-right text-xs font-medium whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-3 whitespace-nowrap">
+                    <% if main_app.respond_to?(:article_path) %>
+                      <%= link_to "Public View", main_app.article_path(article), class: "text-zinc-600 hover:text-zinc-900 hover:underline", target: "_blank", rel: "noopener" %>
+                    <% end %>
+                    <%= link_to "Show", article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
+                    <%= link_to "Edit", edit_article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
+                    <%= button_to "Delete", article_path(article), method: :delete, form_class: "inline", data: { turbo_confirm: "Are you sure you want to delete this article?" }, class: "text-rose-600 hover:text-rose-800 hover:underline cursor-pointer" %>
+                  </div>
                 </td>
               </tr>
             <% end %>
