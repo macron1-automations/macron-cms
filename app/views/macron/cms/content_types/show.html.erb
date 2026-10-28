@@ -143,8 +143,8 @@
       <h3 class="text-sm font-semibold text-zinc-900">Raw Field Schema (JSON)</h3>
       <span class="text-xs font-mono text-zinc-600">application/json</span>
     </div>
-    <div class="p-6 bg-zinc-900 overflow-x-auto">
-      <pre class="font-mono text-xs text-zinc-200 leading-relaxed"><code><%= JSON.pretty_generate(@content_type.fields) rescue @content_type.fields.inspect %></code></pre>
+    <div class="p-6 bg-zinc-900 overflow-x-auto text-zinc-100">
+      <pre class="font-mono text-xs text-zinc-100 leading-relaxed" style="color: #f4f4f5;"><code><%= JSON.pretty_generate(@content_type.fields.presence || {}) rescue (@content_type.fields || {}).inspect %></code></pre>
     </div>
   </div>
 
