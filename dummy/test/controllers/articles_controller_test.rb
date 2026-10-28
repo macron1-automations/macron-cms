@@ -1,6 +1,12 @@
 require "test_helper"
 
 class ArticlesControllerTest < ActionDispatch::IntegrationTest
+  test "should redirect /articles to root with 301 moved permanently" do
+    get articles_url
+    assert_response :moved_permanently
+    assert_redirected_to root_path
+  end
+
   test "should show article using slug" do
     article = Macron::Cms::Article.create!(title: "Friendly Article", name: "friendly-article")
 
