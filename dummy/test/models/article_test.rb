@@ -10,10 +10,41 @@ class ArticleTest < ActiveSupport::TestCase
     assert article.valid?
   end
 
-  test "requires name" do
-    article = Macron::Cms::Article.new(title: "Valid Title")
+  test "derives name from title when name is not provided" do
+    article = Macron::Cms::Article.create!(title: "My Brand New Article!")
+    assert_equal "my-brand-new-article", article.name
+    assert_equal "my-brand-new-article", article.slug
+  end
+
+  test "auto-resolves duplicate derived names with numeric suffix" do
+    first = Macron::Cms::Article.create!(title: "Duplicate Title")
+    assert_equal "duplicate-title", first.name
+
+    second = Macron::Cms::Article.create!(title: "Duplicate Title")
+    assert_equal "duplicate-title-2", second.name
+
+    third = Macron::Cms::Article.create!(title: "Duplicate Title")
+    assert_equal "duplicate-title-3", third.name
+  end
+
+  test "preserves explicitly provided custom name" do
+    article = Macron::Cms::Article.create!(title: "Some Title", name: "custom-identifier")
+    assert_equal "custom-identifier", article.name
+  end
+
+  test "preserves existing name on update unless explicitly cleared" do
+    article = Macron::Cms::Article.create!(title: "Original Title", name: "original-name")
+    article.update!(title: "Updated Title")
+    assert_equal "original-name", article.name
+
+    article.update!(name: "")
+    assert_equal "updated-title", article.name
+  end
+
+  test "requires title when name is also blank" do
+    article = Macron::Cms::Article.new
     assert_not article.valid?
-    assert_includes article.errors[:name], "can't be blank"
+    assert_includes article.errors[:title], "can't be blank"
   end
 
   test "enforces unique name" do

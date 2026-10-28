@@ -71,6 +71,27 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select ".rounded-xl", /Article was successfully created\./
   end
 
+  test "admin can create a new article without providing identifier name" do
+    sign_in @admin
+    get "/cms/articles/new"
+    assert_response :success
+    assert_select "input[name='article[name]']:not([required])"
+
+    assert_difference("Macron::Cms::Article.count", 1) do
+      post "/cms/articles", params: {
+        article: {
+          title: "Auto Slug Generated Guide",
+          name: ""
+        }
+      }
+    end
+
+    article = Macron::Cms::Article.find_by(name: "auto-slug-generated-guide")
+    assert_not_nil article
+    assert_equal "auto-slug-generated-guide", article.slug
+    assert_redirected_to "/cms/articles/#{article.slug}"
+  end
+
   test "admin can edit and update an article" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Original Title", name: "original-name")
@@ -169,6 +190,14 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     # Content stretched without max-w-4xl constraint
     assert_select ".max-w-4xl", count: 0
+
+    # Record Information card contains only Record ID and Title
+    assert_select "dt", text: "Record ID"
+    assert_select "dt", text: "Title"
+    assert_select "dt", text: "Identifier (Name)", count: 0
+    assert_select "dt", text: "Friendly URL Slug", count: 0
+    assert_select "dt", text: "Created At", count: 0
+    assert_select "dt", text: "Last Updated", count: 0
   end
 
   test "article new and edit views display header breadcrumbs and no duplicate in-page breadcrumbs" do
