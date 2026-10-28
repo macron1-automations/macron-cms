@@ -6,10 +6,28 @@ module Macron
 
       def create
         content = Content.find(params.dig(:article_content, :content_id))
-        @article_content = @article.article_contents.build(content: content)
-        @article_content.payload = @article_content.filter_payload(payload_param)
+        insert_at = params.dig(:article_content, :insert_at).presence&.to_i
 
-        if @article_content.save
+        saved = false
+        ActiveRecord::Base.transaction do
+          if insert_at && insert_at >= 1
+            @article.article_contents.where("sort_order >= ?", insert_at).update_all("sort_order = sort_order + 1")
+            @article_content = @article.article_contents.build(content: content, sort_order: insert_at)
+          else
+            @article_content = @article.article_contents.build(content: content)
+          end
+
+          @article_content.payload = @article_content.filter_payload(payload_param)
+
+          if @article_content.save
+            normalize_sort_orders!
+            saved = true
+          else
+            raise ActiveRecord::Rollback
+          end
+        end
+
+        if saved
           redirect_to article_path(@article), notice: "Content block was successfully added."
         else
           redirect_to article_path(@article), alert: "Failed to add content block: #{@article_content.errors.full_messages.to_sentence}"
@@ -94,7 +112,7 @@ module Macron
       end
 
       def normalize_sort_orders!
-        @article.article_contents.order(:sort_order, :id).each_with_index do |item, idx|
+        @article.article_contents.unscoped.where(article_id: @article.id).order(:sort_order, :id).each_with_index do |item, idx|
           item.update_column(:sort_order, idx + 1)
         end
       end

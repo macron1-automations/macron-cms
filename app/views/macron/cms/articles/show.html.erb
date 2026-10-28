@@ -83,6 +83,27 @@
       class="space-y-4"
     >
       <% if @article_contents.any? %>
+        <!-- Inserter above first block (Position 1) -->
+        <div id="inserter-zone-top" class="block-inserter-zone py-1.5" data-position="1">
+          <div class="block-inserter-divider relative py-1 flex items-center justify-center group">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-dashed border-zinc-200 group-hover:border-zinc-300 transition-colors"></div>
+            </div>
+            <button
+              type="button"
+              onclick="toggleInsertForm(1, this);"
+              aria-label="Add block at position 1"
+              class="inserter-toggle-btn relative z-10 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-zinc-500 shadow-2xs border border-zinc-200 opacity-60 hover:opacity-100 hover:text-zinc-900 hover:border-zinc-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 group-hover:opacity-100 transition-all cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span class="text-[11px] font-medium">Add block</span>
+            </button>
+          </div>
+          <div id="insert-slot-1" class="insert-slot-target my-3 hidden"></div>
+        </div>
+
         <% @article_contents.each_with_index do |ac, index| %>
           <% content_type = ac.content %>
           <% fields = content_type ? content_type.normalized_fields : [] %>
@@ -209,6 +230,27 @@
               <% end %>
             </div>
           </div>
+
+          <!-- Inserter after block #<%= index + 1 %> (Position <%= index + 2 %>) -->
+          <div class="block-inserter-zone py-1.5" data-position="<%= index + 2 %>" data-block-id="<%= ac.id %>">
+            <div class="block-inserter-divider relative py-1 flex items-center justify-center group">
+              <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                <div class="w-full border-t border-dashed border-zinc-200 group-hover:border-zinc-300 transition-colors"></div>
+              </div>
+              <button
+                type="button"
+                onclick="toggleInsertForm(<%= index + 2 %>, this);"
+                aria-label="Add block at position <%= index + 2 %>"
+                class="inserter-toggle-btn relative z-10 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-zinc-500 shadow-2xs border border-zinc-200 opacity-60 hover:opacity-100 hover:text-zinc-900 hover:border-zinc-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 group-hover:opacity-100 transition-all cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span class="text-[11px] font-medium">Add block</span>
+              </button>
+            </div>
+            <div id="insert-slot-<%= index + 2 %>" class="insert-slot-target my-3 hidden"></div>
+          </div>
         <% end %>
       <% else %>
         <div class="rounded-xl border border-dashed border-zinc-300 bg-white p-8 text-center">
@@ -216,71 +258,117 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
           </svg>
           <h3 class="mt-2 text-sm font-semibold text-zinc-900">No content blocks yet</h3>
-          <p class="mt-1 text-xs text-zinc-500">Choose a content type below to add the first block to this article.</p>
+          <p class="mt-1 text-xs text-zinc-500">Get started by adding the first block to this article.</p>
+          <div class="mt-4">
+            <button
+              type="button"
+              onclick="toggleInsertForm(1, this);"
+              aria-label="Add first block"
+              class="inserter-toggle-btn inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              <svg class="w-4 h-4 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add First Block
+            </button>
+          </div>
+          <div id="insert-slot-1" class="insert-slot-target mt-4 text-left hidden"></div>
         </div>
       <% end %>
     </div>
 
-    <!-- Add Content Block Card -->
-    <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
-      <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
-        <div>
-          <h3 class="text-sm font-semibold text-zinc-900">Add Content Block</h3>
-          <p class="text-xs text-zinc-500 mt-0.5">Select a Content Type and populate its fields.</p>
-        </div>
-      </div>
-
-      <div class="p-6">
-        <% if @content_types.any? %>
-          <div class="space-y-4">
-            <div>
-              <label for="new_content_type_select" class="block text-xs font-semibold text-zinc-900 mb-1.5">
-                Select Content Type
-              </label>
-              <select
-                id="new_content_type_select"
-                class="block w-full sm:w-80 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                onchange="switchNewContentType(this.value);"
-              >
-                <option value="">-- Choose a Content Type --</option>
-                <% @content_types.each do |ct| %>
-                  <option value="<%= ct.id %>"><%= ct.name %> (<%= pluralize(ct.normalized_fields.size, "field") %>)</option>
-                <% end %>
-              </select>
+    <!-- Reusable In-Place Add Content Block Card (hidden staging storage) -->
+    <div id="form-dock-storage" class="hidden">
+      <div id="reusable-add-block-card" class="overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-md ring-1 ring-zinc-900/5 transition-all">
+        <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-6 h-6 rounded-md bg-zinc-900 text-white flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
             </div>
-
-            <!-- Dynamic Form per Content Type -->
-            <% @content_types.each do |ct| %>
-              <% ct_fields = ct.normalized_fields %>
-              <div id="new-content-type-form-<%= ct.id %>" class="new-content-type-form hidden pt-4 border-t border-zinc-100">
-                <%= form_with(url: article_article_contents_path(@article), scope: :article_content, class: "space-y-4") do |f| %>
-                  <%= f.hidden_field :content_id, value: ct.id %>
-
-                  <div class="space-y-4">
-                    <% ct_fields.each do |field_def| %>
-                      <% fname = field_def["name"] %>
-                      <%= cms_render_field(
-                        field_def,
-                        value: nil,
-                        input_name: "article_content[payload][#{fname}]",
-                        input_id: "new_content_#{ct.id}_payload_#{fname}"
-                      ) %>
-                    <% end %>
-                  </div>
-
-                  <div class="pt-2">
-                    <%= f.submit "Add #{ct.name.titleize} Block", class: "inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-2xs hover:bg-zinc-800 transition-colors cursor-pointer" %>
-                  </div>
-                <% end %>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-zinc-900">Add Content Block</h3>
+                <span id="insert-form-position-badge" class="inline-flex items-center rounded-md bg-zinc-200/80 px-2 py-0.5 text-xs font-mono font-semibold text-zinc-800">
+                  Position #1
+                </span>
               </div>
-            <% end %>
+              <p class="text-xs text-zinc-500 mt-0.5">Select a Content Type and populate its fields.</p>
+            </div>
           </div>
-        <% else %>
-          <div class="text-center py-4">
-            <p class="text-sm text-zinc-500">No content types defined yet.</p>
-            <p class="text-xs text-zinc-400 mt-1">Run <code class="font-mono bg-zinc-100 px-1 py-0.5 rounded">bin/rails macron:cms:import_content_types</code> to import defined schemas.</p>
-          </div>
-        <% end %>
+          <button
+            type="button"
+            onclick="closeInsertForm();"
+            class="text-zinc-400 hover:text-zinc-700 transition-colors rounded-lg p-1 hover:bg-zinc-100 cursor-pointer"
+            title="Close (Esc)"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6">
+          <% if @content_types.any? %>
+            <div class="space-y-4">
+              <div>
+                <label for="new_content_type_select" class="block text-xs font-semibold text-zinc-900 mb-1.5">
+                  Select Content Type
+                </label>
+                <select
+                  id="new_content_type_select"
+                  class="block w-full sm:w-80 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  onchange="switchNewContentType(this.value);"
+                >
+                  <option value="">-- Choose a Content Type --</option>
+                  <% @content_types.each do |ct| %>
+                    <option value="<%= ct.id %>"><%= ct.name %> (<%= pluralize(ct.normalized_fields.size, "field") %>)</option>
+                  <% end %>
+                </select>
+              </div>
+
+              <!-- Dynamic Form per Content Type -->
+              <% @content_types.each do |ct| %>
+                <% ct_fields = ct.normalized_fields %>
+                <div id="new-content-type-form-<%= ct.id %>" class="new-content-type-form hidden pt-4 border-t border-zinc-100">
+                  <%= form_with(url: article_article_contents_path(@article), scope: :article_content, class: "space-y-4") do |f| %>
+                    <%= f.hidden_field :content_id, value: ct.id %>
+                    <%= f.hidden_field :insert_at, value: 1, class: "insert-at-field" %>
+
+                    <div class="space-y-4">
+                      <% ct_fields.each do |field_def| %>
+                        <% fname = field_def["name"] %>
+                        <%= cms_render_field(
+                          field_def,
+                          value: nil,
+                          input_name: "article_content[payload][#{fname}]",
+                          input_id: "new_content_#{ct.id}_payload_#{fname}"
+                        ) %>
+                      <% end %>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-2">
+                      <%= f.submit "Add #{ct.name.titleize} Block", class: "inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-2xs hover:bg-zinc-800 transition-colors cursor-pointer" %>
+                      <button
+                        type="button"
+                        onclick="closeInsertForm();"
+                        class="rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <p class="text-sm text-zinc-500">No content types defined yet.</p>
+              <p class="text-xs text-zinc-400 mt-1">Run <code class="font-mono bg-zinc-100 px-1 py-0.5 rounded">bin/rails macron:cms:import_content_types</code> to import defined schemas.</p>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
   </div>
@@ -291,6 +379,9 @@
 </div>
 
 <script>
+  var activeInsertPosition = null;
+  var activeTriggerBtn = null;
+
   function switchNewContentType(selectedId) {
     document.querySelectorAll('.new-content-type-form').forEach(function(el) {
       el.classList.add('hidden');
@@ -300,6 +391,80 @@
       if (target) target.classList.remove('hidden');
     }
   }
+
+  function toggleInsertForm(position, triggerBtn) {
+    if (activeInsertPosition === position) {
+      closeInsertForm();
+      return;
+    }
+
+    var targetSlot = document.getElementById('insert-slot-' + position);
+    var card = document.getElementById('reusable-add-block-card');
+    if (!targetSlot || !card) return;
+
+    // Reset previous active slot and button if any
+    closeInsertForm(true);
+
+    activeInsertPosition = position;
+    activeTriggerBtn = triggerBtn;
+
+    // Update position badge
+    var badge = document.getElementById('insert-form-position-badge');
+    if (badge) {
+      badge.textContent = 'Position #' + position;
+    }
+
+    // Update all hidden insert_at fields
+    document.querySelectorAll('.insert-at-field').forEach(function(input) {
+      input.value = position;
+    });
+
+    // Move card into target slot
+    targetSlot.appendChild(card);
+    targetSlot.classList.remove('hidden');
+
+    // Style active trigger button if provided
+    if (triggerBtn) {
+      triggerBtn.classList.add('!bg-zinc-900', '!text-white', '!border-zinc-900', '!opacity-100');
+      var svg = triggerBtn.querySelector('svg');
+      if (svg) svg.classList.add('rotate-45');
+    }
+
+    // Focus select dropdown
+    var select = document.getElementById('new_content_type_select');
+    if (select) {
+      setTimeout(function() { select.focus(); }, 50);
+    }
+  }
+
+  function closeInsertForm(skipResetStorage) {
+    var card = document.getElementById('reusable-add-block-card');
+    var storage = document.getElementById('form-dock-storage');
+
+    if (activeTriggerBtn) {
+      activeTriggerBtn.classList.remove('!bg-zinc-900', '!text-white', '!border-zinc-900', '!opacity-100');
+      var svg = activeTriggerBtn.querySelector('svg');
+      if (svg) svg.classList.remove('rotate-45');
+      activeTriggerBtn = null;
+    }
+
+    document.querySelectorAll('.insert-slot-target').forEach(function(slot) {
+      slot.classList.add('hidden');
+    });
+
+    if (card && storage && !skipResetStorage) {
+      storage.appendChild(card);
+    }
+
+    activeInsertPosition = null;
+  }
+
+  // Escape key closes insert form
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && activeInsertPosition !== null) {
+      closeInsertForm();
+    }
+  });
 
   // HTML5 Drag and Drop Reordering
   (function initDragAndDrop() {
@@ -311,6 +476,7 @@
     container.addEventListener('dragstart', function(e) {
       var item = e.target.closest('.content-block-item');
       if (!item) return;
+      closeInsertForm();
       draggedItem = item;
       e.dataTransfer.effectAllowed = 'move';
       item.classList.add('opacity-50', 'border-zinc-400');
@@ -345,6 +511,8 @@
         if (badge) badge.textContent = '#' + (idx + 1);
       });
 
+      refreshInserterSlots();
+
       var reorderUrl = container.getAttribute('data-reorder-url');
       var csrfToken = document.querySelector('meta[name="csrf-token"]');
 
@@ -361,6 +529,37 @@
           console.error('Failed to update content block order:', err);
         });
       }
+    }
+
+    function refreshInserterSlots() {
+      var items = container.querySelectorAll('.content-block-item');
+      var topZone = document.getElementById('inserter-zone-top');
+      if (topZone && container.firstElementChild !== topZone) {
+        container.insertBefore(topZone, container.firstElementChild);
+      }
+
+      items.forEach(function(item) {
+        var blockId = item.getAttribute('data-id');
+        var trailingZone = container.querySelector('.block-inserter-zone[data-block-id="' + blockId + '"]');
+        if (trailingZone) {
+          item.after(trailingZone);
+        }
+      });
+
+      var allZones = container.querySelectorAll('.block-inserter-zone');
+      allZones.forEach(function(zone, idx) {
+        var pos = idx + 1;
+        zone.setAttribute('data-position', pos);
+        var btn = zone.querySelector('.inserter-toggle-btn');
+        if (btn) {
+          btn.setAttribute('onclick', 'toggleInsertForm(' + pos + ', this);');
+          btn.setAttribute('aria-label', 'Add block at position ' + pos);
+        }
+        var slot = zone.querySelector('.insert-slot-target');
+        if (slot) {
+          slot.id = 'insert-slot-' + pos;
+        }
+      });
     }
   })();
 </script>

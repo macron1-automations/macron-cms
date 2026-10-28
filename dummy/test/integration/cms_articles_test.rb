@@ -394,4 +394,147 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_equal [ block3.id, block1.id, block2.id ], article.article_contents.reload.pluck(:id)
     assert_equal [ 1, 2, 3 ], [ block3.reload.sort_order, block1.reload.sort_order, block2.reload.sort_order ]
   end
+
+  test "admin sees in-place '+' block inserters above, between, and below content blocks" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Inserter UI Article", name: "inserter-ui-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
+    Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Block 2" })
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+
+    # Inserter above first block (position 1)
+    assert_select "#inserter-zone-top[data-position='1']" do
+      assert_select "button[aria-label='Add block at position 1']"
+      assert_select "#insert-slot-1"
+    end
+
+    # Inserter between block 1 and block 2 (position 2)
+    assert_select ".block-inserter-zone[data-position='2']" do
+      assert_select "button[aria-label='Add block at position 2']"
+      assert_select "#insert-slot-2"
+    end
+
+    # Inserter after block 2 (position 3)
+    assert_select ".block-inserter-zone[data-position='3']" do
+      assert_select "button[aria-label='Add block at position 3']"
+      assert_select "#insert-slot-3"
+    end
+
+    # Reusable Add Content Block card and hidden insert_at fields
+    assert_select "#reusable-add-block-card"
+    assert_select "input.insert-at-field"
+  end
+
+  test "admin sees add first block button on empty article state" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Empty Inserter Article", name: "empty-inserter-article")
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+
+    assert_select "button[aria-label='Add first block']", text: /Add First Block/
+    assert_select "#insert-slot-1"
+  end
+
+  test "admin can insert a content block at position 1 (above existing blocks) and existing blocks shift down" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Insert Top Article", name: "insert-top-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    existing1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Original First" })
+    existing2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Original Second" })
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: ct.id,
+          insert_at: 1,
+          payload: { "title" => "New First Block" }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select ".rounded-xl", /Content block was successfully added\./
+
+    blocks = article.article_contents.order(:sort_order, :id).to_a
+    assert_equal 3, blocks.size
+    assert_equal "New First Block", blocks[0].payload["title"]
+    assert_equal 1, blocks[0].sort_order
+
+    assert_equal existing1.id, blocks[1].id
+    assert_equal 2, blocks[1].sort_order
+
+    assert_equal existing2.id, blocks[2].id
+    assert_equal 3, blocks[2].sort_order
+  end
+
+  test "admin can insert a content block between existing blocks and subsequent blocks shift down" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Insert Middle Article", name: "insert-middle-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Block 2" })
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: ct.id,
+          insert_at: 2,
+          payload: { "title" => "Inserted Between 1 and 2" }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    blocks = article.article_contents.order(:sort_order, :id).to_a
+    assert_equal 3, blocks.size
+
+    assert_equal block1.id, blocks[0].id
+    assert_equal 1, blocks[0].sort_order
+
+    assert_equal "Inserted Between 1 and 2", blocks[1].payload["title"]
+    assert_equal 2, blocks[1].sort_order
+
+    assert_equal block2.id, blocks[2].id
+    assert_equal 3, blocks[2].sort_order
+  end
+
+  test "admin can insert a content block at the bottom position" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Insert Bottom Article", name: "insert-bottom-article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Block 2" })
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: ct.id,
+          insert_at: 3,
+          payload: { "title" => "New Bottom Block" }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    blocks = article.article_contents.order(:sort_order, :id).to_a
+    assert_equal 3, blocks.size
+
+    assert_equal block1.id, blocks[0].id
+    assert_equal 1, blocks[0].sort_order
+
+    assert_equal block2.id, blocks[1].id
+    assert_equal 2, blocks[1].sort_order
+
+    assert_equal "New Bottom Block", blocks[2].payload["title"]
+    assert_equal 3, blocks[2].sort_order
+  end
 end
