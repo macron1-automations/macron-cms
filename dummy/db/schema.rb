@@ -20,6 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_084434) do
     t.integer "sort_order", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "payload", default: {}, null: false
     t.index [ "article_id", "sort_order" ], name: "index_macron_cms_article_contents_on_article_id_and_sort_order"
     t.index [ "article_id" ], name: "index_macron_cms_article_contents_on_article_id"
     t.index [ "content_id" ], name: "index_macron_cms_article_contents_on_content_id"
@@ -40,7 +41,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_084434) do
   create_table "macron_cms_contents", force: :cascade do |t|
     t.string "name", null: false
     t.jsonb "fields", default: {}, null: false
-    t.jsonb "payload", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index [ "name" ], name: "index_macron_cms_contents_on_name", unique: true

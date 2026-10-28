@@ -27,7 +27,6 @@ namespace :macron do
 
         content = Macron::Cms::Content.find_or_initialize_by(name: content_type_name)
         content.fields = fields
-        content.payload = {} if content.payload.blank?
         content.save!
 
         puts "Imported content type: #{content_type_name}"
