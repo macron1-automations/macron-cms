@@ -47,7 +47,7 @@ module Macron
       end
 
       def article_params
-        params.require(:article).permit(:title, :name)
+        params.require(:article).permit(:title, :name, :meta_title, :meta_description)
       end
     end
   end

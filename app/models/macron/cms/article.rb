@@ -6,6 +6,14 @@ module Macron
 
       validates :title, presence: true
       validates :name, presence: true, uniqueness: true
+
+      def seo_title
+        meta_title.presence || title
+      end
+
+      def seo_description
+        meta_description.presence
+      end
     end
   end
 end
