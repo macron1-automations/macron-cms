@@ -22,7 +22,9 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+    <main class="w-full">
+      <%= yield %>
+    </main>
   </body>
 </html>
