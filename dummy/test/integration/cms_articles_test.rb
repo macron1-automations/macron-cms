@@ -131,4 +131,21 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "table tbody td a", text: "Edit"
     assert_select "table tbody td form.inline button", text: "Delete"
   end
+
+  test "articles index and dashboard render shared empty state when no articles exist" do
+    sign_in @admin
+    Macron::Cms::Article.delete_all
+
+    get "/cms/articles"
+    assert_response :success
+    assert_select "h3", "No articles found"
+    assert_select "p", "Create your first article to begin managing content."
+    assert_select "a[href=?]", "/cms/articles/new", text: /Create First Article/
+
+    get "/cms"
+    assert_response :success
+    assert_select "h3", "No articles found"
+    assert_select "p", "Create your first article to begin managing content."
+    assert_select "a[href=?]", "/cms/articles/new", text: /Create First Article/
+  end
 end
