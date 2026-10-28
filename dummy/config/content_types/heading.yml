@@ -1,3 +1,5 @@
 fields:
-  name: 'title'
-  kind: 'string'
+  - name: 'title'
+    kind: 'string'
+  - name: 'level'
+    kind: 'string'
