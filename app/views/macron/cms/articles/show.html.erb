@@ -1,0 +1,89 @@
+<% content_for :title, "#{@article.title} - Macron CMS" %>
+<% content_for :header_title, "Articles / #{@article.title}" %>
+
+<div class="max-w-4xl space-y-6">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-zinc-500">
+    <%= link_to "Articles", articles_path, class: "hover:text-zinc-900 transition-colors" %>
+    <span>/</span>
+    <span class="font-medium text-zinc-900 truncate max-w-xs"><%= @article.title %></span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-zinc-200 pb-6">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl"><%= @article.title %></h1>
+        <span class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-1 text-xs font-mono font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200">
+          <%= @article.slug %>
+        </span>
+      </div>
+      <p class="text-xs text-zinc-500">
+        Created on <%= @article.created_at.strftime("%B %d, %Y at %H:%M UTC") %> &middot; Updated <%= time_ago_in_words(@article.updated_at) %> ago
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <% if main_app.respond_to?(:article_path) %>
+        <%= link_to main_app.article_path(@article), class: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors", target: "_blank", rel: "noopener" do %>
+          <svg class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+          Public View
+        <% end %>
+      <% end %>
+
+      <%= link_to edit_article_path(@article), class: "inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-semibold text-white shadow-2xs hover:bg-zinc-800 transition-colors" do %>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+        </svg>
+        Edit
+      <% end %>
+
+      <%= button_to article_path(@article), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this article?" }, class: "inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer" do %>
+        <svg class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+        </svg>
+        Delete
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Article Details Card -->
+  <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+    <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+      <h3 class="text-sm font-semibold text-zinc-900">Record Information</h3>
+    </div>
+    <dl class="divide-y divide-zinc-200">
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Record ID</dt>
+        <dd class="mt-1 text-sm font-mono text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.id %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Title</dt>
+        <dd class="mt-1 text-sm font-medium text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.title %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Identifier (Name)</dt>
+        <dd class="mt-1 text-sm font-mono text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.name %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Friendly URL Slug</dt>
+        <dd class="mt-1 text-sm font-mono text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.slug %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Created At</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.created_at.to_fs(:long) rescue @article.created_at.to_s %></dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Last Updated</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @article.updated_at.to_fs(:long) rescue @article.updated_at.to_s %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="pt-2">
+    <%= link_to "&larr; Back to all articles".html_safe, articles_path, class: "text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors" %>
+  </div>
+</div>
