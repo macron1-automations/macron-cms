@@ -1,5 +1,44 @@
 namespace :macron do
   namespace :cms do
+    desc "Import content types from YAML files into Macron::Cms::Content"
+    task import_content_types: :environment do
+      require "yaml"
+
+      base_path = Macron::Cms.configuration.content_types_path ||
+                  (defined?(Rails.root) && Rails.root ? Rails.root.join("config", "content_types") : File.expand_path("config/content_types"))
+      directory = Pathname.new(base_path)
+
+      unless directory.exist?
+        puts "Content types directory '#{directory}' does not exist. Skipping import."
+        next
+      end
+
+      files = Dir.glob(directory.join("*.{yml,yaml}")).sort
+
+      if files.empty?
+        puts "No YAML content types found in #{directory}."
+        next
+      end
+
+      files.each do |file|
+        content_type_name = File.basename(file, ".*")
+        data = YAML.safe_load_file(file, permitted_classes: [ Symbol ], aliases: true) || {}
+        fields = data["fields"] || data[:fields] || {}
+
+        content = Macron::Cms::Content.find_or_initialize_by(name: content_type_name)
+        content.fields = fields
+        content.payload = {} if content.payload.blank?
+        content.save!
+
+        puts "Imported content type: #{content_type_name}"
+      end
+    end
+
+    namespace :content do
+      desc "Alias for macron:cms:import_content_types"
+      task import: :"macron:cms:import_content_types"
+    end
+
     namespace :tailwind do
       def tailwind_executable
         require "tailwindcss/ruby"

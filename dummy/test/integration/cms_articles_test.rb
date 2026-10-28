@@ -21,6 +21,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can view articles index and sees layout elements" do
+    Macron::Cms::Article.create!(title: "Getting Started", name: "getting-started")
     sign_in @admin
     get "/cms/articles"
     assert_response :success

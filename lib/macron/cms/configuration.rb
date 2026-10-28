@@ -1,11 +1,12 @@
 module Macron
   module Cms
     class Configuration
-      attr_accessor :user_class, :admin_flag
+      attr_accessor :user_class, :admin_flag, :content_types_path
 
       def initialize
         @user_class = "User"
         @admin_flag = :admin
+        @content_types_path = nil
       end
 
       def devise_scope
