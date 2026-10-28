@@ -30,9 +30,9 @@
   <div>
     <%= form.label :name, "Identifier Name", class: "block text-sm font-semibold text-zinc-900" %>
     <div class="mt-1.5">
-      <%= form.text_field :name, required: true, placeholder: "e.g., getting-started-guide", class: "block w-full rounded-lg border border-zinc-300 px-3.5 py-2 text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 text-sm font-mono" %>
+      <%= form.text_field :name, placeholder: "Leave blank to generate from title", class: "block w-full rounded-lg border border-zinc-300 px-3.5 py-2 text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 text-sm font-mono" %>
     </div>
-    <p class="mt-1 text-xs text-zinc-500">Unique identifier used by FriendlyId to generate clean URLs.</p>
+    <p class="mt-1 text-xs text-zinc-500">Optional. Unique identifier used by FriendlyId to generate clean URLs (derived from title if left blank).</p>
   </div>
 
   <div class="pt-6 border-t border-zinc-200 space-y-4">
