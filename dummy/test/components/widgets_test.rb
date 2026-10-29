@@ -157,6 +157,36 @@ class WidgetsTest < ViewComponent::TestCase
     assert_selector "div.w-full"
   end
 
+  test "embed component applies responsive height classes and defaults to lg" do
+    article = Macron::Cms::Article.create!(title: "Embed Height Article", name: "embed-height-article")
+    content = Macron::Cms::Content.create!(name: "embed", fields: [
+      { "name" => "upload", "kind" => "file" },
+      { "name" => "height", "kind" => "dropdown" }
+    ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("<b>embed</b>"), "text/html", original_filename: "embed.html")
+    ac.files.attach(file)
+
+    # Default (unspecified or invalid height) -> lg (h-96 sm:h-[480px])
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: {}))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "invalid" }))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    # Large height -> h-96 sm:h-[480px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "lg" }))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    # Extra Large height -> h-[540px] sm:h-[640px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "xl" }))
+    assert_selector "iframe.h-\\[540px\\].sm\\:h-\\[640px\\]"
+
+    # Very Large height -> h-[640px] sm:h-[800px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "2xl" }))
+    assert_selector "iframe.h-\\[640px\\].sm\\:h-\\[800px\\]"
+  end
+
   test "markdown component renders formatted markdown to html with prose classes" do
     markdown_text = <<~MD
       # Heading 1

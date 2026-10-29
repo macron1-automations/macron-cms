@@ -2,7 +2,7 @@
   <div class="my-6 <%= container_classes %> overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
     <iframe
       srcdoc="<%= embed_html %>"
-      class="w-full h-96 sm:h-[450px] border-0"
+      class="w-full <%= height_class %> border-0"
       sandbox="allow-scripts allow-same-origin allow-popups"
       loading="lazy"
       title="Embedded HTML content"

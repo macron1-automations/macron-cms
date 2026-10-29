@@ -7,6 +7,13 @@ module Widgets
       "full" => "w-full"
     }.freeze
 
+    HEIGHT_CLASSES = {
+      "lg"  => "h-96 sm:h-[480px]",
+      "xl"  => "h-[540px] sm:h-[640px]",
+      "2xl" => "h-[640px] sm:h-[800px]"
+    }.freeze
+    DEFAULT_HEIGHT = "lg"
+
     def render?
       upload.present?
     end
@@ -17,6 +24,16 @@ module Widgets
 
     def container_classes
       SIZE_CLASSES[size.presence || "md"] || SIZE_CLASSES["md"]
+    end
+
+    def height
+      h = field_value(:height).presence
+      normalized = h.to_s.strip.downcase
+      HEIGHT_CLASSES.key?(normalized) ? normalized : DEFAULT_HEIGHT
+    end
+
+    def height_class
+      HEIGHT_CLASSES[height] || HEIGHT_CLASSES[DEFAULT_HEIGHT]
     end
 
     def embed_html
