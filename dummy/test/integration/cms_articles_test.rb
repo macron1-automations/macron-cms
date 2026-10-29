@@ -661,7 +661,10 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
   test "admin can add an image content block with file attachment" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Image Block Article", name: "image-block-article")
-    image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
+    image_type = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
+    )
     uploaded = Rack::Test::UploadedFile.new(
       StringIO.new("fake image data"),
       "image/png",
@@ -676,7 +679,8 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
                content_id: image_type.id,
                insert_at: 1,
                payload: {
-                 upload: uploaded
+                 upload: uploaded,
+                 size: "sm"
                }
              }
            }
@@ -687,12 +691,16 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert new_block.files.attached?
     assert_equal "banner.png", new_block.upload.filename.to_s
     assert_equal "banner.png", new_block.payload["upload"]
+    assert_equal "sm", new_block.payload["size"]
   end
 
   test "admin can add an embed content block with html file attachment" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Embed Block Article", name: "embed-block-article")
-    embed_type = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" } ])
+    embed_type = Macron::Cms::Content.create!(
+      name: "embed",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
+    )
     uploaded = Rack::Test::UploadedFile.new(
       StringIO.new("<div>Embedded Widget</div>"),
       "text/html",
@@ -707,7 +715,8 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
                content_id: embed_type.id,
                insert_at: 1,
                payload: {
-                 upload: uploaded
+                 upload: uploaded,
+                 size: "lg"
                }
              }
            }
@@ -718,6 +727,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert new_block.files.attached?
     assert_equal "widget.html", new_block.upload.filename.to_s
     assert_equal "widget.html", new_block.payload["upload"]
+    assert_equal "lg", new_block.payload["size"]
   end
 
   test "admin can update an image block by replacing the attached file" do

@@ -1,5 +1,5 @@
 <% if embed_html.present? %>
-  <div class="my-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+  <div class="my-6 <%= container_classes %> overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
     <iframe
       srcdoc="<%= embed_html %>"
       class="w-full h-96 sm:h-[450px] border-0"

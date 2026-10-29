@@ -63,4 +63,52 @@ class WidgetsTest < ViewComponent::TestCase
     rendered = render_inline(Widgets::EmbedComponent.new(payload: {}))
     assert_empty rendered.to_html.strip
   end
+
+  test "image component applies responsive sizing classes and defaults to md" do
+    article = Macron::Cms::Article.create!(title: "Img Size Article", name: "img-size-article")
+    content = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("img"), "image/png", original_filename: "photo.png")
+    ac.files.attach(file)
+
+    # Default (unspecified or nil size) -> w-full sm:w-1/2 mx-auto
+    render_inline(Widgets::ImageComponent.new(article_content: ac, payload: {}))
+    assert_selector "figure.w-full.sm\\:w-1\\/2.mx-auto"
+
+    # Small size -> w-full sm:w-1/3 mx-auto
+    render_inline(Widgets::ImageComponent.new(article_content: ac, payload: { "size" => "sm" }))
+    assert_selector "figure.w-full.sm\\:w-1\\/3.mx-auto"
+
+    # Large size -> w-full sm:w-3/4 mx-auto
+    render_inline(Widgets::ImageComponent.new(article_content: ac, payload: { "size" => "lg" }))
+    assert_selector "figure.w-full.sm\\:w-3\\/4.mx-auto"
+
+    # Full size -> w-full
+    render_inline(Widgets::ImageComponent.new(article_content: ac, payload: { "size" => "full" }))
+    assert_selector "figure.w-full"
+  end
+
+  test "embed component applies responsive sizing classes and defaults to md" do
+    article = Macron::Cms::Article.create!(title: "Embed Size Article", name: "embed-size-article")
+    content = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("<b>chart</b>"), "text/html", original_filename: "chart.html")
+    ac.files.attach(file)
+
+    # Default (unspecified size) -> w-full sm:w-1/2 mx-auto
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: {}))
+    assert_selector "div.w-full.sm\\:w-1\\/2.mx-auto"
+
+    # Small size -> w-full sm:w-1/3 mx-auto
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "size" => "sm" }))
+    assert_selector "div.w-full.sm\\:w-1\\/3.mx-auto"
+
+    # Large size -> w-full sm:w-3/4 mx-auto
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "size" => "lg" }))
+    assert_selector "div.w-full.sm\\:w-3\\/4.mx-auto"
+
+    # Full size -> w-full
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "size" => "full" }))
+    assert_selector "div.w-full"
+  end
 end

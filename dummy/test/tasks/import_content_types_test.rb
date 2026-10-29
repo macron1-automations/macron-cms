@@ -26,6 +26,22 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     ]
   end
 
+  def media_expected_fields
+    [
+      { "name" => "upload", "kind" => "file" },
+      {
+        "name" => "size",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small (33%)", "value" => "sm" },
+          { "name" => "Medium (50%)", "value" => "md" },
+          { "name" => "Large (75%)", "value" => "lg" },
+          { "name" => "Full Width (100%)", "value" => "full" }
+        ]
+      }
+    ]
+  end
+
   test "imports heading content type from yml" do
     Rake::Task["macron:cms:import_content_types"].invoke
 
@@ -33,10 +49,10 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     assert_equal heading_expected_fields, heading.fields
 
     image = Macron::Cms::Content.find_by!(name: "image")
-    assert_equal [ { "name" => "upload", "kind" => "file" } ], image.fields
+    assert_equal media_expected_fields, image.fields
 
     embed = Macron::Cms::Content.find_by!(name: "embed")
-    assert_equal [ { "name" => "upload", "kind" => "file" } ], embed.fields
+    assert_equal media_expected_fields, embed.fields
   end
 
   test "import task is idempotent and updates existing records" do
