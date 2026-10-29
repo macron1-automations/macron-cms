@@ -75,6 +75,6 @@ class ContentHelperTest < ActionView::TestCase
     assert_includes rendered, "<figure"
     assert_includes rendered, "<img"
     assert_includes rendered, "<iframe"
-    assert_includes rendered, "app.html"
+    assert_includes rendered, "Embed content"
   end
 end
