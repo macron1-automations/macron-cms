@@ -346,6 +346,69 @@ fields:
         value: strong
 ```
 
+#### Interactive 3D Image Effects (`config/content_types/three_js_image.yml`)
+```yaml
+fields:
+  - name: upload
+    kind: file
+  - name: size
+    kind: dropdown
+    options:
+      - name: Small (33%)
+        value: sm
+      - name: Medium (50%)
+        value: md
+      - name: Large (75%)
+        value: lg
+      - name: Full Width (100%)
+        value: full
+  - name: effect
+    kind: dropdown
+    options:
+      - name: Water Ripple
+        value: ripple
+      - name: Underwater Wave
+        value: wave
+      - name: RGB Glitch
+        value: glitch
+  - name: animation_speed
+    kind: dropdown
+    options:
+      - name: Slow
+        value: slow
+      - name: Normal
+        value: normal
+      - name: Fast
+        value: fast
+  - name: intensity
+    kind: dropdown
+    options:
+      - name: Subtle
+        value: subtle
+      - name: Medium
+        value: medium
+      - name: Strong
+        value: strong
+  - name: canvas_height
+    kind: dropdown
+    options:
+      - name: Small (240px)
+        value: sm
+      - name: Medium (320px)
+        value: md
+      - name: Large (480px)
+        value: lg
+      - name: Extra Large (640px)
+        value: xl
+  - name: fit_mode
+    kind: dropdown
+    options:
+      - name: Cover (Fill & Crop)
+        value: cover
+      - name: Contain (Fit Inside)
+        value: contain
+```
+
 ---
 
 ### 4. Importing Content Types
@@ -411,6 +474,7 @@ In your application layout (`app/views/layouts/application.html.erb`), apply the
   <%= javascript_include_tag "vendor/three_text_bundle", "data-turbo-track": "reload", defer: true %>
   <%= javascript_include_tag "vendor/three_fonts_bundle", "data-turbo-track": "reload", defer: true %>
   <%= javascript_include_tag "widgets/three_js_quote", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "widgets/three_js_image", "data-turbo-track": "reload", defer: true %>
 </head>
 
 <body class="min-h-screen text-zinc-900 <%= 'bg-zinc-50' unless content_for?(:body_style) %>"

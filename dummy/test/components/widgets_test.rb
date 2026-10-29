@@ -339,4 +339,50 @@ class WidgetsTest < ViewComponent::TestCase
     render_inline(Widgets::BlockquoteComponent.new(payload: {}))
     assert_selector "blockquote.border-l-4.border-zinc-300.text-zinc-800"
   end
+
+  test "three_js_image component does not render when upload is blank" do
+    rendered = render_inline(Widgets::ThreeJsImageComponent.new(payload: { "upload" => "" }))
+    assert_empty rendered.to_html.strip
+
+    rendered_nil = render_inline(Widgets::ThreeJsImageComponent.new(payload: {}))
+    assert_empty rendered_nil.to_html.strip
+  end
+
+  test "three_js_image component renders mount container with default options and placeholder" do
+    render_inline(Widgets::ThreeJsImageComponent.new(payload: { "upload" => "https://example.com/photo.jpg" }))
+
+    assert_selector "figure[data-three-js-image-card].w-full.sm\\:w-1\\/2.mx-auto"
+    assert_selector "div[data-three-js-image-mount].h-64.sm\\:h-80[data-image-url='https://example.com/photo.jpg'][data-effect='ripple'][data-animation-speed='normal'][data-intensity='medium'][data-canvas-height='md'][data-fit-mode='cover']"
+    assert_selector "div[data-three-js-image-placeholder]"
+    assert_selector "svg.animate-spin"
+  end
+
+  test "three_js_image component renders custom effect, speed, intensity, canvas height, size, and fit mode" do
+    render_inline(Widgets::ThreeJsImageComponent.new(payload: {
+      "upload" => "https://example.com/wave.jpg",
+      "size" => "lg",
+      "effect" => "wave",
+      "animation_speed" => "fast",
+      "intensity" => "strong",
+      "canvas_height" => "xl",
+      "fit_mode" => "contain"
+    }))
+
+    assert_selector "figure[data-three-js-image-card].w-full.sm\\:w-3\\/4.mx-auto"
+    assert_selector "div[data-three-js-image-mount].h-\\[540px\\].sm\\:h-\\[640px\\][data-effect='wave'][data-animation-speed='fast'][data-intensity='strong'][data-canvas-height='xl'][data-fit-mode='contain']"
+  end
+
+  test "three_js_image component resolves ActiveStorage attached image" do
+    article = Macron::Cms::Article.create!(title: "Shader FX Article")
+    content = Macron::Cms::Content.create!(name: "three_js_image", fields: [
+      { "name" => "upload", "kind" => "file" }
+    ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("fake-image-bytes"), "image/jpeg", original_filename: "nature.jpg")
+    ac.files.attach(file)
+
+    render_inline(Widgets::ThreeJsImageComponent.new(article_content: ac, payload: { "effect" => "glitch" }))
+    assert_selector "div[data-three-js-image-mount][data-effect='glitch']"
+    assert_selector "div[data-three-js-image-mount][data-image-url*='nature.jpg']"
+  end
 end

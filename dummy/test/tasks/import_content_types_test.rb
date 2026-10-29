@@ -43,6 +43,67 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     ]
   end
 
+  def three_js_image_expected_fields
+    [
+      { "name" => "upload", "kind" => "file" },
+      {
+        "name" => "size",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small (33%)", "value" => "sm" },
+          { "name" => "Medium (50%)", "value" => "md" },
+          { "name" => "Large (75%)", "value" => "lg" },
+          { "name" => "Full Width (100%)", "value" => "full" }
+        ]
+      },
+      {
+        "name" => "effect",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Water Ripple", "value" => "ripple" },
+          { "name" => "Underwater Wave", "value" => "wave" },
+          { "name" => "RGB Glitch", "value" => "glitch" }
+        ]
+      },
+      {
+        "name" => "animation_speed",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Slow", "value" => "slow" },
+          { "name" => "Normal", "value" => "normal" },
+          { "name" => "Fast", "value" => "fast" }
+        ]
+      },
+      {
+        "name" => "intensity",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Subtle", "value" => "subtle" },
+          { "name" => "Medium", "value" => "medium" },
+          { "name" => "Strong", "value" => "strong" }
+        ]
+      },
+      {
+        "name" => "canvas_height",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small (240px)", "value" => "sm" },
+          { "name" => "Medium (320px)", "value" => "md" },
+          { "name" => "Large (480px)", "value" => "lg" },
+          { "name" => "Extra Large (640px)", "value" => "xl" }
+        ]
+      },
+      {
+        "name" => "fit_mode",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Cover (Fill & Crop)", "value" => "cover" },
+          { "name" => "Contain (Fit Inside)", "value" => "contain" }
+        ]
+      }
+    ]
+  end
+
   test "imports heading content type from yml" do
     Rake::Task["macron:cms:import_content_types"].invoke
 
@@ -51,6 +112,9 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
 
     image = Macron::Cms::Content.find_by!(name: "image")
     assert_equal media_expected_fields, image.fields
+
+    three_js_image = Macron::Cms::Content.find_by!(name: "three_js_image")
+    assert_equal three_js_image_expected_fields, three_js_image.fields
 
     embed = Macron::Cms::Content.find_by!(name: "embed")
     assert_equal media_expected_fields, embed.fields
