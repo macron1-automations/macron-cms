@@ -261,4 +261,46 @@ class WidgetsTest < ViewComponent::TestCase
     rendered_nil = render_inline(Widgets::LatexComponent.new(payload: {}))
     assert_empty rendered_nil.to_html.strip
   end
+
+  test "blockquote component renders markdown formatted html inside blockquote" do
+    markdown_text = <<~MD
+      "Simplicity is the soul of efficiency."
+
+      -- **Austin Freeman** with a [link](https://example.com)
+    MD
+
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => markdown_text }))
+    assert_selector "blockquote.border-l-4.pl-4.italic.my-6"
+    assert_selector "strong", text: "Austin Freeman"
+    assert_selector "a[href='https://example.com']", text: "link"
+  end
+
+  test "blockquote component sanitizes unsafe html script tags" do
+    unsafe_md = "Quote with <script>alert('xss')</script> in it"
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => unsafe_md }))
+    assert_no_selector "script"
+    assert_includes rendered_content, "Quote with"
+  end
+
+  test "blockquote component applies article text_color to inline style and border" do
+    article = Macron::Cms::Article.create!(title: "Quote Color Article", text_color: "#2563eb")
+    bq_type = Macron::Cms::Content.find_or_create_by!(name: "blockquote") { |c| c.fields = [ { "name" => "content", "kind" => "markdown" } ] }
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: bq_type)
+
+    render_inline(Widgets::BlockquoteComponent.new(article_content: ac, payload: { "content" => "**Bold quote**" }))
+    assert_selector "blockquote.border-l-4"
+    assert_no_selector "blockquote.border-zinc-300"
+    assert_includes rendered_content, "color: #2563eb;"
+    assert_includes rendered_content, "border-color: #2563eb;"
+    assert_selector "strong", text: "Bold quote"
+  end
+
+  test "blockquote component handles empty or nil content gracefully" do
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => "" }))
+    assert_selector "blockquote.border-l-4.border-zinc-300"
+    assert_equal "", rendered_content.strip.gsub(/<[^>]*>/, "")
+
+    render_inline(Widgets::BlockquoteComponent.new(payload: {}))
+    assert_selector "blockquote.border-l-4.border-zinc-300"
+  end
 end
