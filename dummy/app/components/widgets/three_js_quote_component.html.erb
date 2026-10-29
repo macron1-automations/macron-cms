@@ -1,0 +1,14 @@
+<figure
+  class="my-6 w-full overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-b from-white to-zinc-50 shadow-xs"
+  data-three-js-quote-card
+>
+  <blockquote class="sr-only"><%= quote_text %></blockquote>
+  <div
+    class="relative w-full h-64 sm:h-80"
+    data-three-js-quote-mount
+    data-quote-text="<%= quote_text %>"
+    data-quote-color="<%= effective_color %>"
+    role="img"
+    aria-label="<%= quote_text %>"
+  ></div>
+</figure>
