@@ -209,7 +209,7 @@ class WidgetsTest < ViewComponent::TestCase
 
     assert_selector "figure[data-three-js-quote-card].rounded-xl.border.border-zinc-200"
     assert_selector "blockquote.sr-only", text: "Simplicity is prerequisite for reliability."
-    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-background-mode='stretch']"
+    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-font-size='md'][data-font='helvetiker'][data-background-mode='stretch']"
     assert_no_selector "div[data-three-js-quote-mount][data-background-color]"
     assert_no_selector "div[data-three-js-quote-mount][data-background-image]"
   end
@@ -218,12 +218,14 @@ class WidgetsTest < ViewComponent::TestCase
     render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {
       "text" => "Design is intelligence made visible.",
       "rotation_axis" => "y",
+      "font_size" => "lg",
+      "font" => "optimer",
       "background_color" => "#09090b",
       "upload" => "https://example.com/stars.png",
       "background_mode" => "tile"
     }))
 
-    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='y'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile']"
+    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='y'][data-font-size='lg'][data-font='optimer'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile']"
   end
 
   test "three_js_quote component resolves ActiveStorage attached background image" do

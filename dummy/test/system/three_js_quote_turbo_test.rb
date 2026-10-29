@@ -74,6 +74,8 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
         "text" => "Creativity is intelligence having fun.",
         "color" => "#10b981",
         "rotation_axis" => "y",
+        "font_size" => "lg",
+        "font" => "optimer",
         "background_color" => "#0f172a",
         "background_mode" => "tile"
       }
@@ -82,11 +84,15 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
     visit article_path(article)
     assert_text "Y Axis Quote"
 
-    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-rotation-axis='y'][data-background-color='#0f172a'][data-background-mode='tile']"
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-rotation-axis='y'][data-font-size='lg'][data-font='optimer'][data-background-color='#0f172a'][data-background-mode='tile']"
 
     if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
       axis = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationAxis()")
       assert_equal "y", axis
+      font_size = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFontSize()")
+      assert_equal "lg", font_size
+      font = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFont()")
+      assert_equal "optimer", font
       mode = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getBackgroundMode()")
       assert_equal "tile", mode
 
@@ -94,6 +100,35 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
       sleep 0.25
       later_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationY()")
       assert_operator later_rot, :>, initial_rot, "Expected 3D quote mesh to rotate continuously around its Y-axis"
+    end
+  end
+
+  test "mounts Three.js quote with Droid Serif font and extra large size" do
+    article = Macron::Cms::Article.create!(
+      title: "Serif Quote",
+      name: "serif-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "All that glitters is not gold.",
+        "font_size" => "xl",
+        "font" => "droid_serif"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Serif Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-font-size='xl'][data-font='droid_serif']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      font = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFont()")
+      assert_equal "droid_serif", font
+      font_size = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFontSize()")
+      assert_equal "xl", font_size
     end
   end
 end

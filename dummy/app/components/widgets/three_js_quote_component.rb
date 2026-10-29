@@ -3,6 +3,10 @@ module Widgets
     DEFAULT_COLOR = "#18181b"
     VALID_ROTATION_AXES = %w[x y z].freeze
     DEFAULT_ROTATION_AXIS = "x"
+    VALID_FONT_SIZES = %w[sm md lg xl].freeze
+    DEFAULT_FONT_SIZE = "md"
+    VALID_FONTS = %w[helvetiker optimer gentilis droid_serif].freeze
+    DEFAULT_FONT = "helvetiker"
     DEFAULT_BACKGROUND_MODE = "stretch"
 
     def render?
@@ -27,6 +31,18 @@ module Widgets
       axis = field_value("rotation_axis").presence
       normalized = axis.to_s.strip.downcase
       VALID_ROTATION_AXES.include?(normalized) ? normalized : DEFAULT_ROTATION_AXIS
+    end
+
+    def font_size
+      size = field_value("font_size").presence
+      normalized = size.to_s.strip.downcase
+      VALID_FONT_SIZES.include?(normalized) ? normalized : DEFAULT_FONT_SIZE
+    end
+
+    def font
+      f = field_value("font").presence
+      normalized = f.to_s.strip.downcase
+      VALID_FONTS.include?(normalized) ? normalized : DEFAULT_FONT
     end
 
     def background_color

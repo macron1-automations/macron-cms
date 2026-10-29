@@ -52,6 +52,8 @@
     var quoteText = props.text || "";
     var quoteColor = props.color || DEFAULT_COLOR;
     var rotationAxis = props.rotationAxis || "x";
+    var fontSize = props.fontSize || "md";
+    var font = props.font || "helvetiker";
     var backgroundColor = props.backgroundColor || null;
     var backgroundImage = props.backgroundImage || null;
     var backgroundMode = props.backgroundMode || "stretch";
@@ -59,12 +61,23 @@
     React.useEffect(function() {
       var host = hostRef.current;
       var THREE = window.THREE;
-      if (!host || !THREE || !THREE.TextGeometry || !THREE.HelvetikerFont) {
+      var resolvedFont = (window.THREE && window.THREE.Fonts && window.THREE.Fonts[font]) ||
+                         (window.THREE && window.THREE.HelvetikerFont);
+
+      if (!host || !THREE || !THREE.TextGeometry || !resolvedFont) {
         setWebglFailed(true);
         return undefined;
       }
 
-      var lines = wrapQuoteLines(quoteText, MAX_CHARS_PER_LINE);
+      var FONT_SIZE_SCALES = {
+        sm: { scale: 0.85, maxChars: 28 },
+        md: { scale: 1.15, maxChars: 24 },
+        lg: { scale: 1.5, maxChars: 20 },
+        xl: { scale: 1.9, maxChars: 16 }
+      };
+      var sizeConfig = FONT_SIZE_SCALES[fontSize] || FONT_SIZE_SCALES.md;
+
+      var lines = wrapQuoteLines(quoteText, sizeConfig.maxChars);
       if (lines.length === 0) {
         return undefined;
       }
@@ -183,17 +196,17 @@
 
         var pivotGroup = new THREE.Group();
         var textContainer = new THREE.Group();
-        var lineSpacing = 1.48;
+        var lineSpacing = 1.48 * sizeConfig.scale;
 
         for (var i = 0; i < lines.length; i++) {
           var lineGeo = new THREE.TextGeometry(lines[i], {
-            font: THREE.HelvetikerFont,
-            size: 1,
-            depth: 0.28,
+            font: resolvedFont,
+            size: 1 * sizeConfig.scale,
+            depth: 0.28 * sizeConfig.scale,
             curveSegments: 8,
             bevelEnabled: true,
-            bevelThickness: 0.04,
-            bevelSize: 0.025,
+            bevelThickness: 0.04 * sizeConfig.scale,
+            bevelSize: 0.025 * sizeConfig.scale,
             bevelSegments: 4
           });
           lineGeo.computeBoundingBox();
@@ -231,11 +244,23 @@
           var vFov = THREE.MathUtils.degToRad(camera.fov);
           var hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
 
-          // Account for full rotational sweep across X, Y, or Z rotation
-          var maxRotRadius = Math.hypot(boxSize.x, boxSize.y, boxSize.z) * 0.5;
-          var distY = maxRotRadius / Math.tan(vFov / 2);
-          var distX = maxRotRadius / Math.tan(Math.max(hFov / 2, 0.05));
-          var distance = Math.max(distX, distY, 2.5) * 1.35;
+          // Calculate exact rotational bounding envelope per axis
+          var rotHeight, rotWidth;
+          if (rotationAxis === "y") {
+            rotHeight = boxSize.y;
+            rotWidth = Math.hypot(boxSize.x, boxSize.z);
+          } else if (rotationAxis === "z") {
+            rotHeight = Math.hypot(boxSize.x, boxSize.y);
+            rotWidth = rotHeight;
+          } else {
+            // "x" axis: flips top-to-bottom around X
+            rotHeight = Math.hypot(boxSize.y, boxSize.z);
+            rotWidth = boxSize.x;
+          }
+
+          var distY = (rotHeight * 0.5) / Math.tan(vFov / 2);
+          var distX = (rotWidth * 0.5) / Math.tan(Math.max(hFov / 2, 0.05));
+          var distance = Math.max(distX, distY, 2.0) * 1.18;
 
           camera.position.set(0, 0, distance);
           camera.lookAt(0, 0, 0);
@@ -263,6 +288,8 @@
           getRotationY: function() { return pivotGroup.rotation.y; },
           getRotationZ: function() { return pivotGroup.rotation.z; },
           getRotationAxis: function() { return rotationAxis; },
+          getFontSize: function() { return fontSize; },
+          getFont: function() { return font; },
           getBackgroundMode: function() { return backgroundMode; },
           lineCount: lines.length
         };
@@ -320,7 +347,7 @@
         }
         delete host._threeQuoteDebug;
       };
-    }, [quoteText, quoteColor, rotationAxis, backgroundColor, backgroundImage, backgroundMode]);
+    }, [quoteText, quoteColor, rotationAxis, fontSize, font, backgroundColor, backgroundImage, backgroundMode]);
 
     if (webglFailed) {
       var fallbackStyle = { color: quoteColor };
@@ -384,6 +411,11 @@
     if (axis !== "x" && axis !== "y" && axis !== "z") {
       axis = "x";
     }
+    var fontSize = (el.getAttribute("data-font-size") || "md").toLowerCase();
+    if (fontSize !== "sm" && fontSize !== "md" && fontSize !== "lg" && fontSize !== "xl") {
+      fontSize = "md";
+    }
+    var font = (el.getAttribute("data-font") || "helvetiker").toLowerCase();
     var backgroundColor = el.getAttribute("data-background-color") || null;
     var backgroundImage = el.getAttribute("data-background-image") || null;
     var backgroundMode = (el.getAttribute("data-background-mode") || "stretch").toLowerCase();
@@ -393,11 +425,13 @@
 
     if (!text.trim()) return;
 
-    var propsKey = [text, color, axis, backgroundColor || "", backgroundImage || "", backgroundMode].join("\u0000");
+    var propsKey = [text, color, axis, fontSize, font, backgroundColor || "", backgroundImage || "", backgroundMode].join("\u0000");
     var sceneProps = {
       text: text,
       color: color,
       rotationAxis: axis,
+      fontSize: fontSize,
+      font: font,
       backgroundColor: backgroundColor,
       backgroundImage: backgroundImage,
       backgroundMode: backgroundMode
