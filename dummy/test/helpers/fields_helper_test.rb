@@ -80,6 +80,22 @@ class FieldsHelperTest < ActionView::TestCase
     assert_includes html, "{&quot;key&quot;: &quot;value&quot;}"
   end
 
+  test "cms_render_field renders latex editor textarea with data-cms-editor" do
+    field_def = {
+      "name" => "content",
+      "kind" => "latex"
+    }
+
+    html = cms_render_field(field_def, value: "\\int x dx", input_name: "article_content[payload][content]", input_id: "test_latex")
+    assert_includes html, "<textarea"
+    assert_includes html, 'name="article_content[payload][content]"'
+    assert_includes html, 'id="test_latex"'
+    assert_includes html, 'data-cms-editor="latex"'
+    assert_includes html, "(latex)"
+    assert_includes html, "CodeMirror"
+    assert_includes html, "\\int x dx"
+  end
+
   test "cms_render_field renders color picker with reset button" do
     field_def = {
       "name" => "color",

@@ -872,4 +872,59 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Welcome to Markdown"
     assert_select "strong", text: "empowered"
   end
+
+  test "admin can add, edit, and view latex content block on public article page" do
+    latex_type = Macron::Cms::Content.find_or_create_by!(name: "latex") do |c|
+      c.fields = [ { "name" => "content", "kind" => "latex" } ]
+    end
+    article = Macron::Cms::Article.create!(title: "LaTeX Showcase", name: "latex-showcase")
+    sign_in @admin
+
+    # Add latex block
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: latex_type.id,
+          payload: {
+            content: "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}"
+          }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select "span", text: "latex"
+    assert_select "textarea[data-cms-editor='latex']"
+
+    block = article.article_contents.last
+    assert_equal "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}", block.payload["content"]
+
+    # Verify admin content block view mode has sm:col-span-2 and data-cms-latex
+    assert_select "#view-payload-#{block.id} div.sm\\:col-span-2"
+    assert_select "#view-payload-#{block.id} div[data-cms-latex]"
+
+    # Public article rendering
+    get "/articles/#{article.slug}"
+    assert_response :success
+    assert_select "div.cms-latex-widget[data-cms-latex]"
+    assert_includes response.body, %(data-cms-latex="\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}")
+
+    # Edit latex block
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}", params: {
+      article_content: {
+        payload: {
+          content: "E = mc^2"
+        }
+      }
+    }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    block.reload
+    assert_equal "E = mc^2", block.payload["content"]
+
+    get "/articles/#{article.slug}"
+    assert_response :success
+    assert_select "div.cms-latex-widget[data-cms-latex='E = mc^2']"
+  end
 end

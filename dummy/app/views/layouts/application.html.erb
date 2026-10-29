@@ -20,7 +20,10 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "macron/cms/katex.min", "data-turbo-track": "reload" %>
     <%= turbo_include_tags %>
+    <%= javascript_include_tag "macron/cms/katex.min", "data-turbo-track": "reload", defer: true %>
+    <%= javascript_include_tag "widgets/latex", "data-turbo-track": "reload", defer: true %>
     <%= javascript_include_tag "vendor/react_bundle", "data-turbo-track": "reload", defer: true %>
     <%= javascript_include_tag "vendor/three_text_bundle", "data-turbo-track": "reload", defer: true %>
     <%= javascript_include_tag "widgets/three_js_quote", "data-turbo-track": "reload", defer: true %>

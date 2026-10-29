@@ -233,4 +233,32 @@ class WidgetsTest < ViewComponent::TestCase
     rendered_nil = render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {}))
     assert_empty rendered_nil.to_html.strip
   end
+
+  test "latex component renders container with data-cms-latex and fallback formula" do
+    formula = "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}"
+    rendered = render_inline(Widgets::LatexComponent.new(payload: { "content" => formula }))
+
+    assert_selector "div.cms-latex-widget[data-cms-latex][data-cms-latex-display='true']"
+    assert_includes rendered.to_html, %(data-cms-latex="#{formula}")
+    assert_includes rendered_content, formula
+  end
+
+  test "latex component applies article text_color when present" do
+    article = Macron::Cms::Article.create!(title: "Math Art", text_color: "#6366f1")
+    latex_type = Macron::Cms::Content.find_or_create_by!(name: "latex") do |c|
+      c.fields = [ { "name" => "content", "kind" => "latex" } ]
+    end
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: latex_type)
+
+    render_inline(Widgets::LatexComponent.new(article_content: ac, payload: { "content" => "E = mc^2" }))
+    assert_selector "div.cms-latex-widget[style='color: #6366f1;']"
+  end
+
+  test "latex component does not render when formula is blank" do
+    rendered = render_inline(Widgets::LatexComponent.new(payload: { "content" => "" }))
+    assert_empty rendered.to_html.strip
+
+    rendered_nil = render_inline(Widgets::LatexComponent.new(payload: {}))
+    assert_empty rendered_nil.to_html.strip
+  end
 end
