@@ -297,10 +297,10 @@ class WidgetsTest < ViewComponent::TestCase
 
   test "blockquote component handles empty or nil content gracefully" do
     render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => "" }))
-    assert_selector "blockquote.border-l-4.border-zinc-300"
+    assert_selector "blockquote.border-l-4.border-zinc-300.text-zinc-800"
     assert_equal "", rendered_content.strip.gsub(/<[^>]*>/, "")
 
     render_inline(Widgets::BlockquoteComponent.new(payload: {}))
-    assert_selector "blockquote.border-l-4.border-zinc-300"
+    assert_selector "blockquote.border-l-4.border-zinc-300.text-zinc-800"
   end
 end

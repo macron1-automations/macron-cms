@@ -31,11 +31,11 @@ module Widgets
     end
 
     def blockquote_classes
-      base = "border-l-4 pl-4 py-1.5 italic my-6 max-w-none text-zinc-700 dark:text-zinc-300"
+      base = "border-l-4 pl-4 py-1.5 my-6 max-w-none text-base leading-relaxed italic space-y-2"
       if article_text_color.present?
         base
       else
-        "#{base} border-zinc-300 dark:border-zinc-700"
+        "#{base} border-zinc-300 text-zinc-800"
       end
     end
   end
