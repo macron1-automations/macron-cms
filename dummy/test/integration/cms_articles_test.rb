@@ -1072,4 +1072,139 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     patch "/cms/articles/#{article.slug}/article_contents/#{block2.id}/move", params: { direction: "up", view: "compact" }
     assert_redirected_to "/cms/articles/#{article.slug}?view=compact"
   end
+
+  test "admin sees Convert dropdown only on convertible blocks in expanded and compact views" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Convert UI Article", name: "convert-ui-article")
+    heading_type = Macron::Cms::Content.create!(
+      name: "heading",
+      fields: [ { "name" => "title", "kind" => "string" } ],
+      convertible_to: []
+    )
+    three_js_image_type = Macron::Cms::Content.create!(
+      name: "three_js_image",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
+      convertible_to: [ "image" ]
+    )
+    image_type = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
+      convertible_to: [ "three_js_image" ]
+    )
+
+    heading_block = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 1, payload: { "title" => "Hello" })
+    image_block = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 2, payload: { "size" => "md" })
+
+    # Expanded view
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+    assert_select "#convert-dropdown-#{heading_block.id}", count: 0
+    assert_select "#convert-dropdown-#{image_block.id}" do
+      assert_select "button.convert-menu-trigger", text: /Convert/
+      assert_select "#convert-menu-#{image_block.id} form[action*='target_content_id=#{three_js_image_type.id}'] button", text: /three_js_image/
+    end
+
+    # Compact view
+    get "/cms/articles/#{article.slug}?view=compact"
+    assert_response :success
+    assert_select "#convert-dropdown-#{heading_block.id}", count: 0
+    assert_select "#convert-dropdown-#{image_block.id}" do
+      assert_select "#convert-menu-#{image_block.id} form[action*='view=compact'] button", text: /three_js_image/
+    end
+  end
+
+  test "admin can convert image block to three_js_image and back via Turbo Stream preserving attachment and dormant payload keys" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Convert Article", name: "turbo-convert-article")
+    image_type = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
+      convertible_to: [ "three_js_image" ]
+    )
+    three_js_image_type = Macron::Cms::Content.create!(
+      name: "three_js_image",
+      fields: [
+        { "name" => "upload", "kind" => "file" },
+        { "name" => "size", "kind" => "dropdown" },
+        { "name" => "effect", "kind" => "dropdown" }
+      ],
+      convertible_to: [ "image" ]
+    )
+
+    block = Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: image_type,
+      sort_order: 1,
+      payload: { "upload" => "landscape.png", "size" => "lg" }
+    )
+    uploaded = Rack::Test::UploadedFile.new(StringIO.new("png-content"), "image/png", original_filename: "landscape.png")
+    block.files.attach(uploaded)
+    original_blob_id = block.upload.blob_id
+
+    # 1. Convert image -> three_js_image via Turbo Stream
+    assert_no_difference -> { Macron::Cms::ArticleContent.count } do
+      patch "/cms/articles/#{article.slug}/article_contents/#{block.id}/convert",
+            as: :turbo_stream,
+            params: { target_content_id: three_js_image_type.id }
+    end
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html; charset=utf-8", response.content_type
+    assert_select "turbo-stream[action='update'][target='content-blocks-section']"
+    assert_select "turbo-stream[action='update'][target='flash-messages']"
+    assert_includes response.body, "Content block was converted to three_js_image."
+    assert_includes response.body, "ring-blue-500/80"
+
+    block.reload
+    assert_equal three_js_image_type, block.content
+    assert block.files.attached?
+    assert_equal original_blob_id, block.upload.blob_id
+    assert_equal "landscape.png", block.payload["upload"]
+    assert_equal "lg", block.payload["size"]
+
+    # 2. Customize effect on three_js_image, convert back to image, edit size, and convert back to three_js_image
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}",
+          params: { article_content: { payload: { size: "lg", effect: "glitch" } } }
+    assert_equal "glitch", block.reload.payload["effect"]
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}/convert",
+          params: { target_content_id: image_type.id, view: "compact" }
+    assert_redirected_to "/cms/articles/#{article.slug}?view=compact"
+    assert_equal image_type, block.reload.content
+    assert_equal original_blob_id, block.upload.blob_id
+
+    # Edit size while in image mode — dormant "effect" key should remain intact
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}",
+          params: { article_content: { payload: { size: "sm" } } }
+    block.reload
+    assert_equal "sm", block.payload["size"]
+    assert_equal "glitch", block.payload["effect"]
+    assert_equal original_blob_id, block.upload.blob_id
+
+    # Convert back to three_js_image — both updated size and dormant effect are preserved
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}/convert",
+          params: { target_content_id: three_js_image_type.id }
+    block.reload
+    assert_equal three_js_image_type, block.content
+    assert_equal "sm", block.payload["size"]
+    assert_equal "glitch", block.payload["effect"]
+    assert_equal original_blob_id, block.upload.blob_id
+  end
+
+  test "convert endpoint rejects disallowed target content type" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Invalid Convert Article", name: "invalid-convert-article")
+    image_type = Macron::Cms::Content.create!(name: "image", fields: [], convertible_to: [ "three_js_image" ])
+    heading_type = Macron::Cms::Content.create!(name: "heading", fields: [])
+    block = Macron::Cms::ArticleContent.create!(article: article, content: image_type)
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}/convert",
+          as: :turbo_stream,
+          params: { target_content_id: heading_type.id }
+
+    assert_response :success
+    assert_select "turbo-stream[action='update'][target='flash-messages']"
+    assert_includes response.body, "Failed to convert content block"
+    assert_equal image_type, block.reload.content
+  end
 end

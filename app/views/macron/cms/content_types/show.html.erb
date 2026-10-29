@@ -58,6 +58,28 @@
         <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= field_list.count %></dd>
       </div>
       <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Convertible To</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0">
+          <% convertible_names = @content_type.normalized_convertible_to %>
+          <% if convertible_names.any? %>
+            <div class="flex flex-wrap gap-1.5">
+              <% convertible_names.each do |target_name| %>
+                <% target_ct = (@convertible_targets_by_name || {})[target_name] %>
+                <% if target_ct %>
+                  <%= link_to target_name, content_type_path(target_ct), class: "inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-0.5 text-xs font-mono font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-100 transition-colors" %>
+                <% else %>
+                  <span class="inline-flex items-center rounded-md bg-zinc-100 px-2.5 py-0.5 text-xs font-mono text-zinc-700 ring-1 ring-inset ring-zinc-200">
+                    <%= target_name %>
+                  </span>
+                <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="text-zinc-500 italic">None</span>
+          <% end %>
+        </dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
         <dt class="text-sm font-medium text-zinc-500">Created At</dt>
         <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.created_at.to_fs(:long) rescue @content_type.created_at.to_s %></dd>
       </div>

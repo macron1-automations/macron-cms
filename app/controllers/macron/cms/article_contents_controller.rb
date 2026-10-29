@@ -2,7 +2,7 @@ module Macron
   module Cms
     class ArticleContentsController < ApplicationController
       before_action :set_article
-      before_action :set_article_content, only: %i[update destroy move]
+      before_action :set_article_content, only: %i[update destroy move convert]
 
       def create
         content = Content.find(params.dig(:article_content, :content_id))
@@ -71,7 +71,9 @@ module Macron
 
         attach_files_if_present! unless remove_files.include?("upload") || remove_files.include?("file")
 
-        if @article_content.update(payload: filtered)
+        merged_payload = (@article_content.payload || {}).merge(filtered)
+
+        if @article_content.update(payload: merged_payload)
           respond_to do |format|
             format.turbo_stream do
               render_content_blocks_stream(
@@ -129,6 +131,36 @@ module Macron
             render_content_blocks_stream(notice: "Content block order updated.")
           end
           format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block order updated." }
+        end
+      end
+
+      def convert
+        target_content = Content.find_by(id: params[:target_content_id]) ||
+                         Content.find_by(name: params[:target_content_type].to_s)
+
+        if @article_content.convert_to(target_content)
+          notice_msg = "Content block was converted to #{target_content.name}."
+          respond_to do |format|
+            format.turbo_stream do
+              render_content_blocks_stream(
+                notice: notice_msg,
+                updated_id: @article_content.id
+              )
+            end
+            format.html { redirect_to article_path(@article, view: params[:view].presence), notice: notice_msg }
+          end
+        else
+          alert_msg = "Failed to convert content block: #{@article_content.errors.full_messages.to_sentence}"
+          respond_to do |format|
+            format.turbo_stream do
+              render turbo_stream: turbo_stream.update(
+                "flash-messages",
+                partial: "macron/cms/shared/flash",
+                locals: { alert: alert_msg }
+              )
+            end
+            format.html { redirect_to article_path(@article, view: params[:view].presence), alert: alert_msg }
+          end
         end
       end
 

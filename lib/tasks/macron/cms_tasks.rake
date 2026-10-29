@@ -24,9 +24,12 @@ namespace :macron do
         content_type_name = File.basename(file, ".*")
         data = YAML.safe_load_file(file, permitted_classes: [ Symbol ], aliases: true) || {}
         fields = data["fields"] || data[:fields] || {}
+        raw_convertible = data["convertible_to"] || data[:convertible_to] || []
+        convertible_to = Array(raw_convertible).filter_map { |v| v.to_s.strip.presence }.uniq
 
         content = Macron::Cms::Content.find_or_initialize_by(name: content_type_name)
         content.fields = fields
+        content.convertible_to = convertible_to
         content.save!
 
         puts "Imported content type: #{content_type_name}"

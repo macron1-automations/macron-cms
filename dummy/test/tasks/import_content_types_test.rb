@@ -134,12 +134,15 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
     assert_equal heading_expected_fields, heading.fields
+    assert_equal [], heading.convertible_to
 
     image = Macron::Cms::Content.find_by!(name: "image")
     assert_equal media_expected_fields, image.fields
+    assert_equal [ "three_js_image" ], image.convertible_to
 
     three_js_image = Macron::Cms::Content.find_by!(name: "three_js_image")
     assert_equal three_js_image_expected_fields, three_js_image.fields
+    assert_equal [ "image" ], three_js_image.convertible_to
 
     embed = Macron::Cms::Content.find_by!(name: "embed")
     assert_equal embed_expected_fields, embed.fields
