@@ -1,6 +1,6 @@
 # MacronCMS
 
-[![Gem Version](https://img.shields.io/badge/version-2.0.0-emerald.svg)](#version)
+[![Gem Version](https://img.shields.io/badge/version-3.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
@@ -27,7 +27,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **In-Place Block Inserters**: Add new blocks directly above, between, or below existing blocks on the Article management screen with one click.
 - **Inline Turbo Stream Updates**: Add, edit, and reorder content blocks with instantaneous Turbo Stream updates—no full-page reloads.
 - **Dynamic Field Generation**: Field controls are generated dynamically based on the content type schema and validated before saving into the block's `payload` JSONB column.
-- **7 Extensible Field Kinds**:
+- **8 Extensible Field Kinds**:
   - `string`: Single-line text input.
   - `text`: Multiline text area.
   - `dropdown`: Select menu configured with custom option lists from the schema YAML.
@@ -35,6 +35,8 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
   - `markdown`: CodeMirror-backed markdown editor with formatted preview on the article show page.
   - `file`: Direct file attachment powered by Active Storage.
   - `json`: Dedicated JSON data editor.
+  - `latex`: CodeMirror LaTeX editor with `stex` syntax mode and KaTeX mathematical equation preview.
+- **File Attachment Purging**: Remove or replace existing Active Storage attachments directly from the block editor with a dedicated purge checkbox, keeping payloads clean without recreating blocks.
 
 ### 🎨 Article Background & Typography Customization
 - **Custom Background Colors & Images**: Configure an optional background color or attach a background image directly to any article via Active Storage, with live image previews and one-click purge.
@@ -46,8 +48,9 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Article-Wide Text Color Propagation**: Set a custom text color at the article level that automatically propagates to the host view's `<body>` and header, as well as to child `WidgetComponent` instances (headings, paragraphs, and markdown prose).
 - **Public Style Helper**: Use `cms_article_background_style(@article)` to generate clean inline CSS applied directly to the host application's `<body>` tag.
 
-### 📝 CodeMirror Markdown & Rich Media
-- **CodeMirror Markdown Editor**: Integrated CodeMirror editor in the CMS admin for writing Markdown content with syntax highlighting.
+### 📝 CodeMirror Markdown, LaTeX & Rich Media
+- **CodeMirror Markdown & LaTeX Editors**: Integrated CodeMirror editors in the CMS admin for writing Markdown content and raw LaTeX expressions with syntax highlighting (`stex` mode).
+- **Fast KaTeX Math Rendering**: Embedded KaTeX engine renders complex LaTeX equations, mathematical notation, and symbols instantaneously in both admin previews and front-end layouts.
 - **Formatted Markdown Previews**: Formatted GitHub Flavored Markdown (GFM) previews rendered directly on the article management page.
 - **Sandboxed Embeds**: Render third-party media and raw HTML snippets safely inside isolated `<iframe>` elements using `srcdoc` to prevent Active Storage download blocks and script collisions.
 - **Responsive Media Controls**: Configure image and embed widgets with responsive width options (`25%`, `33%`, `50%`, `66%`, `75%`, `100%`) and alignment (`left`, `center`, `right`).
@@ -84,12 +87,11 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 ### 🔍 Built-in SEO Metadata Helpers
 - **`cms_seo_meta(@article)`**: Helper to inject `<title>`, canonical `<link>`, and Open Graph meta tags into the view `<head>` using an article's title, meta title, and meta description overrides.
 
----
-
-## Coming Soon
-
-### 🌊 React & Three.js Hydration Plugins
-Drop in React plugins where heavy client-side interactivity is needed, making hydrating complex client components—such as interactive 3D [Three.js](https://threejs.org/) scenes, interactive canvases, and custom calculators—effortless and isolated.
+### 🌊 React & Three.js 3D Hydration
+- **Interactive 3D Client Components**: Effortlessly hydrate rich client-side experiences—such as interactive 3D typography in [Three.js](https://threejs.org/)—wrapped cleanly in ViewComponent widgets.
+- **Rich 3D Customization**: Supports selectable 3D fonts (Helvetiker, Optimer, Gentilis, Droid Serif), customizable font sizes, 3-axis rotation (`x`, `y`, `z`), and variable rotation speeds.
+- **Visual CRT Shader Effects & Backgrounds**: Built-in CRT scanline shader overlays (intensity, density, speed) and dual-mode background support (hex colors or Active Storage background image in stretch/tile modes).
+- **Turbo-Resilient Lifecycle**: Cleanly mounts, re-renders, and disposes React roots and Three.js animation loops across Turbo navigation (`turbo:load`, `turbo:render`, `turbo:before-cache`).
 
 ---
 
@@ -150,6 +152,8 @@ Scaffold content types using the built-in Rails generator:
 $ bin/rails generate macron:cms:content_type heading title:string level:dropdown color:color
 $ bin/rails generate macron:cms:content_type paragraph content:text
 $ bin/rails generate macron:cms:content_type markdown content:markdown
+$ bin/rails generate macron:cms:content_type blockquote content:markdown
+$ bin/rails generate macron:cms:content_type latex content:latex
 $ bin/rails generate macron:cms:content_type image file:file width:dropdown align:dropdown caption:string
 $ bin/rails generate macron:cms:content_type embed html:text width:dropdown align:dropdown
 ```
@@ -172,6 +176,7 @@ This generates:
 | `markdown` | Multiline markdown with CodeMirror editor | — | `field_name` |
 | `file` | File upload backed by Active Storage | — | `file` or `upload` (Active Storage attachment) |
 | `json` | Formatted JSON editor | — | `field_name` |
+| `latex` | Mathematical formula editor with CodeMirror & KaTeX | — | `field_name` |
 
 ---
 
@@ -256,6 +261,91 @@ fields:
       - right
 ```
 
+#### Mathematical Equation (`config/content_types/latex.yml`)
+```yaml
+fields:
+  - name: content
+    kind: latex
+```
+
+#### Blockquote with Markdown (`config/content_types/blockquote.yml`)
+```yaml
+fields:
+  - name: content
+    kind: markdown
+```
+
+#### Interactive 3D Quote (`config/content_types/three_js_quote.yml`)
+```yaml
+fields:
+  - name: text
+    kind: string
+  - name: color
+    kind: color
+  - name: rotation_axis
+    kind: dropdown
+    options:
+      - name: X Axis
+        value: x
+      - name: Y Axis
+        value: y
+      - name: Z Axis
+        value: z
+  - name: rotation_speed
+    kind: dropdown
+    options:
+      - name: 0x (Paused)
+        value: "0"
+      - name: 0.5x
+        value: "0.5"
+      - name: 1x
+        value: "1"
+      - name: 2x
+        value: "2"
+  - name: font
+    kind: dropdown
+    options:
+      - name: Helvetiker (Sans-serif)
+        value: helvetiker
+      - name: Optimer (Modern Sans)
+        value: optimer
+      - name: Gentilis (Humanist Sans)
+        value: gentilis
+      - name: Droid Serif (Serif)
+        value: droid_serif
+  - name: canvas_height
+    kind: dropdown
+    options:
+      - name: Small (240px)
+        value: sm
+      - name: Medium (320px)
+        value: md
+      - name: Large (480px)
+        value: lg
+  - name: background_color
+    kind: color
+  - name: upload
+    kind: file
+  - name: background_mode
+    kind: dropdown
+    options:
+      - name: Stretch
+        value: stretch
+      - name: Tile
+        value: tile
+  - name: scanlines_intensity
+    kind: dropdown
+    options:
+      - name: Off
+        value: off
+      - name: Subtle
+        value: subtle
+      - name: Medium
+        value: medium
+      - name: Strong
+        value: strong
+```
+
 ---
 
 ### 4. Importing Content Types
@@ -302,9 +392,27 @@ Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply 
 </article>
 ```
 
-In your application layout (`app/views/layouts/application.html.erb`), apply the `:body_style` slot:
+In your application layout (`app/views/layouts/application.html.erb`), apply the `:body_style` slot and include the KaTeX and 3D widget assets:
 
 ```erb
+<head>
+  <title><%= content_for(:title) || "Macron CMS" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= turbo_include_tags %>
+
+  <%# KaTeX Stylesheet & Scripts (LaTeX Math Rendering) %>
+  <%= stylesheet_link_tag "macron/cms/katex.min", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "macron/cms/katex.min", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "widgets/latex", "data-turbo-track": "reload", defer: true %>
+
+  <%# React & Three.js Vendor Bundles (3D Interactive Widgets) %>
+  <%= javascript_include_tag "vendor/react_bundle", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "vendor/three_text_bundle", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "vendor/three_fonts_bundle", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "widgets/three_js_quote", "data-turbo-track": "reload", defer: true %>
+</head>
+
 <body class="min-h-screen text-zinc-900 <%= 'bg-zinc-50' unless content_for?(:body_style) %>"
       style="<%= yield :body_style if content_for?(:body_style) %>">
   <%= yield %>
@@ -450,6 +558,144 @@ end
     loading="lazy">
   </iframe>
 </div>
+```
+
+#### Blockquote Widget Component Example
+
+Render quote blocks with Markdown and dynamically inherited article text color:
+
+```ruby
+# app/components/widgets/blockquote_component.rb
+module Widgets
+  class BlockquoteComponent < Macron::Cms::WidgetComponent
+    def rendered_html
+      return "".html_safe if content.blank?
+
+      raw_html = Kramdown::Document.new(content.to_s, input: "GFM").to_html
+      helpers.sanitize(raw_html)
+    end
+
+    def custom_style
+      return unless article_text_color.present?
+
+      "color: #{article_text_color}; border-color: #{article_text_color};"
+    end
+
+    def blockquote_classes
+      base = "border-l-4 pl-4 py-1.5 my-6 max-w-none text-base leading-relaxed italic space-y-2"
+      article_text_color.present? ? base : "#{base} border-zinc-300 text-zinc-800"
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/blockquote_component.html.erb %>
+<blockquote class="<%= blockquote_classes %>" style="<%= custom_style %>">
+  <%= rendered_html %>
+</blockquote>
+```
+
+#### LaTeX Mathematical Widget Component Example
+
+Render mathematical notation and formulas with KaTeX:
+
+```ruby
+# app/components/widgets/latex_component.rb
+module Widgets
+  class LatexComponent < Macron::Cms::WidgetComponent
+    def formula
+      content.to_s
+    end
+
+    def custom_style
+      "color: #{article_text_color};" if article_text_color.present?
+    end
+
+    def latex_classes
+      "cms-latex-widget my-6 overflow-x-auto py-2 text-center"
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/latex_component.html.erb %>
+<% if formula.present? %>
+  <%= content_tag(
+    :div,
+    content_tag(:span, formula, class: "font-mono text-xs opacity-75"),
+    class: latex_classes,
+    style: custom_style,
+    data: { cms_latex: formula, cms_latex_display: "true" }
+  ) %>
+<% end %>
+```
+
+#### Interactive 3D Three.js Widget Component Example
+
+Hydrate a 3D Three.js scene with React in a ViewComponent with Turbo lifecycle awareness:
+
+```ruby
+# app/components/widgets/three_js_quote_component.rb
+module Widgets
+  class ThreeJsQuoteComponent < Macron::Cms::WidgetComponent
+    DEFAULT_COLOR = "#18181b"
+    CANVAS_HEIGHT_CLASSES = {
+      "sm" => "h-60",
+      "md" => "h-64 sm:h-80",
+      "lg" => "h-96 sm:h-[480px]",
+      "xl" => "h-[540px] sm:h-[640px]"
+    }.freeze
+
+    def render?
+      quote_text.present?
+    end
+
+    def quote_text
+      field_value("text").to_s.strip.presence
+    end
+
+    def effective_color
+      field_value("color").presence || article_text_color.presence || DEFAULT_COLOR
+    end
+
+    def rotation_axis
+      field_value("rotation_axis").presence || "x"
+    end
+
+    def rotation_speed
+      field_value("rotation_speed").presence || "1"
+    end
+
+    def canvas_height_class
+      CANVAS_HEIGHT_CLASSES[field_value("canvas_height")] || "h-64 sm:h-80"
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/three_js_quote_component.html.erb %>
+<figure
+  class="my-6 w-full overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-b from-white to-zinc-50 shadow-xs"
+  data-three-js-quote-card
+>
+  <blockquote class="sr-only"><%= quote_text %></blockquote>
+  <div
+    class="relative w-full <%= canvas_height_class %>"
+    data-three-js-quote-mount
+    data-quote-text="<%= quote_text %>"
+    data-quote-color="<%= effective_color %>"
+    data-rotation-axis="<%= rotation_axis %>"
+    data-rotation-speed="<%= rotation_speed %>"
+    data-font="<%= field_value('font').presence || 'helvetiker' %>"
+    data-font-size="<%= field_value('font_size').presence || 'md' %>"
+    data-scanlines-intensity="<%= field_value('scanlines_intensity').presence || 'off' %>"
+    role="img"
+    aria-label="<%= quote_text %>"
+  ></div>
+</figure>
 ```
 
 ---
