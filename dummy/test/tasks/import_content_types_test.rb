@@ -22,7 +22,8 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
           { "name" => "Heading 5", "value" => "h5" },
           { "name" => "Heading 6", "value" => "h6" }
         ]
-      }
+      },
+      { "name" => "color", "kind" => "color" }
     ]
   end
 

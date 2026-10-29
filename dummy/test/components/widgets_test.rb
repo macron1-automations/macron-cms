@@ -24,6 +24,23 @@ class WidgetsTest < ViewComponent::TestCase
     assert_selector "h2", text: "Default Level"
   end
 
+  test "heading component defaults to text-zinc-900 when color is omitted or blank" do
+    render_inline(Widgets::HeadingComponent.new(payload: { "title" => "Default Color Heading", "level" => "h2" }))
+    assert_selector "h2.text-zinc-900", text: "Default Color Heading"
+    assert_no_selector "h2[style]"
+
+    render_inline(Widgets::HeadingComponent.new(payload: { "title" => "Blank Color Heading", "level" => "h2", "color" => "" }))
+    assert_selector "h2.text-zinc-900", text: "Blank Color Heading"
+    assert_no_selector "h2[style]"
+  end
+
+  test "heading component applies custom inline color and strips text-zinc-900 class" do
+    rendered = render_inline(Widgets::HeadingComponent.new(payload: { "title" => "Blue Heading", "level" => "h1", "color" => "#2563eb" }))
+    assert_selector "h1[style='color: #2563eb;']", text: "Blue Heading"
+    assert_no_selector "h1.text-zinc-900"
+    assert_includes rendered.to_html, "text-3xl"
+  end
+
   test "paragraph component renders formatted paragraph text" do
     render_inline(Widgets::ParagraphComponent.new(payload: { "content" => "Lorem ipsum dolor sit amet." }))
     assert_selector "p", text: "Lorem ipsum dolor sit amet."
