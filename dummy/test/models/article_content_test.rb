@@ -2,7 +2,7 @@ require "test_helper"
 
 class ArticleContentTest < ActiveSupport::TestCase
   test "article has many contents through article_contents ordered by sort_order" do
-    article = Macron::Cms::Article.create!(title: "Main Article", name: "main-article-contents-test")
+    article = Macron::Cms::Article.create!(title: "Main Article")
     content_a = Macron::Cms::Content.create!(name: "content-a", fields: [])
     content_b = Macron::Cms::Content.create!(name: "content-b", fields: [])
     content_c = Macron::Cms::Content.create!(name: "content-c", fields: [])
@@ -17,7 +17,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "auto assigns sort_order sequentially on creation if omitted" do
-    article = Macron::Cms::Article.create!(title: "Sequential Article", name: "seq-article")
+    article = Macron::Cms::Article.create!(title: "Sequential Article")
     content = Macron::Cms::Content.create!(name: "heading-test", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: content)
@@ -30,7 +30,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "allows multiple content blocks of the same content type with different payloads" do
-    article = Macron::Cms::Article.create!(title: "Multi Heading Article", name: "multi-heading")
+    article = Macron::Cms::Article.create!(title: "Multi Heading Article")
     heading_type = Macron::Cms::Content.create!(
       name: "heading",
       fields: [
@@ -76,7 +76,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "destroying article removes article_contents but keeps contents" do
-    article = Macron::Cms::Article.create!(title: "To Delete", name: "to-delete-article")
+    article = Macron::Cms::Article.create!(title: "To Delete")
     content = Macron::Cms::Content.create!(name: "shared-content", fields: [])
     join = Macron::Cms::ArticleContent.create!(article: article, content: content, sort_order: 1)
 
@@ -91,7 +91,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "has_many_attached :files with convenience methods upload, file, and uploads" do
-    article = Macron::Cms::Article.create!(title: "Attach Article", name: "attach-article")
+    article = Macron::Cms::Article.create!(title: "Attach Article")
     content = Macron::Cms::Content.create!(name: "image-test", fields: [ { "name" => "upload", "kind" => "file" } ])
     article_content = Macron::Cms::ArticleContent.create!(article: article, content: content)
 
@@ -129,7 +129,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "convert_to converts block in place preserving attached files, sort_order, and all payload keys across round-trip" do
-    article = Macron::Cms::Article.create!(title: "Convert Article", name: "convert-article")
+    article = Macron::Cms::Article.create!(title: "Convert Article")
     image_type = Macron::Cms::Content.create!(
       name: "image",
       fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
@@ -180,7 +180,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "convert_to rejects non-convertible target content type" do
-    article = Macron::Cms::Article.create!(title: "Reject Convert", name: "reject-convert")
+    article = Macron::Cms::Article.create!(title: "Reject Convert")
     image_type = Macron::Cms::Content.create!(name: "image", fields: [], convertible_to: [ "three_js_image" ])
     heading_type = Macron::Cms::Content.create!(name: "heading", fields: [])
 
@@ -192,7 +192,7 @@ class ArticleContentTest < ActiveSupport::TestCase
   end
 
   test "saving article_content with featured_image content type bubbles up first attached image to article" do
-    article = Macron::Cms::Article.create!(title: "Bubbling Article", name: "bubbling-article")
+    article = Macron::Cms::Article.create!(title: "Bubbling Article")
     image_type = Macron::Cms::Content.create!(
       name: "image",
       fields: [ { "name" => "upload", "kind" => "file" } ],

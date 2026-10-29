@@ -68,11 +68,6 @@ module Macron
           end
 
           def find_existing_article(attrs)
-            if attrs[:name].present?
-              existing = Article.find_by(name: attrs[:name])
-              return existing if existing
-            end
-
             if attrs[:slug].present?
               existing = Article.find_by(slug: attrs[:slug])
               return existing if existing
@@ -90,7 +85,6 @@ module Macron
             raw = params[:article].presence || params
             raw.permit(
               :title,
-              :name,
               :slug,
               :meta_title,
               :meta_description,
@@ -147,7 +141,6 @@ module Macron
               article: {
                 id: article.id,
                 title: article.title,
-                name: article.name,
                 slug: article.slug,
                 meta_title: article.meta_title,
                 meta_description: article.meta_description,

@@ -2,7 +2,7 @@ require "test_helper"
 
 class RemoteAssetAttacherTest < ActiveSupport::TestCase
   setup do
-    @article = Macron::Cms::Article.create!(title: "Service Test Article", name: "service-test-article")
+    @article = Macron::Cms::Article.create!(title: "Service Test Article")
     @image_type = Macron::Cms::Content.find_or_create_by!(name: "image") do |c|
       c.fields = [
         { "name" => "upload", "kind" => "file" },

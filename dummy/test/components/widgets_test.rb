@@ -75,7 +75,7 @@ class WidgetsTest < ViewComponent::TestCase
   end
 
   test "image component renders image tag when file is attached" do
-    article = Macron::Cms::Article.create!(title: "Img Article", name: "img-article")
+    article = Macron::Cms::Article.create!(title: "Img Article")
     content = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
     ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
     file = Rack::Test::UploadedFile.new(StringIO.new("img content"), "image/png", original_filename: "photo.png")
@@ -92,7 +92,7 @@ class WidgetsTest < ViewComponent::TestCase
   end
 
   test "embed component renders iframe with srcdoc when html file is attached" do
-    article = Macron::Cms::Article.create!(title: "Embed Article", name: "embed-article")
+    article = Macron::Cms::Article.create!(title: "Embed Article")
     content = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" } ])
     ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
     file = Rack::Test::UploadedFile.new(StringIO.new("<h1>Interactive chart</h1>"), "text/html", original_filename: "chart.html")
@@ -116,7 +116,7 @@ class WidgetsTest < ViewComponent::TestCase
   end
 
   test "image component applies responsive sizing classes and defaults to md" do
-    article = Macron::Cms::Article.create!(title: "Img Size Article", name: "img-size-article")
+    article = Macron::Cms::Article.create!(title: "Img Size Article")
     content = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ])
     ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
     file = Rack::Test::UploadedFile.new(StringIO.new("img"), "image/png", original_filename: "photo.png")
@@ -140,7 +140,7 @@ class WidgetsTest < ViewComponent::TestCase
   end
 
   test "embed component applies responsive sizing classes and defaults to md" do
-    article = Macron::Cms::Article.create!(title: "Embed Size Article", name: "embed-size-article")
+    article = Macron::Cms::Article.create!(title: "Embed Size Article")
     content = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ])
     ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
     file = Rack::Test::UploadedFile.new(StringIO.new("<b>chart</b>"), "text/html", original_filename: "chart.html")
@@ -164,7 +164,7 @@ class WidgetsTest < ViewComponent::TestCase
   end
 
   test "embed component applies responsive height classes and defaults to lg" do
-    article = Macron::Cms::Article.create!(title: "Embed Height Article", name: "embed-height-article")
+    article = Macron::Cms::Article.create!(title: "Embed Height Article")
     content = Macron::Cms::Content.create!(name: "embed", fields: [
       { "name" => "upload", "kind" => "file" },
       { "name" => "height", "kind" => "dropdown" }

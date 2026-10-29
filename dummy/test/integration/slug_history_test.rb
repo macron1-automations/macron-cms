@@ -16,7 +16,7 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
   end
 
   test "recording previous slugs in friendly_id_slugs and public 301 canonical redirects" do
-    article = Macron::Cms::Article.create!(title: "Initial Launch Post", name: "initial-launch-post")
+    article = Macron::Cms::Article.create!(title: "Initial Launch Post")
     assert_equal "initial-launch-post", article.slug
 
     # Verify initial slug is recorded
@@ -61,7 +61,7 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
 
   test "cms admin does not 301 redirect when accessed with historical slug" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "CMS Admin History Test", name: "admin-history-initial")
+    article = Macron::Cms::Article.create!(title: "CMS Admin History Test", slug: "admin-history-initial")
 
     article.update!(slug: "admin-history-updated")
 
@@ -77,7 +77,7 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
 
   test "cms admin edit form displays slug in Identifier Name field and updates slug" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Form Edit Test", name: "original-fixed-name", slug: "original-form-slug")
+    article = Macron::Cms::Article.create!(title: "Form Edit Test", slug: "original-form-slug")
 
     get "/cms/articles/#{article.slug}/edit"
     assert_response :success
@@ -93,7 +93,6 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/cms/articles/brand-new-edited-slug"
     article.reload
     assert_equal "brand-new-edited-slug", article.slug
-    assert_equal "original-fixed-name", article.name
     assert article.slugs.where(slug: "original-form-slug").exists?
 
     # Verify public 301 redirect from old slug to new slug
@@ -103,7 +102,7 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
   end
 
   test "cms api resolves historical slugs, current slugs, and numeric IDs with 200 OK" do
-    article = Macron::Cms::Article.create!(title: "API History Resolution", name: "api-slug-v1")
+    article = Macron::Cms::Article.create!(title: "API History Resolution", slug: "api-slug-v1")
     article.update!(slug: "api-slug-v2")
 
     # Old slug in API resolves with 200 OK and includes current canonical slug

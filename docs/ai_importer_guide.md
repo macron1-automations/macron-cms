@@ -44,8 +44,7 @@ Authorization: Bearer <API_KEY>
   "upsert": true,
   "article": {
     "title": "String (Required) - Main title of the article",
-    "name": "String (Optional) - Unique identifier/slug. Auto-generated from title if blank",
-    "slug": "String (Optional) - URL slug (managed by FriendlyId)",
+    "slug": "String (Optional) - URL slug (managed by FriendlyId). Auto-generated from title if blank",
     "meta_title": "String (Optional) - SEO title tag",
     "meta_description": "String (Optional) - SEO meta description",
     "background_color": "String (Optional) - Hex code or CSS color",
@@ -81,7 +80,7 @@ Authorization: Bearer <API_KEY>
 
 #### Idempotency & Upserting
 When `"upsert": true` is specified:
-1. The API checks for existing articles matching `name`, `slug`, or `title`.
+1. The API checks for existing articles matching `slug` or `title`.
 2. If found, it updates the article attributes and atomically synchronizes the `content_blocks` (replacing existing blocks in sequential order).
 3. If not found, it creates a new article (returning `201 Created`).
 
@@ -132,7 +131,7 @@ You are an expert content migration agent. Your task is to import the provided S
      "upsert": true,
      "article": {
        "title": "<Extracted Title>",
-       "name": "<parameterized-slug>",
+       "slug": "<parameterized-slug>",
        "meta_title": "<Extracted Title>",
        "meta_description": "<Extracted Subtitle>"
      },
@@ -164,7 +163,7 @@ curl -X POST http://localhost:3000/cms/api/v1/articles \
     "upsert": true,
     "article": {
       "title": "The Myth of Your Limitations: Why You’re More Capable Than You Think",
-      "name": "the-myth-of-your-limitations-why",
+      "slug": "the-myth-of-your-limitations-why",
       "meta_title": "The Myth of Your Limitations",
       "meta_description": "How a simple mindset shift can prove you wrong—in the best way possible"
     },

@@ -8,7 +8,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show article using slug" do
-    article = Macron::Cms::Article.create!(title: "Friendly Article", name: "friendly-article")
+    article = Macron::Cms::Article.create!(title: "Friendly Article")
 
     get article_url(article)
     assert_response :success
@@ -24,7 +24,6 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "should render custom SEO metadata when article defines meta_title and meta_description" do
     article = Macron::Cms::Article.create!(
       title: "Friendly Article",
-      name: "seo-article",
       meta_title: "Custom Title For Search",
       meta_description: "Custom Description For Search Snippets"
     )
@@ -45,7 +44,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should render ordered content block widgets on public show page" do
-    article = Macron::Cms::Article.create!(title: "Rich Content Article", name: "rich-content-article")
+    article = Macron::Cms::Article.create!(title: "Rich Content Article")
     heading_type = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
       c.fields = [ { "name" => "title", "kind" => "string" }, { "name" => "level", "kind" => "string" } ]
     end

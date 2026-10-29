@@ -3,7 +3,7 @@ require "test_helper"
 class ContentHelperTest < ActionView::TestCase
   include Macron::Cms::ContentHelper
   test "cms_render_article_contents renders widgets in sort_order" do
-    article = Macron::Cms::Article.create!(title: "Render Test Article", name: "render-test-article")
+    article = Macron::Cms::Article.create!(title: "Render Test Article")
     heading_type = Macron::Cms::Content.create!(
       name: "heading",
       fields: [
@@ -42,7 +42,7 @@ class ContentHelperTest < ActionView::TestCase
   end
 
   test "cms_render_widget raises MissingWidgetError for missing widget component" do
-    article = Macron::Cms::Article.create!(title: "Missing Widget Article", name: "missing-widget-article")
+    article = Macron::Cms::Article.create!(title: "Missing Widget Article")
     mystery_type = Macron::Cms::Content.create!(name: "mystery_box", fields: [])
     ac = Macron::Cms::ArticleContent.create!(article: article, content: mystery_type, payload: {})
 
@@ -54,12 +54,12 @@ class ContentHelperTest < ActionView::TestCase
   test "cms_render_article_contents returns empty string when article is nil or has no contents" do
     assert_equal "", cms_render_article_contents(nil)
 
-    article = Macron::Cms::Article.create!(title: "Empty Article", name: "empty-article")
+    article = Macron::Cms::Article.create!(title: "Empty Article")
     assert_equal "", cms_render_article_contents(article)
   end
 
   test "cms_render_article_contents renders image and embed widgets" do
-    article = Macron::Cms::Article.create!(title: "Media Article", name: "media-article")
+    article = Macron::Cms::Article.create!(title: "Media Article")
     image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
     embed_type = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" } ])
 
@@ -81,14 +81,13 @@ class ContentHelperTest < ActionView::TestCase
   test "cms_article_background_style returns empty string when article is nil or has no background styles" do
     assert_equal "", cms_article_background_style(nil)
 
-    article = Macron::Cms::Article.create!(title: "Plain Article", name: "plain-article")
+    article = Macron::Cms::Article.create!(title: "Plain Article")
     assert_equal "", cms_article_background_style(article)
   end
 
   test "cms_article_background_style includes background-color when set" do
     article = Macron::Cms::Article.create!(
       title: "Color Article",
-      name: "color-article",
       background_color: "#3b82f6"
     )
 
@@ -99,7 +98,6 @@ class ContentHelperTest < ActionView::TestCase
   test "cms_article_background_style includes full background properties when image is attached" do
     article = Macron::Cms::Article.create!(
       title: "Image Article",
-      name: "image-article",
       background_color: "#0f172a",
       background_options: {
         "repeat" => "repeat",
@@ -123,7 +121,6 @@ class ContentHelperTest < ActionView::TestCase
   test "cms_article_background_style includes text color when set" do
     article = Macron::Cms::Article.create!(
       title: "Text Styled Article",
-      name: "text-styled-article",
       text_color: "#e2e8f0"
     )
 
