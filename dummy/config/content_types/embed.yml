@@ -12,3 +12,12 @@ fields:
         value: 'lg'
       - name: 'Full Width (100%)'
         value: 'full'
+  - name: 'height'
+    kind: 'dropdown'
+    options:
+      - name: 'Large (480px)'
+        value: 'lg'
+      - name: 'Extra Large (640px)'
+        value: 'xl'
+      - name: 'Very Large (800px)'
+        value: '2xl'

@@ -29,6 +29,7 @@
     <%= javascript_include_tag "vendor/three_fonts_bundle", "data-turbo-track": "reload", defer: true %>
     <%= javascript_include_tag "widgets/three_js_quote", "data-turbo-track": "reload", defer: true %>
     <%= javascript_include_tag "widgets/three_js_image", "data-turbo-track": "reload", defer: true %>
+    <%= javascript_include_tag "widgets/embed", "data-turbo-track": "reload", defer: true %>
   </head>
 
   <body class="min-h-screen <%= 'bg-zinc-50' unless content_for?(:body_style) %> text-zinc-900 antialiased" style="<%= yield :body_style if content_for?(:body_style) %>">

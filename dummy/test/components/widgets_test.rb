@@ -99,8 +99,14 @@ class WidgetsTest < ViewComponent::TestCase
     ac.files.attach(file)
 
     rendered = render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: ac.payload))
+    assert_selector "div[data-embed-card]"
+    assert_selector "button[data-embed-fullscreen-btn][aria-label='Maximize']"
+    assert_selector "button[data-embed-fullscreen-btn] svg[data-icon-enter-fullscreen]"
+    assert_selector "button[data-embed-fullscreen-btn] svg[data-icon-exit-fullscreen].hidden"
     assert_selector "iframe[title='Embedded HTML content']"
     assert_selector "iframe[sandbox='allow-scripts allow-same-origin allow-popups']"
+    assert_selector "iframe[allowfullscreen]"
+    assert_selector "iframe[allow='fullscreen']"
     assert_includes rendered.to_html, "<h1>Interactive chart</h1>"
   end
 
@@ -155,6 +161,36 @@ class WidgetsTest < ViewComponent::TestCase
     # Full size -> w-full
     render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "size" => "full" }))
     assert_selector "div.w-full"
+  end
+
+  test "embed component applies responsive height classes and defaults to lg" do
+    article = Macron::Cms::Article.create!(title: "Embed Height Article", name: "embed-height-article")
+    content = Macron::Cms::Content.create!(name: "embed", fields: [
+      { "name" => "upload", "kind" => "file" },
+      { "name" => "height", "kind" => "dropdown" }
+    ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("<b>embed</b>"), "text/html", original_filename: "embed.html")
+    ac.files.attach(file)
+
+    # Default (unspecified or invalid height) -> lg (h-96 sm:h-[480px])
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: {}))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "invalid" }))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    # Large height -> h-96 sm:h-[480px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "lg" }))
+    assert_selector "iframe.h-96.sm\\:h-\\[480px\\]"
+
+    # Extra Large height -> h-[540px] sm:h-[640px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "xl" }))
+    assert_selector "iframe.h-\\[540px\\].sm\\:h-\\[640px\\]"
+
+    # Very Large height -> h-[640px] sm:h-[800px]
+    render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "height" => "2xl" }))
+    assert_selector "iframe.h-\\[640px\\].sm\\:h-\\[800px\\]"
   end
 
   test "markdown component renders formatted markdown to html with prose classes" do

@@ -43,6 +43,31 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     ]
   end
 
+  def embed_expected_fields
+    [
+      { "name" => "upload", "kind" => "file" },
+      {
+        "name" => "size",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small (33%)", "value" => "sm" },
+          { "name" => "Medium (50%)", "value" => "md" },
+          { "name" => "Large (75%)", "value" => "lg" },
+          { "name" => "Full Width (100%)", "value" => "full" }
+        ]
+      },
+      {
+        "name" => "height",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Large (480px)", "value" => "lg" },
+          { "name" => "Extra Large (640px)", "value" => "xl" },
+          { "name" => "Very Large (800px)", "value" => "2xl" }
+        ]
+      }
+    ]
+  end
+
   def three_js_image_expected_fields
     [
       { "name" => "upload", "kind" => "file" },
@@ -117,7 +142,7 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     assert_equal three_js_image_expected_fields, three_js_image.fields
 
     embed = Macron::Cms::Content.find_by!(name: "embed")
-    assert_equal media_expected_fields, embed.fields
+    assert_equal embed_expected_fields, embed.fields
 
     markdown = Macron::Cms::Content.find_by!(name: "markdown")
     assert_equal [ { "name" => "content", "kind" => "markdown" } ], markdown.fields
