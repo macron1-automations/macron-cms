@@ -102,15 +102,16 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/articles/brand-new-edited-slug"
   end
 
-  test "cms api returns 404 for historical slugs but 200 for current slug or numeric ID" do
-    article = Macron::Cms::Article.create!(title: "API History Strictness", name: "api-slug-v1")
+  test "cms api resolves historical slugs, current slugs, and numeric IDs with 200 OK" do
+    article = Macron::Cms::Article.create!(title: "API History Resolution", name: "api-slug-v1")
     article.update!(slug: "api-slug-v2")
 
-    # Old slug in API returns 404 Not Found
+    # Old slug in API resolves with 200 OK and includes current canonical slug
     get "/cms/api/v1/articles/api-slug-v1", headers: @auth_headers
-    assert_response :not_found
+    assert_response :success
     json = JSON.parse(response.body)
-    assert_equal "Article not found", json["error"]
+    assert_equal article.id, json.dig("article", "id")
+    assert_equal "api-slug-v2", json.dig("article", "slug")
 
     # Current slug returns 200 OK
     get "/cms/api/v1/articles/api-slug-v2", headers: @auth_headers
@@ -124,5 +125,11 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
     assert_response :success
     json = JSON.parse(response.body)
     assert_equal article.id, json.dig("article", "id")
+
+    # Non-existent slug returns 404 Not Found
+    get "/cms/api/v1/articles/completely-unknown-slug", headers: @auth_headers
+    assert_response :not_found
+    json = JSON.parse(response.body)
+    assert_equal "Article not found", json["error"]
   end
 end

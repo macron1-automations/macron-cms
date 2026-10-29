@@ -63,10 +63,6 @@ module Macron
 
           def set_article
             @article = Article.friendly.find(params[:id])
-
-            if params[:id].to_s != @article.id.to_s && params[:id].to_s != @article.slug
-              render json: { error: "Article not found" }, status: :not_found
-            end
           rescue ActiveRecord::RecordNotFound
             render json: { error: "Article not found" }, status: :not_found
           end
