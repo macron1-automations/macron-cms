@@ -1,5 +1,5 @@
 <% if image_source.present? %>
-  <figure class="my-6">
+  <figure class="my-6 <%= container_classes %>">
     <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 shadow-xs">
       <%= image_tag(image_source, class: "w-full h-auto max-h-[600px] object-cover", loading: "lazy", alt: "Article image") %>
     </div>

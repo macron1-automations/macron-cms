@@ -1,3 +1,14 @@
 fields:
   - name: 'upload'
     kind: 'file'
+  - name: 'size'
+    kind: 'dropdown'
+    options:
+      - name: 'Small (33%)'
+        value: 'sm'
+      - name: 'Medium (50%)'
+        value: 'md'
+      - name: 'Large (75%)'
+        value: 'lg'
+      - name: 'Full Width (100%)'
+        value: 'full'
