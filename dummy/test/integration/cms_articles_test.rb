@@ -793,11 +793,26 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "body[style*='background-repeat: repeat;']"
     assert_select "body[style*='background-size: auto;']"
 
-    # Verify edit form renders attached background image preview
+    # Verify edit form renders attached background image preview and valid single form
     get "/cms/articles/#{article.slug}/edit"
     assert_response :success
     assert_select "img[src*='bg-art.png']"
-    assert_select "button", text: "Delete image"
+    assert_select "a[data-turbo-method='delete']", text: "Delete image"
+
+    # Verify form submits updates to background options (e.g. changing size to auto)
+    patch "/cms/articles/#{article.slug}", params: {
+      article: {
+        background_options: {
+          repeat: "repeat",
+          size: "auto",
+          position: "top",
+          attachment: "fixed"
+        }
+      }
+    }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    article.reload
+    assert_equal "auto", article.background_size
 
     # Verify purge background image
     assert_difference -> { ActiveStorage::Attachment.count }, -1 do

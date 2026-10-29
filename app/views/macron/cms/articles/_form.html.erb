@@ -81,7 +81,7 @@
             <p class="font-medium text-zinc-900 truncate"><%= article.background_image.filename %></p>
             <p class="text-zinc-500"><%= number_to_human_size(article.background_image.byte_size) %></p>
           </div>
-          <%= button_to "Delete image", purge_background_image_article_path(article), method: :delete, form: { data: { turbo_confirm: "Are you sure you want to remove the background image?" } }, class: "rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer shrink-0" %>
+          <%= link_to "Delete image", purge_background_image_article_path(article), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove the background image?" }, class: "rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer shrink-0" %>
         </div>
       <% end %>
     </div>
