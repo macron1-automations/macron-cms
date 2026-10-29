@@ -1,0 +1,35 @@
+<div class="space-y-1.5">
+  <label for="<%= input_id %>_picker" class="block text-xs font-mono font-semibold text-zinc-700">
+    <%= field_name %>
+    <span class="ml-1 text-[10px] font-normal text-zinc-400">(color)</span>
+  </label>
+
+  <input
+    type="hidden"
+    name="<%= input_name %>"
+    id="<%= input_id %>"
+    value="<%= value %>"
+  />
+
+  <div class="flex items-center gap-3">
+    <input
+      type="color"
+      id="<%= input_id %>_picker"
+      value="<%= value.presence || "#000000" %>"
+      class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+      oninput="document.getElementById('<%= input_id %>').value = this.value; document.getElementById('<%= input_id %>_label').textContent = this.value;"
+    />
+
+    <span id="<%= input_id %>_label" class="text-xs font-mono text-zinc-600">
+      <%= value.presence || "Default (theme color)" %>
+    </span>
+
+    <button
+      type="button"
+      class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
+      onclick="document.getElementById('<%= input_id %>').value = ''; document.getElementById('<%= input_id %>_label').textContent = 'Default (theme color)';"
+    >
+      Reset to default
+    </button>
+  </div>
+</div>
