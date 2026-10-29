@@ -13,6 +13,20 @@ module Macron
         sanitize(raw_html)
       end
 
+      def cms_strip_markdown(text)
+        return "" if text.blank?
+
+        raw_html = Kramdown::Document.new(text.to_s, input: "GFM").to_html
+        strip_tags(raw_html).to_s.squish
+      end
+
+      def cms_top_field_definition(article_content)
+        content = article_content.content
+        return nil unless content
+
+        content.normalized_fields.first
+      end
+
       def cms_render_field(field_def, value: nil, input_name: nil, input_id: nil)
         field_hash = field_def.stringify_keys
         fname = field_hash["name"]

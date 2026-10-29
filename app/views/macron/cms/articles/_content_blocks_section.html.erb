@@ -2,6 +2,7 @@
 <% content_types ||= [] %>
 <% newly_added_id ||= nil %>
 <% updated_id ||= nil %>
+<% compact = local_assigns.key?(:compact) ? !!local_assigns[:compact] : (params[:view] == "compact") %>
 
 <div class="space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-4">
@@ -14,12 +15,30 @@
       </div>
       <p class="text-xs text-zinc-500 mt-1">Re-order blocks using drag-and-drop or the Move Up/Down buttons.</p>
     </div>
+
+    <!-- View Mode Switcher -->
+    <div class="inline-flex items-center rounded-lg bg-zinc-100 p-1 border border-zinc-200 text-xs font-medium self-start sm:self-auto shadow-2xs">
+      <%= link_to article_path(article),
+                  class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors #{!compact ? 'bg-white text-zinc-900 font-semibold shadow-2xs ring-1 ring-zinc-900/5' : 'text-zinc-600 hover:text-zinc-900'}" do %>
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+        Expanded
+      <% end %>
+      <%= link_to article_path(article, view: "compact"),
+                  class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors #{compact ? 'bg-white text-zinc-900 font-semibold shadow-2xs ring-1 ring-zinc-900/5' : 'text-zinc-600 hover:text-zinc-900'}" do %>
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+        </svg>
+        Compact
+      <% end %>
+    </div>
   </div>
 
   <!-- Content Blocks List -->
   <div
     id="content-blocks-list"
-    data-reorder-url="<%= reorder_article_article_contents_path(article) %>"
+    data-reorder-url="<%= reorder_article_article_contents_path(article, view: (compact ? 'compact' : nil)) %>"
     class="space-y-2"
   >
     <% if article_contents.any? %>
@@ -56,7 +75,7 @@
           class="content-block-item group rounded-xl border border-zinc-200 bg-white shadow-2xs transition-all duration-300 hover:shadow-xs <%= 'ring-2 ring-emerald-500/80 bg-emerald-50/15' if is_new %> <%= 'ring-2 ring-blue-500/80 bg-blue-50/15' if is_updated %>"
         >
           <!-- Card Header & Actions -->
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50/70 px-5 py-3.5 rounded-t-xl">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50/70 <%= compact ? 'px-4 py-2' : 'px-5 py-3.5' %> rounded-t-xl">
             <div class="flex items-center gap-3">
               <!-- Drag Handle -->
               <div class="cursor-grab active:cursor-grabbing text-zinc-400 group-hover:text-zinc-600 transition-colors" title="Drag to reorder">
@@ -77,14 +96,14 @@
             <!-- Action Buttons -->
             <div class="flex items-center gap-1.5">
               <!-- Move Up -->
-              <%= button_to move_article_article_content_path(article, ac, direction: "up"), method: :patch, disabled: (index == 0), class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" do %>
+              <%= button_to move_article_article_content_path(article, ac, direction: "up", view: (compact ? "compact" : nil)), method: :patch, disabled: (index == 0), class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" do %>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
                 </svg>
               <% end %>
 
               <!-- Move Down -->
-              <%= button_to move_article_article_content_path(article, ac, direction: "down"), method: :patch, disabled: (index == article_contents.size - 1), class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" do %>
+              <%= button_to move_article_article_content_path(article, ac, direction: "down", view: (compact ? "compact" : nil)), method: :patch, disabled: (index == article_contents.size - 1), class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer" do %>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
@@ -104,7 +123,7 @@
 
               <!-- Delete Block Button -->
               <% del_block_confirm = "Are you sure you want to remove this #{content_type ? content_type.name : 'content'} block?" %>
-              <%= button_to article_article_content_path(article, ac), method: :delete, onclick: "return confirm(#{del_block_confirm.to_json});", data: { turbo_confirm: del_block_confirm }, class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer" do %>
+              <%= button_to article_article_content_path(article, ac, view: (compact ? "compact" : nil)), method: :delete, onclick: "return confirm(#{del_block_confirm.to_json});", data: { turbo_confirm: del_block_confirm }, class: "inline-flex items-center justify-center w-8 h-8 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer" do %>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
@@ -113,70 +132,125 @@
           </div>
 
           <!-- View Payload Mode -->
-          <div id="view-payload-<%= ac.id %>" class="p-5">
-            <% if fields.any? %>
-              <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <% fields.each do |f| %>
-                  <% fname = f["name"] %>
-                  <% fkind = f["kind"] %>
-                  <% fval = ac.payload[fname] %>
-                  <div class="<%= fkind.in?(%w[text markdown latex]) ? 'sm:col-span-2' : '' %>">
-                    <dt class="text-xs font-mono font-medium text-zinc-500 uppercase tracking-wide">
-                      <%= fname %>
-                      <span class="text-[10px] text-zinc-400 lowercase font-normal">(<%= fkind %>)</span>
-                    </dt>
-                    <dd class="mt-1 text-sm text-zinc-900 bg-zinc-50/80 rounded-lg p-2.5 border border-zinc-100 font-sans">
-                      <% if fval.present? || ac.files.attached? %>
-                        <% if fkind == 'markdown' %>
-                          <div class="prose prose-zinc prose-sm max-w-none">
-                            <%= cms_render_markdown(fval) %>
-                          </div>
-                        <% elsif fkind == 'latex' %>
-                          <div class="py-2 overflow-x-auto text-center" data-cms-latex="<%= fval %>">
-                            <span class="font-mono text-xs text-zinc-600"><%= fval %></span>
-                          </div>
-                        <% elsif fkind == 'text' %>
-                          <div class="whitespace-pre-wrap"><%= fval %></div>
-                        <% elsif fkind == 'file' && ac.files.attached? %>
-                          <div class="space-y-2">
-                            <% ac.files.each do |att| %>
-                              <div class="flex items-center gap-2.5">
-                                <% if att.image? %>
-                                  <div class="w-10 h-10 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
-                                    <%= image_tag main_app.rails_blob_path(att), class: "w-full h-full object-cover" %>
-                                  </div>
-                                <% else %>
-                                  <div class="w-8 h-8 rounded-md bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 text-zinc-500">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
-                                    </svg>
-                                  </div>
-                                <% end %>
-                                <div class="min-w-0">
-                                  <p class="text-xs font-medium font-mono text-zinc-900 truncate"><%= att.filename %></p>
-                                  <p class="text-[10px] text-zinc-400"><%= number_to_human_size(att.byte_size) %></p>
-                                </div>
-                              </div>
-                            <% end %>
-                          </div>
-                        <% else %>
-                          <span><%= fval %></span>
-                        <% end %>
+          <% if compact %>
+            <div id="view-payload-<%= ac.id %>" class="px-4 py-2.5">
+              <% top_field = cms_top_field_definition(ac) %>
+              <% if top_field %>
+                <% fname = top_field["name"] %>
+                <% fkind = top_field["kind"] %>
+                <% fval = ac.payload[fname] %>
+                <div class="text-xs text-zinc-700">
+                  <% if fkind == 'markdown' %>
+                    <% plain = cms_strip_markdown(fval) %>
+                    <% if plain.present? %>
+                      <div class="line-clamp-2 break-words leading-relaxed font-sans" title="<%= plain %>"><%= plain %></div>
+                    <% else %>
+                      <span class="italic text-zinc-400">Empty</span>
+                    <% end %>
+                  <% elsif fkind == 'latex' %>
+                    <% if fval.present? %>
+                      <div class="font-mono text-[11px] text-zinc-800 line-clamp-2 break-words leading-relaxed" title="<%= fval %>"><%= fval %></div>
+                    <% else %>
+                      <span class="italic text-zinc-400">Empty</span>
+                    <% end %>
+                  <% elsif fkind == 'file' && ac.files.attached? %>
+                    <% att = ac.files.first %>
+                    <div class="flex items-center gap-2">
+                      <% if att.image? %>
+                        <div class="w-6 h-6 rounded overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                          <%= image_tag main_app.rails_blob_path(att), class: "w-full h-full object-cover" %>
+                        </div>
                       <% else %>
-                        <span class="italic text-zinc-400 text-xs">Empty</span>
+                        <div class="w-6 h-6 rounded bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 text-zinc-500">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                          </svg>
+                        </div>
                       <% end %>
-                    </dd>
-                  </div>
-                <% end %>
-              </dl>
-            <% else %>
-              <p class="text-xs text-zinc-500 italic">No fields defined for this content type.</p>
-            <% end %>
-          </div>
+                      <span class="font-mono text-zinc-900 truncate max-w-xs"><%= att.filename %></span>
+                      <span class="text-[10px] text-zinc-400">(<%= number_to_human_size(att.byte_size) %>)</span>
+                    </div>
+                  <% elsif fkind == 'color' && fval.present? %>
+                    <div class="flex items-center gap-1.5 font-mono text-zinc-800">
+                      <span class="w-3.5 h-3.5 rounded-full border border-zinc-300 shrink-0" style="background-color: <%= fval %>;"></span>
+                      <span><%= fval %></span>
+                    </div>
+                  <% elsif fval.present? %>
+                    <div class="line-clamp-2 break-words leading-relaxed font-sans" title="<%= fval %>"><%= fval %></div>
+                  <% else %>
+                    <span class="italic text-zinc-400">Empty</span>
+                  <% end %>
+                </div>
+              <% else %>
+                <p class="text-xs text-zinc-400 italic">No fields defined for this content type.</p>
+              <% end %>
+            </div>
+          <% else %>
+            <div id="view-payload-<%= ac.id %>" class="p-5">
+              <% if fields.any? %>
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <% fields.each do |f| %>
+                    <% fname = f["name"] %>
+                    <% fkind = f["kind"] %>
+                    <% fval = ac.payload[fname] %>
+                    <div class="<%= fkind.in?(%w[text markdown latex]) ? 'sm:col-span-2' : '' %>">
+                      <dt class="text-xs font-mono font-medium text-zinc-500 uppercase tracking-wide">
+                        <%= fname %>
+                        <span class="text-[10px] text-zinc-400 lowercase font-normal">(<%= fkind %>)</span>
+                      </dt>
+                      <dd class="mt-1 text-sm text-zinc-900 bg-zinc-50/80 rounded-lg p-2.5 border border-zinc-100 font-sans">
+                        <% if fval.present? || ac.files.attached? %>
+                          <% if fkind == 'markdown' %>
+                            <div class="prose prose-zinc prose-sm max-w-none">
+                              <%= cms_render_markdown(fval) %>
+                            </div>
+                          <% elsif fkind == 'latex' %>
+                            <div class="py-2 overflow-x-auto text-center" data-cms-latex="<%= fval %>">
+                              <span class="font-mono text-xs text-zinc-600"><%= fval %></span>
+                            </div>
+                          <% elsif fkind == 'text' %>
+                            <div class="whitespace-pre-wrap"><%= fval %></div>
+                          <% elsif fkind == 'file' && ac.files.attached? %>
+                            <div class="space-y-2">
+                              <% ac.files.each do |att| %>
+                                <div class="flex items-center gap-2.5">
+                                  <% if att.image? %>
+                                    <div class="w-10 h-10 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                                      <%= image_tag main_app.rails_blob_path(att), class: "w-full h-full object-cover" %>
+                                    </div>
+                                  <% else %>
+                                    <div class="w-8 h-8 rounded-md bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 text-zinc-500">
+                                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                                      </svg>
+                                    </div>
+                                  <% end %>
+                                  <div class="min-w-0">
+                                    <p class="text-xs font-medium font-mono text-zinc-900 truncate"><%= att.filename %></p>
+                                    <p class="text-[10px] text-zinc-400"><%= number_to_human_size(att.byte_size) %></p>
+                                  </div>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% else %>
+                            <span><%= fval %></span>
+                          <% end %>
+                        <% else %>
+                          <span class="italic text-zinc-400 text-xs">Empty</span>
+                        <% end %>
+                      </dd>
+                    </div>
+                  <% end %>
+                </dl>
+              <% else %>
+                <p class="text-xs text-zinc-500 italic">No fields defined for this content type.</p>
+              <% end %>
+            </div>
+          <% end %>
 
           <!-- Inline Edit Form -->
           <div id="edit-form-<%= ac.id %>" class="hidden p-5 border-t border-zinc-100 bg-zinc-50/30">
-            <%= form_with(model: [article, ac], multipart: true, class: "space-y-4") do |f| %>
+            <%= form_with(model: [article, ac], url: article_article_content_path(article, ac, view: (compact ? "compact" : nil)), multipart: true, class: "space-y-4") do |f| %>
               <div class="space-y-4">
                 <% fields.each do |field_def| %>
                   <% fname = field_def["name"] %>
@@ -304,7 +378,7 @@
             <% content_types.each do |ct| %>
               <% ct_fields = ct.normalized_fields %>
               <div id="new-content-type-form-<%= ct.id %>" class="new-content-type-form hidden pt-4 border-t border-zinc-100">
-                <%= form_with(url: article_article_contents_path(article), scope: :article_content, multipart: true, class: "space-y-4") do |f| %>
+                <%= form_with(url: article_article_contents_path(article, view: (compact ? "compact" : nil)), scope: :article_content, multipart: true, class: "space-y-4") do |f| %>
                   <%= f.hidden_field :content_id, value: ct.id %>
                   <%= f.hidden_field :insert_at, value: 1, class: "insert-at-field" %>
 

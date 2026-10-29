@@ -167,4 +167,30 @@ class FieldsHelperTest < ActionView::TestCase
     assert_not_includes result, "onclick"
     assert_includes result, "<p>Paragraph</p>"
   end
+
+  test "cms_strip_markdown removes markdown formatting and tags to plain text" do
+    markdown = "# Heading 1\n\nThis is **bold** text and [a link](https://example.com) with `code`."
+    result = cms_strip_markdown(markdown)
+    assert_equal "Heading 1 This is bold text and a link with code.", result
+  end
+
+  test "cms_strip_markdown handles nil and empty text" do
+    assert_equal "", cms_strip_markdown(nil)
+    assert_equal "", cms_strip_markdown("")
+    assert_equal "", cms_strip_markdown("   ")
+  end
+
+  test "cms_top_field_definition returns the first defined field in content type" do
+    content_type = Macron::Cms::Content.new(
+      name: "quote",
+      fields: [
+        { "name" => "text", "kind" => "string" },
+        { "name" => "author", "kind" => "string" }
+      ]
+    )
+    ac = Macron::Cms::ArticleContent.new(content: content_type)
+    top = cms_top_field_definition(ac)
+    assert_equal "text", top["name"]
+    assert_equal "string", top["kind"]
+  end
 end
