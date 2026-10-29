@@ -108,14 +108,37 @@
                 </td>
                 <td class="px-6 py-3.5 text-xs text-zinc-600">
                   <% if extra_keys.any? %>
-                    <dl class="flex flex-wrap gap-x-4 gap-y-1">
+                    <div class="space-y-1.5">
                       <% extra_keys.each do |k, v| %>
-                        <div class="flex items-center gap-1">
-                          <dt class="font-mono text-zinc-500"><%= k %>:</dt>
-                          <dd class="font-mono font-medium text-zinc-800"><%= v.inspect %></dd>
-                        </div>
+                        <% if k.to_s == "options" && v.is_a?(Array) %>
+                          <div class="flex items-start gap-1.5 flex-wrap">
+                            <span class="font-mono text-zinc-500 shrink-0">options:</span>
+                            <div class="flex flex-wrap gap-1">
+                              <% v.each do |opt| %>
+                                <%
+                                  opt_label = if opt.is_a?(Hash)
+                                    h = opt.stringify_keys
+                                    name_part = h["name"] || h["label"] || h["value"]
+                                    val_part = h["value"]
+                                    name_part == val_part ? name_part : "#{name_part} (#{val_part})"
+                                  else
+                                    opt.to_s
+                                  end
+                                %>
+                                <span class="inline-flex items-center rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] font-mono text-zinc-700 ring-1 ring-inset ring-zinc-200">
+                                  <%= opt_label %>
+                                </span>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% else %>
+                          <div class="flex items-center gap-1">
+                            <span class="font-mono text-zinc-500"><%= k %>:</span>
+                            <span class="font-mono font-medium text-zinc-800"><%= v.inspect %></span>
+                          </div>
+                        <% end %>
                       <% end %>
-                    </dl>
+                    </div>
                   <% else %>
                     <span class="text-zinc-600 italic">None</span>
                   <% end %>

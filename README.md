@@ -25,7 +25,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 ### 🧱 Dynamic Article Content Blocks & Payload Storage
 - **Multiple Blocks Per Article**: Associate an arbitrary series of content blocks with an article (`Macron::Cms::ArticleContent`). Add multiple blocks of the same content type (e.g. multiple headings or paragraphs) with distinct values.
 - **Dynamic Field Populating**: When adding or editing a block, input controls are automatically generated based on the content type's defined fields. Values are validated against the schema and saved into the block's `payload` JSONB column.
-- **Extensible Field Kinds**: Out-of-the-box support for `string` (text input) and `text` (multiline textarea), with a partial-based architecture (`app/views/macron/cms/fields/_<kind>.html.erb`) making it effortless to add new field types.
+- **Extensible Field Kinds**: Out-of-the-box support for `string` (text input), `text` (multiline textarea), and `dropdown` (select menu with configured options), with a partial-based architecture (`app/views/macron/cms/fields/_<kind>.html.erb`) making it effortless to add new field types.
 - **Inline Editing & Deletion**: Edit block payloads inline directly on the Article show page, or remove blocks with confirmation.
 
 ### ↕️ Drag-and-Drop & Button Reordering

@@ -8,15 +8,29 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     Rails.application.load_tasks
   end
 
+  def heading_expected_fields
+    [
+      { "name" => "title", "kind" => "string" },
+      {
+        "name" => "level",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Heading 1", "value" => "h1" },
+          { "name" => "Heading 2", "value" => "h2" },
+          { "name" => "Heading 3", "value" => "h3" },
+          { "name" => "Heading 4", "value" => "h4" },
+          { "name" => "Heading 5", "value" => "h5" },
+          { "name" => "Heading 6", "value" => "h6" }
+        ]
+      }
+    ]
+  end
+
   test "imports heading content type from yml" do
     Rake::Task["macron:cms:import_content_types"].invoke
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
-    expected_fields = [
-      { "name" => "title", "kind" => "string" },
-      { "name" => "level", "kind" => "string" }
-    ]
-    assert_equal expected_fields, heading.fields
+    assert_equal heading_expected_fields, heading.fields
   end
 
   test "import task is idempotent and updates existing records" do
@@ -30,11 +44,7 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     end
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
-    expected_fields = [
-      { "name" => "title", "kind" => "string" },
-      { "name" => "level", "kind" => "string" }
-    ]
-    assert_equal expected_fields, heading.fields
+    assert_equal heading_expected_fields, heading.fields
   end
 
   test "content:import alias runs import_content_types" do
