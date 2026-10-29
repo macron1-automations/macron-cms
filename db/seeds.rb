@@ -52,7 +52,7 @@ articles = [
 ]
 
 articles.each do |data|
-  article = Macron::Cms::Article.find_or_initialize_by(name: data[:title].parameterize)
+  article = Macron::Cms::Article.find_or_initialize_by(slug: data[:title].parameterize)
   article.title = data[:title]
   article.meta_title = data[:meta_title]
   article.meta_description = data[:meta_description]

@@ -181,7 +181,7 @@ Creates a new article or updates an existing article, atomically synchronizing i
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `upsert` | `boolean` | `false` | When `true`, searches for an existing article by `name`, `slug`, or `title`. If matched, updates the article and replaces its content blocks instead of creating a duplicate. |
+| `upsert` | `boolean` | `false` | When `true`, searches for an existing article by `slug` or `title`. If matched, updates the article and replaces its content blocks instead of creating a duplicate. |
 
 #### Request Payload Schema
 
@@ -190,7 +190,6 @@ Creates a new article or updates an existing article, atomically synchronizing i
   "upsert": false,
   "article": {
     "title": "My Article Title",
-    "name": "my-article-title",
     "slug": "custom-slug",
     "meta_title": "SEO Meta Title",
     "meta_description": "SEO Meta Description",
@@ -234,8 +233,7 @@ Creates a new article or updates an existing article, atomically synchronizing i
 ##### Field Specifications: `article`
 
 - `title` (*String, Required*): The display title of the article.
-- `name` (*String, Optional*): Unique identifier / candidate slug. If omitted, parameterized from `title` automatically.
-- `slug` (*String, Optional*): URL slug managed by FriendlyId.
+- `slug` (*String, Optional*): URL slug managed by FriendlyId. If omitted, parameterized from `title` automatically.
 - `meta_title` (*String, Optional*): HTML `<title>` and Open Graph title tag.
 - `meta_description` (*String, Optional*): SEO `<meta name="description">` tag.
 - `background_color` (*String, Optional*): CSS color / hex string for the host view background.
@@ -262,7 +260,6 @@ An array of content block objects. When `content_blocks` is passed:
   "article": {
     "id": 14,
     "title": "My Article Title",
-    "name": "my-article-title",
     "slug": "my-article-title",
     "meta_title": "SEO Meta Title",
     "meta_description": "SEO Meta Description",
@@ -377,7 +374,7 @@ Fetches article metadata, featured image information, and ordered content blocks
 
 | Parameter | Type | Description |
 |---|---|---|
-| `:id` | `string` or `integer` | Database numeric ID or FriendlyId slug / `name` (e.g. `14` or `my-article-title`). |
+| `:id` | `string` or `integer` | Database numeric ID or FriendlyId slug (e.g. `14` or `my-article-title`). |
 
 #### Request
 
@@ -394,7 +391,6 @@ Authorization: Bearer test-secret-key
   "article": {
     "id": 14,
     "title": "My Article Title",
-    "name": "my-article-title",
     "slug": "my-article-title",
     "meta_title": "SEO Meta Title",
     "meta_description": "SEO Meta Description",
@@ -451,7 +447,7 @@ Updates an existing article's metadata and optionally replaces its content block
 
 | Parameter | Type | Description |
 |---|---|---|
-| `:id` | `string` or `integer` | Database numeric ID or FriendlyId slug / `name`. |
+| `:id` | `string` or `integer` | Database numeric ID or FriendlyId slug. |
 
 #### Request Payload Schema
 

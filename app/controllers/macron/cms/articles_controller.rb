@@ -56,7 +56,7 @@ module Macron
       def article_params
         params.require(:article).permit(
           :title,
-          :name,
+          :slug,
           :meta_title,
           :meta_description,
           :background_color,

@@ -11,13 +11,21 @@ module Macron
       DEFAULT_BACKGROUND_POSITION = "center"
       DEFAULT_BACKGROUND_ATTACHMENT = "scroll"
 
-      before_validation :derive_name_from_title
+      before_validation :normalize_slug
 
       extend FriendlyId
-      friendly_id :name, use: :slugged
+      friendly_id :slug_candidate, use: %i[slugged history]
 
       validates :title, presence: true
-      validates :name, presence: true, uniqueness: true
+      validates :slug, presence: true, uniqueness: true
+
+      def should_generate_new_friendly_id?
+        slug_changed? || super
+      end
+
+      def slug_candidate
+        slug.presence || title
+      end
 
       has_many :article_contents, -> { order(:sort_order) }, class_name: "Macron::Cms::ArticleContent", dependent: :destroy
       has_many :contents, through: :article_contents
@@ -80,20 +88,8 @@ module Macron
 
       private
 
-      def derive_name_from_title
-        return if name.present? || title.blank?
-
-        base = title.parameterize.presence || "article"
-        candidate = base
-        scope = id.present? ? self.class.where.not(id: id) : self.class.all
-
-        counter = 1
-        while scope.exists?(name: candidate)
-          counter += 1
-          candidate = "#{base}-#{counter}"
-        end
-
-        self.name = candidate
+      def normalize_slug
+        self.slug = slug.to_s.parameterize.presence
       end
     end
   end

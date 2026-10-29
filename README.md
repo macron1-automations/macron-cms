@@ -811,7 +811,7 @@ curl -X POST http://localhost:3000/cms/api/v1/articles \
     "upsert": true,
     "article": {
       "title": "The Myth of Your Limitations",
-      "name": "the-myth-of-your-limitations",
+      "slug": "the-myth-of-your-limitations",
       "meta_title": "The Myth of Your Limitations | Mindset Guide",
       "meta_description": "How a simple mindset shift can prove you wrong.",
       "background_color": "#ffffff",
@@ -844,7 +844,7 @@ curl -X POST http://localhost:3000/cms/api/v1/articles \
 When an `image_url` (or `upload_url`) is provided in a content block, MacronCMS automatically downloads the asset from the remote source (e.g. Substack CDN), verifies content size and type, and attaches it as an Active Storage blob on the content block. If the remote server is unreachable, it gracefully falls back to storing the direct URL in the block payload.
 
 #### Idempotent Upserting
-When `"upsert": true` is specified, the API searches for an existing article matching `name`, `slug`, or `title`. If found, it updates the article attributes and atomically replaces its content blocks with the incoming sequence, making bulk migrations safe to re-run.
+When `"upsert": true` is specified, the API searches for an existing article matching `slug` or `title`. If found, it updates the article attributes and atomically replaces its content blocks with the incoming sequence, making bulk migrations safe to re-run.
 
 ---
 

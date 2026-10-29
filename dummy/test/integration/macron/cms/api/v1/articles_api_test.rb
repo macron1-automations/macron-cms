@@ -58,7 +58,7 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
 
     json = JSON.parse(response.body)
     assert_equal "Test Import Article", json["article"]["title"]
-    assert_equal "test-import-article", json["article"]["name"]
+    assert_equal "test-import-article", json["article"]["slug"]
     assert_equal 2, json["content_blocks"].size
     assert_equal "heading", json["content_blocks"][0]["content_type"]
     assert_equal "Introduction", json["content_blocks"][0]["payload"]["title"]
@@ -66,14 +66,14 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "POST /cms/api/v1/articles with upsert: true updates existing article and replaces blocks" do
-    article = Macron::Cms::Article.create!(title: "Existing Title", name: "existing-slug")
+    article = Macron::Cms::Article.create!(title: "Existing Title", slug: "existing-slug")
     heading_type = Macron::Cms::Content.find_by!(name: "heading")
     article.article_contents.create!(content: heading_type, payload: { "title" => "Old Heading" })
 
     payload = {
       upsert: true,
       article: {
-        name: "existing-slug",
+        slug: "existing-slug",
         title: "Updated Title",
         meta_description: "Updated Meta"
       },
@@ -133,7 +133,7 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "GET /cms/api/v1/articles/:id returns article and its blocks" do
-    article = Macron::Cms::Article.create!(title: "Retrieve Me", name: "retrieve-me")
+    article = Macron::Cms::Article.create!(title: "Retrieve Me")
     get "/cms/api/v1/articles/#{article.slug}", headers: @auth_headers
     assert_response :success
 
@@ -143,7 +143,7 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
   end
 
   test "GET /cms/api/v1/articles/:id returns article with featured_image metadata when attached" do
-    article = Macron::Cms::Article.create!(title: "Featured Article", name: "featured-article-api")
+    article = Macron::Cms::Article.create!(title: "Featured Article")
     image_type = Macron::Cms::Content.find_by!(name: "image")
     image_type.update!(featured_image: true)
 

@@ -8,9 +8,9 @@ class SeedsTest < ActiveSupport::TestCase
 
     assert_equal 10, Macron::Cms::Article.count
     Macron::Cms::Article.find_each do |article|
-      assert_predicate article.title, :present?, "Article #{article.name} is missing title"
-      assert_predicate article.meta_title, :present?, "Article #{article.name} is missing meta_title"
-      assert_predicate article.meta_description, :present?, "Article #{article.name} is missing meta_description"
+      assert_predicate article.title, :present?, "Article #{article.slug} is missing title"
+      assert_predicate article.meta_title, :present?, "Article #{article.slug} is missing meta_title"
+      assert_predicate article.meta_description, :present?, "Article #{article.slug} is missing meta_description"
     end
   end
 

@@ -2,7 +2,7 @@ require "test_helper"
 
 class ArticleTest < ActiveSupport::TestCase
   test "requires title" do
-    article = Macron::Cms::Article.new(name: "unique-title-test")
+    article = Macron::Cms::Article.new
     assert_not article.valid?
     assert_includes article.errors[:title], "can't be blank"
 
@@ -10,56 +10,48 @@ class ArticleTest < ActiveSupport::TestCase
     assert article.valid?
   end
 
-  test "derives name from title when name is not provided" do
+  test "derives slug from title when slug is not provided" do
     article = Macron::Cms::Article.create!(title: "My Brand New Article!")
-    assert_equal "my-brand-new-article", article.name
     assert_equal "my-brand-new-article", article.slug
   end
 
-  test "auto-resolves duplicate derived names with numeric suffix" do
+  test "auto-resolves duplicate derived slugs" do
     first = Macron::Cms::Article.create!(title: "Duplicate Title")
-    assert_equal "duplicate-title", first.name
+    assert_equal "duplicate-title", first.slug
 
     second = Macron::Cms::Article.create!(title: "Duplicate Title")
-    assert_equal "duplicate-title-2", second.name
-
-    third = Macron::Cms::Article.create!(title: "Duplicate Title")
-    assert_equal "duplicate-title-3", third.name
+    assert_match(/\Aduplicate-title-/, second.slug)
+    assert_not_equal first.slug, second.slug
   end
 
-  test "preserves explicitly provided custom name" do
-    article = Macron::Cms::Article.create!(title: "Some Title", name: "custom-identifier")
-    assert_equal "custom-identifier", article.name
+  test "preserves explicitly provided custom slug" do
+    article = Macron::Cms::Article.create!(title: "Some Title", slug: "custom-identifier")
+    assert_equal "custom-identifier", article.slug
   end
 
-  test "preserves existing name on update unless explicitly cleared" do
-    article = Macron::Cms::Article.create!(title: "Original Title", name: "original-name")
+  test "preserves existing slug on update unless explicitly cleared" do
+    article = Macron::Cms::Article.create!(title: "Original Title", slug: "original-slug")
     article.update!(title: "Updated Title")
-    assert_equal "original-name", article.name
+    assert_equal "original-slug", article.slug
 
-    article.update!(name: "")
-    assert_equal "updated-title", article.name
+    article.update!(slug: "")
+    assert_equal "updated-title", article.slug
   end
 
-  test "requires title when name is also blank" do
-    article = Macron::Cms::Article.new
-    assert_not article.valid?
-    assert_includes article.errors[:title], "can't be blank"
+  test "auto-resolves duplicate custom slugs" do
+    first = Macron::Cms::Article.create!(title: "Article 1", slug: "duplicate-slug")
+    second = Macron::Cms::Article.create!(title: "Article 2", slug: "duplicate-slug")
+
+    assert_equal "duplicate-slug", first.slug
+    assert_match(/\Aduplicate-slug-/, second.slug)
+    assert_not_equal first.slug, second.slug
   end
 
-  test "enforces unique name" do
-    Macron::Cms::Article.create!(title: "Article 1", name: "duplicate-name")
-    duplicate = Macron::Cms::Article.new(title: "Article 2", name: "duplicate-name")
+  test "finds via friendly id" do
+    article = Macron::Cms::Article.create!(title: "Getting Started with Rails")
+    assert_equal "getting-started-with-rails", article.slug
 
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:name], "has already been taken"
-  end
-
-  test "generates slug from name and finds via friendly id" do
-    article = Macron::Cms::Article.create!(title: "Getting Started with Rails", name: "getting-started-rails")
-    assert_equal "getting-started-rails", article.slug
-
-    found = Macron::Cms::Article.friendly.find("getting-started-rails")
+    found = Macron::Cms::Article.friendly.find("getting-started-with-rails")
     assert_equal article.id, found.id
   end
 
@@ -109,7 +101,7 @@ class ArticleTest < ActiveSupport::TestCase
   end
 
   test "featured_image delegates to featured_image_blob" do
-    article = Macron::Cms::Article.create!(title: "Featured Image Test", name: "featured-image-test")
+    article = Macron::Cms::Article.create!(title: "Featured Image Test")
     assert_nil article.featured_image
     assert_nil article.featured_image_blob
 
@@ -122,5 +114,25 @@ class ArticleTest < ActiveSupport::TestCase
 
     assert_equal blob, article.reload.featured_image
     assert_equal blob, article.featured_image_blob
+  end
+
+  test "slug update records history in friendly_id_slugs" do
+    article = Macron::Cms::Article.create!(title: "Independent Test", slug: "initial-slug")
+    article.update!(slug: "updated-slug")
+
+    assert_equal "updated-slug", article.slug
+    assert article.slugs.where(slug: "initial-slug").exists?
+  end
+
+  test "slug is automatically parameterized on assignment" do
+    article = Macron::Cms::Article.create!(title: "Formatting Test", slug: "Custom Slug With Spaces & Special #1!")
+    assert_equal "custom-slug-with-spaces-special-1", article.slug
+  end
+
+  test "clearing slug re-derives slug from title" do
+    article = Macron::Cms::Article.create!(title: "Auto Regeneration Test", slug: "custom-temporary-slug")
+    article.update!(slug: "")
+
+    assert_equal "auto-regeneration-test", article.slug
   end
 end

@@ -2,7 +2,7 @@ require "test_helper"
 
 class PagesControllerTest < ActionDispatch::IntegrationTest
   test "should get index and list articles" do
-    article = Macron::Cms::Article.create!(title: "Test Article", name: "test-article")
+    article = Macron::Cms::Article.create!(title: "Test Article")
 
     get root_url
     assert_response :success
@@ -14,7 +14,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
   test "paginates articles using configured ARTICLES_PER_PAGE" do
     Macron::Cms::Article.delete_all
     7.times do |i|
-      Macron::Cms::Article.create!(title: "Article #{i + 1}", name: "article-#{i + 1}")
+      Macron::Cms::Article.create!(title: "Article #{i + 1}")
     end
 
     # Page 1
@@ -38,12 +38,12 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     end
     image_type.update!(featured_image: true)
 
-    article_with_img = Macron::Cms::Article.create!(title: "With Image", name: "with-image")
+    article_with_img = Macron::Cms::Article.create!(title: "With Image")
     block = article_with_img.article_contents.create!(content: image_type, sort_order: 1)
     file = Rack::Test::UploadedFile.new(StringIO.new("img-data"), "image/png", original_filename: "thumb.png")
     block.files.attach(file)
 
-    article_without_img = Macron::Cms::Article.create!(title: "Without Image", name: "without-image")
+    article_without_img = Macron::Cms::Article.create!(title: "Without Image")
 
     get root_url
     assert_response :success

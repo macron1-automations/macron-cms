@@ -21,7 +21,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can view articles index and sees layout elements" do
-    Macron::Cms::Article.create!(title: "Getting Started", name: "getting-started")
+    Macron::Cms::Article.create!(title: "Getting Started")
     sign_in @admin
     get "/cms/articles"
     assert_response :success
@@ -52,14 +52,14 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
       post "/cms/articles", params: {
         article: {
           title: "Tailwind CMS Guide",
-          name: "tailwind-cms-guide",
+          slug: "tailwind-cms-guide",
           meta_title: "Guide to Tailwind CMS",
           meta_description: "Learn how to use Tailwind with Macron CMS."
         }
       }
     end
 
-    article = Macron::Cms::Article.find_by(name: "tailwind-cms-guide")
+    article = Macron::Cms::Article.find_by(slug: "tailwind-cms-guide")
     assert_not_nil article
     assert_equal "tailwind-cms-guide", article.slug
     assert_equal "Guide to Tailwind CMS", article.meta_title
@@ -75,18 +75,18 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     sign_in @admin
     get "/cms/articles/new"
     assert_response :success
-    assert_select "input[name='article[name]']:not([required])"
+    assert_select "input[name='article[slug]']:not([required])"
 
     assert_difference("Macron::Cms::Article.count", 1) do
       post "/cms/articles", params: {
         article: {
           title: "Auto Slug Generated Guide",
-          name: ""
+          slug: ""
         }
       }
     end
 
-    article = Macron::Cms::Article.find_by(name: "auto-slug-generated-guide")
+    article = Macron::Cms::Article.find_by(slug: "auto-slug-generated-guide")
     assert_not_nil article
     assert_equal "auto-slug-generated-guide", article.slug
     assert_redirected_to "/cms/articles/#{article.slug}"
@@ -94,7 +94,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can edit and update an article" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Original Title", name: "original-name")
+    article = Macron::Cms::Article.create!(title: "Original Title")
 
     get "/cms/articles/#{article.slug}/edit"
     assert_response :success
@@ -119,7 +119,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can delete an article" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "To Be Deleted", name: "to-be-deleted")
+    article = Macron::Cms::Article.create!(title: "To Be Deleted")
 
     assert_difference("Macron::Cms::Article.count", -1) do
       delete "/cms/articles/#{article.slug}"
@@ -132,7 +132,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "delete buttons in table and show view include confirmation dialog with article title" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: 'Special "Guide" Article', name: "special-guide-article")
+    article = Macron::Cms::Article.create!(title: 'Special "Guide" Article')
     expected_confirm = %(Are you sure you want to delete "Special "Guide" Article"?)
 
     # Table view on articles index
@@ -161,7 +161,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
   test "dashboard displays correct article count and links" do
     sign_in @admin
     Macron::Cms::Article.delete_all
-    article = Macron::Cms::Article.create!(title: "Dashboard Showcase", name: "dashboard-showcase")
+    article = Macron::Cms::Article.create!(title: "Dashboard Showcase")
 
     get "/cms"
     assert_response :success
@@ -201,7 +201,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "article show view displays header breadcrumb with links and stretches full width" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Breadcrumb Test Article", name: "breadcrumb-test-article")
+    article = Macron::Cms::Article.create!(title: "Breadcrumb Test Article")
 
     get "/cms/articles/#{article.slug}"
     assert_response :success
@@ -230,7 +230,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "article new and edit views display header breadcrumbs and no duplicate in-page breadcrumbs" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Edit Breadcrumb Article", name: "edit-breadcrumb-article")
+    article = Macron::Cms::Article.create!(title: "Edit Breadcrumb Article")
 
     # New view
     get "/cms/articles/new"
@@ -256,7 +256,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can add a content block to an article and dynamic fields are populated into payload" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Block Showcase", name: "block-showcase")
+    article = Macron::Cms::Article.create!(title: "Block Showcase")
     content_type = Macron::Cms::Content.create!(
       name: "heading",
       fields: [
@@ -305,7 +305,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin article show renders dropdown field for content types with dropdown kind" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Dropdown Article", name: "dropdown-article")
+    article = Macron::Cms::Article.create!(title: "Dropdown Article")
     heading_type = Macron::Cms::Content.create!(
       name: "heading-dropdown",
       fields: [
@@ -345,7 +345,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can edit and update a content block payload inline" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Editable Article", name: "editable-article")
+    article = Macron::Cms::Article.create!(title: "Editable Article")
     content_type = Macron::Cms::Content.create!(
       name: "paragraph",
       fields: [ { "name" => "content", "kind" => "text" } ]
@@ -372,7 +372,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can delete a content block from an article and remaining blocks renormalize sort_order" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Deletable Article", name: "deletable-article")
+    article = Macron::Cms::Article.create!(title: "Deletable Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1)
@@ -393,7 +393,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can move content blocks up and down" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Movable Article", name: "movable-article")
+    article = Macron::Cms::Article.create!(title: "Movable Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "One" })
@@ -416,7 +416,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "reorder endpoint persists drag-and-drop order via JSON" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Drag Drop Article", name: "drag-drop-article")
+    article = Macron::Cms::Article.create!(title: "Drag Drop Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1)
@@ -437,7 +437,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin sees in-place '+' block inserters above, between, and below content blocks" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Inserter UI Article", name: "inserter-ui-article")
+    article = Macron::Cms::Article.create!(title: "Inserter UI Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
@@ -471,7 +471,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin sees add first block button on empty article state" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Empty Inserter Article", name: "empty-inserter-article")
+    article = Macron::Cms::Article.create!(title: "Empty Inserter Article")
 
     get "/cms/articles/#{article.slug}"
     assert_response :success
@@ -482,7 +482,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can insert a content block at position 1 (above existing blocks) and existing blocks shift down" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Insert Top Article", name: "insert-top-article")
+    article = Macron::Cms::Article.create!(title: "Insert Top Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     existing1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Original First" })
@@ -516,7 +516,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can insert a content block between existing blocks and subsequent blocks shift down" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Insert Middle Article", name: "insert-middle-article")
+    article = Macron::Cms::Article.create!(title: "Insert Middle Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
@@ -548,7 +548,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can insert a content block at the bottom position" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Insert Bottom Article", name: "insert-bottom-article")
+    article = Macron::Cms::Article.create!(title: "Insert Bottom Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
@@ -580,7 +580,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "cms layout includes turbo_include_tags via Propshaft" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Turbo Asset Article", name: "turbo-asset-article")
+    article = Macron::Cms::Article.create!(title: "Turbo Asset Article")
 
     get "/cms/articles/#{article.slug}"
     assert_response :success
@@ -590,7 +590,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can add a content block inline via Turbo Stream without full page reload" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Turbo Add Article", name: "turbo-add-article")
+    article = Macron::Cms::Article.create!(title: "Turbo Add Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     assert_difference -> { article.article_contents.count }, 1 do
@@ -620,7 +620,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can move a content block inline via Turbo Stream" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Turbo Move Article", name: "turbo-move-article")
+    article = Macron::Cms::Article.create!(title: "Turbo Move Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "First" })
@@ -641,7 +641,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can delete a content block inline via Turbo Stream" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Turbo Delete Article", name: "turbo-delete-article")
+    article = Macron::Cms::Article.create!(title: "Turbo Delete Article")
     ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
 
     block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "Block 1" })
@@ -660,7 +660,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can add an image content block with file attachment" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Image Block Article", name: "image-block-article")
+    article = Macron::Cms::Article.create!(title: "Image Block Article")
     image_type = Macron::Cms::Content.create!(
       name: "image",
       fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
@@ -696,7 +696,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can add an embed content block with html file attachment" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Embed Block Article", name: "embed-block-article")
+    article = Macron::Cms::Article.create!(title: "Embed Block Article")
     embed_type = Macron::Cms::Content.create!(
       name: "embed",
       fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
@@ -732,7 +732,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can update an image block by replacing the attached file" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Replace Image Article", name: "replace-image-article")
+    article = Macron::Cms::Article.create!(title: "Replace Image Article")
     image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
     block = Macron::Cms::ArticleContent.create!(article: article, content: image_type, payload: { "upload" => "old.png" })
     old_file = Rack::Test::UploadedFile.new(StringIO.new("old"), "image/png", original_filename: "old.png")
@@ -835,7 +835,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     markdown_type = Macron::Cms::Content.find_or_create_by!(name: "markdown") do |c|
       c.fields = [ { "name" => "content", "kind" => "markdown" } ]
     end
-    article = Macron::Cms::Article.create!(title: "Markdown Showcase", name: "markdown-showcase")
+    article = Macron::Cms::Article.create!(title: "Markdown Showcase")
     sign_in @admin
 
     # Add markdown block
@@ -877,7 +877,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     latex_type = Macron::Cms::Content.find_or_create_by!(name: "latex") do |c|
       c.fields = [ { "name" => "content", "kind" => "latex" } ]
     end
-    article = Macron::Cms::Article.create!(title: "LaTeX Showcase", name: "latex-showcase")
+    article = Macron::Cms::Article.create!(title: "LaTeX Showcase")
     sign_in @admin
 
     # Add latex block
@@ -930,7 +930,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can remove existing file attachment from content block" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Remove File Article", name: "remove-file-article")
+    article = Macron::Cms::Article.create!(title: "Remove File Article")
     image_type = Macron::Cms::Content.find_or_create_by!(name: "image") do |c|
       c.fields = [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
     end
@@ -975,7 +975,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can view article with compact block view toggle" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Compact View Article", name: "compact-view-article")
+    article = Macron::Cms::Article.create!(title: "Compact View Article")
     quote_type = Macron::Cms::Content.find_or_create_by!(name: "three_js_quote") do |c|
       c.fields = [
         { "name" => "text", "kind" => "string" },
@@ -1034,7 +1034,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "reorder multiple blocks persists multi-drag order via JSON" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Multi Drag Article", name: "multi-drag-article")
+    article = Macron::Cms::Article.create!(title: "Multi Drag Article")
     heading_type = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
       c.fields = [ { "name" => "title", "kind" => "string" } ]
     end
@@ -1061,7 +1061,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "move action preserves view=compact parameter on redirect" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Move Compact Article", name: "move-compact-article")
+    article = Macron::Cms::Article.create!(title: "Move Compact Article")
     heading_type = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
       c.fields = [ { "name" => "title", "kind" => "string" } ]
     end
@@ -1075,7 +1075,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin sees Convert dropdown only on convertible blocks in expanded and compact views" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Convert UI Article", name: "convert-ui-article")
+    article = Macron::Cms::Article.create!(title: "Convert UI Article")
     heading_type = Macron::Cms::Content.create!(
       name: "heading",
       fields: [ { "name" => "title", "kind" => "string" } ],
@@ -1115,7 +1115,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "admin can convert image block to three_js_image and back via Turbo Stream preserving attachment and dormant payload keys" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Turbo Convert Article", name: "turbo-convert-article")
+    article = Macron::Cms::Article.create!(title: "Turbo Convert Article")
     image_type = Macron::Cms::Content.create!(
       name: "image",
       fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
@@ -1193,7 +1193,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
   test "convert endpoint rejects disallowed target content type" do
     sign_in @admin
-    article = Macron::Cms::Article.create!(title: "Invalid Convert Article", name: "invalid-convert-article")
+    article = Macron::Cms::Article.create!(title: "Invalid Convert Article")
     image_type = Macron::Cms::Content.create!(name: "image", fields: [], convertible_to: [ "three_js_image" ])
     heading_type = Macron::Cms::Content.create!(name: "heading", fields: [])
     block = Macron::Cms::ArticleContent.create!(article: article, content: image_type)
