@@ -60,6 +60,7 @@ module Macron
           :meta_title,
           :meta_description,
           :background_color,
+          :text_color,
           :background_image,
           background_options: %i[repeat size position attachment]
         )

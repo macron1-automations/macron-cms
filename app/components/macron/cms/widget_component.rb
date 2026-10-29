@@ -39,6 +39,10 @@ module Macron
         @payload[name.to_s]
       end
 
+      def article_text_color
+        @article_content&.article&.text_color.presence
+      end
+
       def defined_field_names
         @fields.filter_map { |f| f["name"] if f.is_a?(Hash) }
       end

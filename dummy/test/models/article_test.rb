@@ -102,4 +102,9 @@ class ArticleTest < ActiveSupport::TestCase
     assert_equal "center", article.background_position
     assert_equal "scroll", article.background_attachment
   end
+
+  test "supports text_color" do
+    article = Macron::Cms::Article.create!(title: "Text Color Test", text_color: "#f8fafc")
+    assert_equal "#f8fafc", article.text_color
+  end
 end

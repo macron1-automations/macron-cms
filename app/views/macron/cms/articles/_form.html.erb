@@ -37,34 +37,62 @@
 
   <div class="pt-6 border-t border-zinc-200 space-y-4">
     <div>
-      <h3 class="text-sm font-semibold text-zinc-900">Background Settings</h3>
-      <p class="text-xs text-zinc-500">Configure page background color, background image, and display options.</p>
+      <h3 class="text-sm font-semibold text-zinc-900">Styling & Background Settings</h3>
+      <p class="text-xs text-zinc-500">Configure page background color, background image, text color, and display options.</p>
     </div>
 
-    <!-- Background Color -->
-    <div class="space-y-1.5">
-      <%= form.label :background_color, "Background Color", class: "block text-sm font-medium text-zinc-700" %>
-      <%= form.hidden_field :background_color, id: "article_background_color" %>
-      <div class="flex items-center gap-3">
-        <input
-          type="color"
-          id="article_background_color_picker"
-          value="<%= article.background_color.presence || "#ffffff" %>"
-          class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-          oninput="document.getElementById('article_background_color').value = this.value; document.getElementById('article_background_color_label').textContent = this.value;"
-        />
-        <span id="article_background_color_label" class="text-xs font-mono text-zinc-600">
-          <%= article.background_color.presence || "Default (transparent / theme)" %>
-        </span>
-        <button
-          type="button"
-          class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
-          onclick="document.getElementById('article_background_color').value = ''; document.getElementById('article_background_color_label').textContent = 'Default (transparent / theme)';"
-        >
-          Reset to default
-        </button>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Background Color -->
+      <div class="space-y-1.5">
+        <%= form.label :background_color, "Background Color", class: "block text-sm font-medium text-zinc-700" %>
+        <%= form.hidden_field :background_color, id: "article_background_color" %>
+        <div class="flex items-center gap-3">
+          <input
+            type="color"
+            id="article_background_color_picker"
+            value="<%= article.background_color.presence || "#ffffff" %>"
+            class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            oninput="document.getElementById('article_background_color').value = this.value; document.getElementById('article_background_color_label').textContent = this.value;"
+          />
+          <span id="article_background_color_label" class="text-xs font-mono text-zinc-600">
+            <%= article.background_color.presence || "Default (transparent / theme)" %>
+          </span>
+          <button
+            type="button"
+            class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
+            onclick="document.getElementById('article_background_color').value = ''; document.getElementById('article_background_color_label').textContent = 'Default (transparent / theme)';"
+          >
+            Reset
+          </button>
+        </div>
+        <p class="text-xs text-zinc-500">Optional hex color for the page background.</p>
       </div>
-      <p class="text-xs text-zinc-500">Optional hex color for the page background.</p>
+
+      <!-- Text Color -->
+      <div class="space-y-1.5">
+        <%= form.label :text_color, "Text Color", class: "block text-sm font-medium text-zinc-700" %>
+        <%= form.hidden_field :text_color, id: "article_text_color" %>
+        <div class="flex items-center gap-3">
+          <input
+            type="color"
+            id="article_text_color_picker"
+            value="<%= article.text_color.presence || "#000000" %>"
+            class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            oninput="document.getElementById('article_text_color').value = this.value; document.getElementById('article_text_color_label').textContent = this.value;"
+          />
+          <span id="article_text_color_label" class="text-xs font-mono text-zinc-600">
+            <%= article.text_color.presence || "Default (theme color)" %>
+          </span>
+          <button
+            type="button"
+            class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
+            onclick="document.getElementById('article_text_color').value = ''; document.getElementById('article_text_color_label').textContent = 'Default (theme color)';"
+          >
+            Reset
+          </button>
+        </div>
+        <p class="text-xs text-zinc-500">Optional text color applied to widgets across this article.</p>
+      </div>
     </div>
 
     <!-- Background Image -->

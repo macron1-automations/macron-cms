@@ -36,6 +36,10 @@ module Macron
           styles << "background-color: #{article.background_color};"
         end
 
+        if article.respond_to?(:text_color) && article.text_color.present?
+          styles << "color: #{article.text_color};"
+        end
+
         if article.respond_to?(:background_image) && article.background_image.attached?
           image_path = if respond_to?(:rails_blob_path)
                          rails_blob_path(article.background_image, only_path: true)

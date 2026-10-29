@@ -64,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
     t.text "meta_description"
     t.string "background_color"
     t.jsonb "background_options", default: {}, null: false
+    t.string "text_color"
     t.index ["name"], name: "index_macron_cms_articles_on_name", unique: true
     t.index ["slug"], name: "index_macron_cms_articles_on_slug", unique: true
   end

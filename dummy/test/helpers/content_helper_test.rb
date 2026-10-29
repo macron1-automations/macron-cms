@@ -119,4 +119,15 @@ class ContentHelperTest < ActionView::TestCase
     assert_includes style, "background-position: top;"
     assert_includes style, "background-attachment: fixed;"
   end
+
+  test "cms_article_background_style includes text color when set" do
+    article = Macron::Cms::Article.create!(
+      title: "Text Styled Article",
+      name: "text-styled-article",
+      text_color: "#e2e8f0"
+    )
+
+    style = cms_article_background_style(article)
+    assert_includes style, "color: #e2e8f0;"
+  end
 end
