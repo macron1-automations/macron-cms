@@ -23,6 +23,7 @@
             <tr>
               <th scope="col" class="px-6 py-3.5">Name</th>
               <th scope="col" class="px-6 py-3.5">Fields Summary</th>
+              <th scope="col" class="px-6 py-3.5">Convertible To</th>
               <th scope="col" class="px-6 py-3.5">Created At</th>
               <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
             </tr>
@@ -56,6 +57,25 @@
                     </div>
                   <% else %>
                     <span class="text-zinc-600 italic">No fields defined</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 text-zinc-600 text-xs">
+                  <% convertible_names = content_type.normalized_convertible_to %>
+                  <% if convertible_names.any? %>
+                    <div class="flex flex-wrap gap-1.5">
+                      <% convertible_names.each do |target_name| %>
+                        <% target_ct = (@content_types_by_name || {})[target_name] %>
+                        <% if target_ct %>
+                          <%= link_to target_name, content_type_path(target_ct), class: "inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-100 transition-colors" %>
+                        <% else %>
+                          <span class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 font-mono text-[11px] text-zinc-700 ring-1 ring-inset ring-zinc-200">
+                            <%= target_name %>
+                          </span>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-zinc-400">—</span>
                   <% end %>
                 </td>
                 <td class="px-6 py-4 text-zinc-500 text-xs whitespace-nowrap">

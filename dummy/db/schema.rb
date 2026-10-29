@@ -74,6 +74,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
     t.jsonb "fields", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "convertible_to", default: [], null: false
     t.index [ "name" ], name: "index_macron_cms_contents_on_name", unique: true
   end
 

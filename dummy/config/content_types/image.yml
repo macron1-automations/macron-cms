@@ -1,3 +1,5 @@
+convertible_to:
+  - 'three_js_image'
 fields:
   - name: 'upload'
     kind: 'file'

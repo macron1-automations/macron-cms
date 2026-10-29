@@ -127,4 +127,67 @@ class ArticleContentTest < ActiveSupport::TestCase
     filtered = article_content.filter_payload({ "upload" => uploaded })
     assert_equal({ "upload" => "widget.html" }, filtered)
   end
+
+  test "convert_to converts block in place preserving attached files, sort_order, and all payload keys across round-trip" do
+    article = Macron::Cms::Article.create!(title: "Convert Article", name: "convert-article")
+    image_type = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ],
+      convertible_to: [ "three_js_image" ]
+    )
+    three_js_type = Macron::Cms::Content.create!(
+      name: "three_js_image",
+      fields: [
+        { "name" => "upload", "kind" => "file" },
+        { "name" => "size", "kind" => "dropdown" },
+        { "name" => "effect", "kind" => "dropdown" }
+      ],
+      convertible_to: [ "image" ]
+    )
+
+    block = Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: image_type,
+      sort_order: 2,
+      payload: { "upload" => "hero.png", "size" => "lg" }
+    )
+    uploaded = Rack::Test::UploadedFile.new(StringIO.new("png-bytes"), "image/png", original_filename: "hero.png")
+    block.files.attach(uploaded)
+    original_blob_id = block.upload.blob_id
+
+    assert block.convert_to(three_js_type)
+    block.reload
+    assert_equal three_js_type, block.content
+    assert_equal 2, block.sort_order
+    assert block.files.attached?
+    assert_equal original_blob_id, block.upload.blob_id
+    assert_equal({ "upload" => "hero.png", "size" => "lg" }, block.payload)
+
+    # Set a three_js_image-specific field, convert back to image, then back to three_js_image
+    block.update!(payload: block.payload.merge("effect" => "glitch"))
+    assert block.convert_to(image_type)
+    block.reload
+    assert_equal image_type, block.content
+    assert_equal original_blob_id, block.upload.blob_id
+    assert_equal "glitch", block.payload["effect"]
+    assert_equal "lg", block.payload["size"]
+
+    assert block.convert_to(three_js_type)
+    block.reload
+    assert_equal three_js_type, block.content
+    assert_equal "glitch", block.payload["effect"]
+    assert_equal original_blob_id, block.upload.blob_id
+  end
+
+  test "convert_to rejects non-convertible target content type" do
+    article = Macron::Cms::Article.create!(title: "Reject Convert", name: "reject-convert")
+    image_type = Macron::Cms::Content.create!(name: "image", fields: [], convertible_to: [ "three_js_image" ])
+    heading_type = Macron::Cms::Content.create!(name: "heading", fields: [])
+
+    block = Macron::Cms::ArticleContent.create!(article: article, content: image_type)
+
+    assert_not block.convert_to(heading_type)
+    assert_includes block.errors[:base].join, "Cannot convert image block to heading"
+    assert_equal image_type, block.reload.content
+  end
 end

@@ -49,6 +49,21 @@ module Macron
         end
       end
 
+      def convert_to(target_content)
+        unless target_content.is_a?(Content) && content&.convertible_to?(target_content)
+          errors.add(:base, "Cannot convert #{content&.name || 'unknown'} block to #{target_content&.name || 'unknown'}")
+          return false
+        end
+
+        updated_payload = (payload || {}).deep_dup
+        if files.attached? && updated_payload["upload"].blank? &&
+           target_content.normalized_fields.any? { |f| f["name"] == "upload" && f["kind"] == "file" }
+          updated_payload["upload"] = upload.filename.to_s
+        end
+
+        update(content: target_content, payload: updated_payload)
+      end
+
       private
 
       def assign_default_sort_order

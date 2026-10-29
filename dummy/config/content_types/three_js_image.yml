@@ -1,3 +1,5 @@
+convertible_to:
+  - 'image'
 fields:
   - name: 'upload'
     kind: 'file'

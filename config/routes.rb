@@ -7,6 +7,7 @@ Macron::Cms::Engine.routes.draw do
     resources :article_contents, only: %i[create update destroy] do
       member do
         patch :move
+        patch :convert
       end
       collection do
         patch :reorder

@@ -86,6 +86,7 @@
       <% article_contents.each_with_index do |ac, index| %>
         <% content_type = ac.content %>
         <% fields = content_type ? content_type.normalized_fields : [] %>
+        <% convertible_targets = content_type ? content_type.convertible_targets(content_types) : [] %>
         <% is_new = (ac.id == newly_added_id) %>
         <% is_updated = (ac.id == updated_id) %>
         <div
@@ -136,6 +137,49 @@
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
+              <% end %>
+
+              <% if convertible_targets.any? %>
+                <!-- Convert Dropdown -->
+                <div class="relative convert-dropdown-container" id="convert-dropdown-<%= ac.id %>">
+                  <button
+                    type="button"
+                    onclick="toggleConvertMenu(<%= ac.id %>, event);"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="convert-menu-<%= ac.id %>"
+                    class="convert-menu-trigger inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                    Convert
+                    <svg class="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
+
+                  <div
+                    id="convert-menu-<%= ac.id %>"
+                    role="menu"
+                    class="convert-dropdown-menu hidden absolute right-0 z-20 mt-1.5 min-w-44 origin-top-right rounded-lg border border-zinc-200 bg-white py-1 shadow-lg ring-1 ring-zinc-900/5"
+                  >
+                    <div class="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                      Convert to
+                    </div>
+                    <% convertible_targets.each do |target_ct| %>
+                      <%= button_to convert_article_article_content_path(article, ac, target_content_id: target_ct.id, view: (compact ? "compact" : nil)),
+                                    method: :patch,
+                                    form: { class: "block w-full" },
+                                    class: "w-full text-left px-3 py-1.5 text-xs font-mono font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 flex items-center justify-between gap-2 transition-colors cursor-pointer" do %>
+                        <span><%= target_ct.name %></span>
+                        <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                        </svg>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
               <% end %>
 
               <!-- Edit Toggle Button -->
@@ -527,10 +571,55 @@
     window.activeInsertPosition = null;
   };
 
+  window.closeAllConvertMenus = function(exceptId) {
+    document.querySelectorAll('.convert-dropdown-menu').forEach(function(menu) {
+      if (exceptId && menu.id === 'convert-menu-' + exceptId) return;
+      menu.classList.add('hidden');
+      var container = menu.closest('.convert-dropdown-container');
+      if (container) {
+        var btn = container.querySelector('.convert-menu-trigger');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  };
+
+  window.toggleConvertMenu = function(blockId, event) {
+    if (event) event.stopPropagation();
+    var menu = document.getElementById('convert-menu-' + blockId);
+    if (!menu) return;
+
+    var willOpen = menu.classList.contains('hidden');
+    window.closeAllConvertMenus(blockId);
+
+    if (willOpen) {
+      menu.classList.remove('hidden');
+      var container = menu.closest('.convert-dropdown-container');
+      if (container) {
+        var btn = container.querySelector('.convert-menu-trigger');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+      }
+    } else {
+      menu.classList.add('hidden');
+      var container = menu.closest('.convert-dropdown-container');
+      if (container) {
+        var btn = container.querySelector('.convert-menu-trigger');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+  };
+
   if (!window._macronEscapeBound) {
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && window.activeInsertPosition !== null) {
-        window.closeInsertForm();
+      if (e.key === 'Escape') {
+        if (window.activeInsertPosition !== null) {
+          window.closeInsertForm();
+        }
+        window.closeAllConvertMenus();
+      }
+    });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.convert-dropdown-container')) {
+        window.closeAllConvertMenus();
       }
     });
     window._macronEscapeBound = true;
@@ -622,6 +711,7 @@
       var item = e.target.closest('.content-block-item');
       if (!item) return;
       window.closeInsertForm();
+      window.closeAllConvertMenus();
 
       var cb = item.querySelector('.block-select-checkbox');
       var allCards = Array.from(container.querySelectorAll('.content-block-item'));

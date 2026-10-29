@@ -5,9 +5,11 @@ module Macron
 
       def index
         @content_types = Content.order(:name)
+        @content_types_by_name = @content_types.index_by(&:name)
       end
 
       def show
+        @convertible_targets_by_name = Content.where(name: @content_type.normalized_convertible_to).index_by(&:name)
       end
 
       private

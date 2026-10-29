@@ -111,4 +111,28 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "aside nav a[href=?]", "/cms/content_types", text: /Content Types/
   end
+
+  test "content types index and show display convertible_to target links" do
+    sign_in @admin
+    three_js = Macron::Cms::Content.create!(
+      name: "three_js_image",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      convertible_to: [ "image" ]
+    )
+    image = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      convertible_to: [ "three_js_image" ]
+    )
+
+    get "/cms/content_types"
+    assert_response :success
+    assert_select "table thead th", text: "Convertible To"
+    assert_select "table tbody td a[href=?]", "/cms/content_types/#{three_js.id}", text: "three_js_image"
+
+    get "/cms/content_types/#{image.id}"
+    assert_response :success
+    assert_select "dt", text: "Convertible To"
+    assert_select "dd a[href=?]", "/cms/content_types/#{three_js.id}", text: "three_js_image"
+  end
 end
