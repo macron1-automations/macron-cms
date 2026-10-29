@@ -36,7 +36,7 @@ module Macron
                 newly_added_id: @article_content.id
               )
             end
-            format.html { redirect_to article_path(@article), notice: "Content block was successfully added." }
+            format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block was successfully added." }
           end
         else
           respond_to do |format|
@@ -47,7 +47,7 @@ module Macron
                 locals: { alert: "Failed to add content block: #{@article_content.errors.full_messages.to_sentence}" }
               )
             end
-            format.html { redirect_to article_path(@article), alert: "Failed to add content block: #{@article_content.errors.full_messages.to_sentence}" }
+            format.html { redirect_to article_path(@article, view: params[:view].presence), alert: "Failed to add content block: #{@article_content.errors.full_messages.to_sentence}" }
           end
         end
       end
@@ -79,7 +79,7 @@ module Macron
                 updated_id: @article_content.id
               )
             end
-            format.html { redirect_to article_path(@article), notice: "Content block was successfully updated." }
+            format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block was successfully updated." }
           end
         else
           respond_to do |format|
@@ -90,7 +90,7 @@ module Macron
                 locals: { alert: "Failed to update content block: #{@article_content.errors.full_messages.to_sentence}" }
               )
             end
-            format.html { redirect_to article_path(@article), alert: "Failed to update content block: #{@article_content.errors.full_messages.to_sentence}" }
+            format.html { redirect_to article_path(@article, view: params[:view].presence), alert: "Failed to update content block: #{@article_content.errors.full_messages.to_sentence}" }
           end
         end
       end
@@ -102,7 +102,7 @@ module Macron
           format.turbo_stream do
             render_content_blocks_stream(notice: "Content block was successfully removed.")
           end
-          format.html { redirect_to article_path(@article), notice: "Content block was successfully removed." }
+          format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block was successfully removed." }
         end
       end
 
@@ -128,7 +128,7 @@ module Macron
           format.turbo_stream do
             render_content_blocks_stream(notice: "Content block order updated.")
           end
-          format.html { redirect_to article_path(@article), notice: "Content block order updated." }
+          format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block order updated." }
         end
       end
 
@@ -146,7 +146,7 @@ module Macron
 
         respond_to do |format|
           format.json { render json: { status: "ok" } }
-          format.html { redirect_to article_path(@article), notice: "Content block order updated." }
+          format.html { redirect_to article_path(@article, view: params[:view].presence), notice: "Content block order updated." }
         end
       end
 
@@ -192,6 +192,7 @@ module Macron
 
       def render_content_blocks_stream(notice: nil, alert: nil, newly_added_id: nil, updated_id: nil)
         @content_types = Content.order(:name)
+        compact = params[:view] == "compact"
         turbo_stream_actions = [
           turbo_stream.update(
             "content-blocks-section",
@@ -200,6 +201,7 @@ module Macron
               article: @article,
               article_contents: @article.article_contents.reload,
               content_types: @content_types,
+              compact: compact,
               newly_added_id: newly_added_id,
               updated_id: updated_id
             }
