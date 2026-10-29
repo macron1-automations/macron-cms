@@ -44,6 +44,40 @@ class FieldsHelperTest < ActionView::TestCase
     assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "dropdown"
     assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "file"
     assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "color"
+    assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "markdown"
+    assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "json"
+  end
+
+  test "cms_render_field renders markdown editor textarea with data-cms-editor" do
+    field_def = {
+      "name" => "content",
+      "kind" => "markdown"
+    }
+
+    html = cms_render_field(field_def, value: "# Hello World", input_name: "article_content[payload][content]", input_id: "test_content")
+    assert_includes html, "<textarea"
+    assert_includes html, 'name="article_content[payload][content]"'
+    assert_includes html, 'id="test_content"'
+    assert_includes html, 'data-cms-editor="markdown"'
+    assert_includes html, "(markdown)"
+    assert_includes html, "CodeMirror"
+    assert_includes html, "# Hello World"
+  end
+
+  test "cms_render_field renders json editor textarea with data-cms-editor" do
+    field_def = {
+      "name" => "settings",
+      "kind" => "json"
+    }
+
+    html = cms_render_field(field_def, value: '{"key": "value"}', input_name: "article_content[payload][settings]", input_id: "test_settings")
+    assert_includes html, "<textarea"
+    assert_includes html, 'name="article_content[payload][settings]"'
+    assert_includes html, 'id="test_settings"'
+    assert_includes html, 'data-cms-editor="json"'
+    assert_includes html, "(json)"
+    assert_includes html, "CodeMirror"
+    assert_includes html, '{&quot;key&quot;: &quot;value&quot;}'
   end
 
   test "cms_render_field renders color picker with reset button" do
