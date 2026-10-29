@@ -19,6 +19,7 @@ class ContentTypesApiTest < ActionDispatch::IntegrationTest
     image = Macron::Cms::Content.find_or_initialize_by(name: "image")
     image.fields = [ { "name" => "upload", "kind" => "file" } ]
     image.convertible_to = [ "three_js_image" ]
+    image.featured_image = true
     image.save!
   end
 
@@ -48,9 +49,11 @@ class ContentTypesApiTest < ActionDispatch::IntegrationTest
 
     image_entry = json["content_types"].find { |ct| ct["name"] == "image" }
     assert_equal [ "three_js_image" ], image_entry["convertible_to"]
+    assert_equal true, image_entry["featured_image"]
 
     markdown_entry = json["content_types"].find { |ct| ct["name"] == "markdown" }
     assert_equal [], markdown_entry["convertible_to"]
+    assert_equal false, markdown_entry["featured_image"]
   end
 
   test "supports X-API-Key header" do

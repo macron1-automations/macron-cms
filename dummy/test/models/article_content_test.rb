@@ -190,4 +190,44 @@ class ArticleContentTest < ActiveSupport::TestCase
     assert_includes block.errors[:base].join, "Cannot convert image block to heading"
     assert_equal image_type, block.reload.content
   end
+
+  test "saving article_content with featured_image content type bubbles up first attached image to article" do
+    article = Macron::Cms::Article.create!(title: "Bubbling Article", name: "bubbling-article")
+    image_type = Macron::Cms::Content.create!(
+      name: "image",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      featured_image: true
+    )
+    non_featured_type = Macron::Cms::Content.create!(
+      name: "embed",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      featured_image: false
+    )
+
+    # 1. Non-featured block with attached file does NOT become article.featured_image
+    non_featured_block = Macron::Cms::ArticleContent.create!(article: article, content: non_featured_type, sort_order: 1)
+    file_html = Rack::Test::UploadedFile.new(StringIO.new("html"), "text/html", original_filename: "doc.html")
+    non_featured_block.files.attach(file_html)
+    assert_nil article.reload.featured_image_blob_id
+
+    # 2. Featured image block with attached file bubbles up
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 2)
+    file1 = Rack::Test::UploadedFile.new(StringIO.new("img1"), "image/png", original_filename: "img1.png")
+    block1.files.attach(file1)
+    assert_equal block1.upload.blob_id, article.reload.featured_image_blob_id
+
+    # 3. Second featured image block added later with higher sort_order does not override first
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 3)
+    file2 = Rack::Test::UploadedFile.new(StringIO.new("img2"), "image/png", original_filename: "img2.png")
+    block2.files.attach(file2)
+    assert_equal block1.upload.blob_id, article.reload.featured_image_blob_id
+
+    # 4. Destroying the first block updates article.featured_image to the second block
+    block1.destroy!
+    assert_equal block2.upload.blob_id, article.reload.featured_image_blob_id
+
+    # 5. Destroying the remaining block clears article.featured_image
+    block2.destroy!
+    assert_nil article.reload.featured_image_blob_id
+  end
 end

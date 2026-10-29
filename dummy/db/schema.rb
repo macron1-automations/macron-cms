@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_120002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -65,6 +65,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
     t.string "background_color"
     t.jsonb "background_options", default: {}, null: false
     t.string "text_color"
+    t.bigint "featured_image_blob_id"
+    t.index [ "featured_image_blob_id" ], name: "index_macron_cms_articles_on_featured_image_blob_id"
     t.index [ "name" ], name: "index_macron_cms_articles_on_name", unique: true
     t.index [ "slug" ], name: "index_macron_cms_articles_on_slug", unique: true
   end
@@ -75,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "convertible_to", default: [], null: false
+    t.boolean "featured_image", default: false, null: false
     t.index [ "name" ], name: "index_macron_cms_contents_on_name", unique: true
   end
 
@@ -95,4 +98,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_002251) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "macron_cms_article_contents", "macron_cms_articles", column: "article_id"
   add_foreign_key "macron_cms_article_contents", "macron_cms_contents", column: "content_id"
+  add_foreign_key "macron_cms_articles", "active_storage_blobs", column: "featured_image_blob_id", on_delete: :nullify
 end

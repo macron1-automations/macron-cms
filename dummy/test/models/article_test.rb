@@ -107,4 +107,20 @@ class ArticleTest < ActiveSupport::TestCase
     article = Macron::Cms::Article.create!(title: "Text Color Test", text_color: "#f8fafc")
     assert_equal "#f8fafc", article.text_color
   end
+
+  test "featured_image delegates to featured_image_blob" do
+    article = Macron::Cms::Article.create!(title: "Featured Image Test", name: "featured-image-test")
+    assert_nil article.featured_image
+    assert_nil article.featured_image_blob
+
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("fake image data"),
+      filename: "test.png",
+      content_type: "image/png"
+    )
+    article.update!(featured_image_blob: blob)
+
+    assert_equal blob, article.reload.featured_image
+    assert_equal blob, article.featured_image_blob
+  end
 end

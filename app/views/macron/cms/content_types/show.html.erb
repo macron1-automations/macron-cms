@@ -80,6 +80,18 @@
         </dd>
       </div>
       <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+        <dt class="text-sm font-medium text-zinc-500">Featured Image</dt>
+        <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0">
+          <% if @content_type.featured_image? %>
+            <span class="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-0.5 text-xs font-mono font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+              Yes
+            </span>
+          <% else %>
+            <span class="text-zinc-500 italic">No</span>
+          <% end %>
+        </dd>
+      </div>
+      <div class="px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
         <dt class="text-sm font-medium text-zinc-500">Created At</dt>
         <dd class="mt-1 text-sm text-zinc-900 sm:col-span-2 sm:mt-0"><%= @content_type.created_at.to_fs(:long) rescue @content_type.created_at.to_s %></dd>
       </div>

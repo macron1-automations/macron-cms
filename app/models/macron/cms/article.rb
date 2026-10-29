@@ -23,6 +23,28 @@ module Macron
       has_many :contents, through: :article_contents
 
       has_one_attached :background_image
+      belongs_to :featured_image_blob, class_name: "ActiveStorage::Blob", optional: true
+
+      def featured_image
+        featured_image_blob
+      end
+
+      def sync_featured_image!
+        return if destroyed? || marked_for_destruction?
+
+        next_blob_id = article_contents
+          .unscoped
+          .where(article_id: id)
+          .joins(:content, :files_attachments)
+          .where(macron_cms_contents: { featured_image: true })
+          .order(:sort_order, :id, Arel.sql("active_storage_attachments.id ASC"))
+          .pick(Arel.sql("active_storage_attachments.blob_id"))
+
+        if featured_image_blob_id != next_blob_id
+          update_column(:featured_image_blob_id, next_blob_id)
+          self.featured_image_blob_id = next_blob_id
+        end
+      end
 
       def seo_title
         meta_title.presence || title

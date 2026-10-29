@@ -135,4 +135,23 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     assert_select "dt", text: "Convertible To"
     assert_select "dd a[href=?]", "/cms/content_types/#{three_js.id}", text: "three_js_image"
   end
+
+  test "content types index and show display featured_image indicator" do
+    sign_in @admin
+    image = Macron::Cms::Content.create!(
+      name: "image_featured_test",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      featured_image: true
+    )
+
+    get "/cms/content_types"
+    assert_response :success
+    assert_select "table thead th", text: "Featured Image"
+    assert_select "table tbody td span", text: /Yes/
+
+    get "/cms/content_types/#{image.id}"
+    assert_response :success
+    assert_select "dt", text: "Featured Image"
+    assert_select "dd span", text: "Yes"
+  end
 end
