@@ -77,4 +77,46 @@ class ContentHelperTest < ActionView::TestCase
     assert_includes rendered, "<iframe"
     assert_includes rendered, "Embed content"
   end
+
+  test "cms_article_background_style returns empty string when article is nil or has no background styles" do
+    assert_equal "", cms_article_background_style(nil)
+
+    article = Macron::Cms::Article.create!(title: "Plain Article", name: "plain-article")
+    assert_equal "", cms_article_background_style(article)
+  end
+
+  test "cms_article_background_style includes background-color when set" do
+    article = Macron::Cms::Article.create!(
+      title: "Color Article",
+      name: "color-article",
+      background_color: "#3b82f6"
+    )
+
+    style = cms_article_background_style(article)
+    assert_equal "background-color: #3b82f6;", style
+  end
+
+  test "cms_article_background_style includes full background properties when image is attached" do
+    article = Macron::Cms::Article.create!(
+      title: "Image Article",
+      name: "image-article",
+      background_color: "#0f172a",
+      background_options: {
+        "repeat" => "repeat",
+        "size" => "auto",
+        "position" => "top",
+        "attachment" => "fixed"
+      }
+    )
+    file = Rack::Test::UploadedFile.new(StringIO.new("dummy bg data"), "image/png", original_filename: "pattern.png")
+    article.background_image.attach(file)
+
+    style = cms_article_background_style(article)
+    assert_includes style, "background-color: #0f172a;"
+    assert_includes style, "background-image: url("
+    assert_includes style, "background-repeat: repeat;"
+    assert_includes style, "background-size: auto;"
+    assert_includes style, "background-position: top;"
+    assert_includes style, "background-attachment: fixed;"
+  end
 end

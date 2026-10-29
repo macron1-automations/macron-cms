@@ -1,4 +1,7 @@
 <% cms_seo_meta(@article) %>
+<% if cms_article_background_style(@article).present? %>
+  <% content_for :body_style, cms_article_background_style(@article) %>
+<% end %>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
   <!-- Back navigation -->

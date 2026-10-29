@@ -27,6 +27,32 @@ module Macron
           fields: article_content.content.normalized_fields
         )
       end
+
+      def cms_article_background_style(article)
+        return "" if article.nil?
+
+        styles = []
+        if article.background_color.present?
+          styles << "background-color: #{article.background_color};"
+        end
+
+        if article.respond_to?(:background_image) && article.background_image.attached?
+          image_path = if respond_to?(:rails_blob_path)
+                         rails_blob_path(article.background_image, only_path: true)
+          elsif respond_to?(:url_for)
+                         url_for(article.background_image)
+          else
+                         Rails.application.routes.url_helpers.rails_blob_path(article.background_image, only_path: true)
+          end
+          styles << "background-image: url('#{image_path}');"
+          styles << "background-repeat: #{article.background_repeat};"
+          styles << "background-size: #{article.background_size};"
+          styles << "background-position: #{article.background_position};"
+          styles << "background-attachment: #{article.background_attachment};"
+        end
+
+        styles.join(" ")
+      end
     end
   end
 end

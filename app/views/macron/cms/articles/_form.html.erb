@@ -37,6 +37,99 @@
 
   <div class="pt-6 border-t border-zinc-200 space-y-4">
     <div>
+      <h3 class="text-sm font-semibold text-zinc-900">Background Settings</h3>
+      <p class="text-xs text-zinc-500">Configure page background color, background image, and display options.</p>
+    </div>
+
+    <!-- Background Color -->
+    <div class="space-y-1.5">
+      <%= form.label :background_color, "Background Color", class: "block text-sm font-medium text-zinc-700" %>
+      <%= form.hidden_field :background_color, id: "article_background_color" %>
+      <div class="flex items-center gap-3">
+        <input
+          type="color"
+          id="article_background_color_picker"
+          value="<%= article.background_color.presence || "#ffffff" %>"
+          class="h-9 w-12 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          oninput="document.getElementById('article_background_color').value = this.value; document.getElementById('article_background_color_label').textContent = this.value;"
+        />
+        <span id="article_background_color_label" class="text-xs font-mono text-zinc-600">
+          <%= article.background_color.presence || "Default (transparent / theme)" %>
+        </span>
+        <button
+          type="button"
+          class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
+          onclick="document.getElementById('article_background_color').value = ''; document.getElementById('article_background_color_label').textContent = 'Default (transparent / theme)';"
+        >
+          Reset to default
+        </button>
+      </div>
+      <p class="text-xs text-zinc-500">Optional hex color for the page background.</p>
+    </div>
+
+    <!-- Background Image -->
+    <div class="space-y-1.5">
+      <%= form.label :background_image, "Background Image", class: "block text-sm font-medium text-zinc-700" %>
+      <%= form.file_field :background_image, accept: "image/*", class: "block w-full text-xs text-zinc-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border border-zinc-300 file:text-xs file:font-semibold file:bg-white hover:file:bg-zinc-50 file:cursor-pointer" %>
+
+      <% if article.persisted? && article.background_image.attached? %>
+        <div class="mt-2 flex items-center gap-4 p-3 rounded-lg border border-zinc-200 bg-zinc-50">
+          <div class="h-12 w-12 shrink-0 rounded border border-zinc-200 overflow-hidden bg-white flex items-center justify-center">
+            <%= image_tag main_app.rails_blob_path(article.background_image), class: "h-full w-full object-cover" %>
+          </div>
+          <div class="min-w-0 flex-1 text-xs">
+            <p class="font-medium text-zinc-900 truncate"><%= article.background_image.filename %></p>
+            <p class="text-zinc-500"><%= number_to_human_size(article.background_image.byte_size) %></p>
+          </div>
+          <%= button_to "Delete image", purge_background_image_article_path(article), method: :delete, form: { data: { turbo_confirm: "Are you sure you want to remove the background image?" } }, class: "rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer shrink-0" %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Background Display Options -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+      <div>
+        <label for="article_background_options_repeat" class="block text-xs font-medium text-zinc-700">Tiling / Repeat</label>
+        <select name="article[background_options][repeat]" id="article_background_options_repeat" class="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+          <option value="no-repeat" <%= "selected" if article.background_repeat == "no-repeat" %>>No repeat</option>
+          <option value="repeat" <%= "selected" if article.background_repeat == "repeat" %>>Tile (repeat both)</option>
+          <option value="repeat-x" <%= "selected" if article.background_repeat == "repeat-x" %>>Tile horizontally</option>
+          <option value="repeat-y" <%= "selected" if article.background_repeat == "repeat-y" %>>Tile vertically</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="article_background_options_size" class="block text-xs font-medium text-zinc-700">Sizing</label>
+        <select name="article[background_options][size]" id="article_background_options_size" class="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+          <option value="cover" <%= "selected" if article.background_size == "cover" %>>Cover (fill area)</option>
+          <option value="contain" <%= "selected" if article.background_size == "contain" %>>Contain (fit inside)</option>
+          <option value="auto" <%= "selected" if article.background_size == "auto" %>>Auto (original size)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="article_background_options_position" class="block text-xs font-medium text-zinc-700">Position</label>
+        <select name="article[background_options][position]" id="article_background_options_position" class="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+          <option value="center" <%= "selected" if article.background_position == "center" %>>Center</option>
+          <option value="top" <%= "selected" if article.background_position == "top" %>>Top</option>
+          <option value="bottom" <%= "selected" if article.background_position == "bottom" %>>Bottom</option>
+          <option value="left" <%= "selected" if article.background_position == "left" %>>Left</option>
+          <option value="right" <%= "selected" if article.background_position == "right" %>>Right</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="article_background_options_attachment" class="block text-xs font-medium text-zinc-700">Attachment</label>
+        <select name="article[background_options][attachment]" id="article_background_options_attachment" class="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+          <option value="scroll" <%= "selected" if article.background_attachment == "scroll" %>>Scroll (scrolls with page)</option>
+          <option value="fixed" <%= "selected" if article.background_attachment == "fixed" %>>Fixed (fixed in place)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="pt-6 border-t border-zinc-200 space-y-4">
+    <div>
       <h3 class="text-sm font-semibold text-zinc-900">SEO Settings</h3>
       <p class="text-xs text-zinc-500">Optional search engine and social metadata overrides.</p>
     </div>
