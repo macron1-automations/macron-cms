@@ -13,8 +13,12 @@ module Widgets
       c.to_s.strip.presence
     end
 
+    def effective_color
+      custom_color.presence || article_text_color.presence
+    end
+
     def custom_style
-      "color: #{custom_color};" if custom_color.present?
+      "color: #{effective_color};" if effective_color.present?
     end
 
     def heading_classes
@@ -33,7 +37,7 @@ module Widgets
         "text-sm sm:text-base font-medium mt-2 mb-1"
       end
 
-      custom_color.present? ? base : "#{base} text-zinc-900"
+      effective_color.present? ? base : "#{base} text-zinc-900"
     end
   end
 end

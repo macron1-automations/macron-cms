@@ -756,4 +756,78 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_equal "new.png", block.upload.filename.to_s
     assert_equal "new.png", block.payload["upload"]
   end
+
+  test "admin can create and update article with background color, image and options" do
+    sign_in @admin
+
+    bg_file = Rack::Test::UploadedFile.new(StringIO.new("dummy bg"), "image/png", original_filename: "bg-art.png")
+
+    assert_difference("Macron::Cms::Article.count", 1) do
+      post "/cms/articles", params: {
+        article: {
+          title: "Themed Article",
+          background_color: "#1e1e2f",
+          text_color: "#e2e8f0",
+          background_image: bg_file,
+          background_options: {
+            repeat: "repeat",
+            size: "auto",
+            position: "top",
+            attachment: "fixed"
+          }
+        }
+      }
+    end
+
+    article = Macron::Cms::Article.last
+    assert_equal "#1e1e2f", article.background_color
+    assert_equal "#e2e8f0", article.text_color
+    assert_equal "repeat", article.background_repeat
+    assert_equal "auto", article.background_size
+    assert_equal "top", article.background_position
+    assert_equal "fixed", article.background_attachment
+    assert article.background_image.attached?
+
+    # Verify public show page has body style with background and text color
+    get "/articles/#{article.slug}"
+    assert_response :success
+    assert_select "body[style*='background-color: #1e1e2f;']"
+    assert_select "body[style*='color: #e2e8f0;']"
+    assert_select "h1[style*='color: #e2e8f0;']", text: "Themed Article"
+    assert_select "body[style*='background-repeat: repeat;']"
+    assert_select "body[style*='background-size: auto;']"
+
+    # Verify edit form renders attached background image preview and valid single form
+    get "/cms/articles/#{article.slug}/edit"
+    assert_response :success
+    assert_select "img[src*='bg-art.png']"
+    assert_select "a[data-turbo-method='delete']", text: "Delete image"
+
+    # Verify form submits updates to text_color and background options
+    patch "/cms/articles/#{article.slug}", params: {
+      article: {
+        text_color: "#ffffff",
+        background_options: {
+          repeat: "repeat",
+          size: "auto",
+          position: "top",
+          attachment: "fixed"
+        }
+      }
+    }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    article.reload
+    assert_equal "#ffffff", article.text_color
+    assert_equal "auto", article.background_size
+
+    # Verify purge background image
+    assert_difference -> { ActiveStorage::Attachment.count }, -1 do
+      delete "/cms/articles/#{article.slug}/purge_background_image"
+    end
+    assert_redirected_to "/cms/articles/#{article.slug}/edit"
+    follow_redirect!
+    assert_equal "Background image was successfully removed.", flash[:notice]
+    article.reload
+    assert_not article.background_image.attached?
+  end
 end

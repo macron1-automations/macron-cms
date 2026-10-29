@@ -1,6 +1,9 @@
 Macron::Cms::Engine.routes.draw do
   root to: "dashboard#index"
   resources :articles do
+    member do
+      delete :purge_background_image
+    end
     resources :article_contents, only: %i[create update destroy] do
       member do
         patch :move

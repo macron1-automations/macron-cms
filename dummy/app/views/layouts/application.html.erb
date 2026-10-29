@@ -22,7 +22,7 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   </head>
 
-  <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+  <body class="min-h-screen <%= 'bg-zinc-50' unless content_for?(:body_style) %> text-zinc-900 antialiased" style="<%= yield :body_style if content_for?(:body_style) %>">
     <main class="w-full">
       <%= yield %>
     </main>

@@ -1,6 +1,16 @@
 module Macron
   module Cms
     class Article < ApplicationRecord
+      VALID_BACKGROUND_REPEATS = %w[no-repeat repeat repeat-x repeat-y].freeze
+      VALID_BACKGROUND_SIZES = %w[cover contain auto].freeze
+      VALID_BACKGROUND_POSITIONS = %w[center top bottom left right].freeze
+      VALID_BACKGROUND_ATTACHMENTS = %w[scroll fixed].freeze
+
+      DEFAULT_BACKGROUND_REPEAT = "no-repeat"
+      DEFAULT_BACKGROUND_SIZE = "cover"
+      DEFAULT_BACKGROUND_POSITION = "center"
+      DEFAULT_BACKGROUND_ATTACHMENT = "scroll"
+
       before_validation :derive_name_from_title
 
       extend FriendlyId
@@ -12,12 +22,38 @@ module Macron
       has_many :article_contents, -> { order(:sort_order) }, class_name: "Macron::Cms::ArticleContent", dependent: :destroy
       has_many :contents, through: :article_contents
 
+      has_one_attached :background_image
+
       def seo_title
         meta_title.presence || title
       end
 
       def seo_description
         meta_description.presence
+      end
+
+      def normalized_background_options
+        (background_options || {}).to_h.stringify_keys
+      end
+
+      def background_repeat
+        val = normalized_background_options["repeat"].to_s.strip.presence
+        VALID_BACKGROUND_REPEATS.include?(val) ? val : DEFAULT_BACKGROUND_REPEAT
+      end
+
+      def background_size
+        val = normalized_background_options["size"].to_s.strip.presence
+        VALID_BACKGROUND_SIZES.include?(val) ? val : DEFAULT_BACKGROUND_SIZE
+      end
+
+      def background_position
+        val = normalized_background_options["position"].to_s.strip.presence
+        VALID_BACKGROUND_POSITIONS.include?(val) ? val : DEFAULT_BACKGROUND_POSITION
+      end
+
+      def background_attachment
+        val = normalized_background_options["attachment"].to_s.strip.presence
+        VALID_BACKGROUND_ATTACHMENTS.include?(val) ? val : DEFAULT_BACKGROUND_ATTACHMENT
       end
 
       private

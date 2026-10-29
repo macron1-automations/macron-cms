@@ -1,7 +1,7 @@
 module Macron
   module Cms
     class ArticlesController < ApplicationController
-      before_action :set_article, only: %i[show edit update destroy]
+      before_action :set_article, only: %i[show edit update destroy purge_background_image]
 
       def index
         @articles = Article.order(created_at: :desc)
@@ -42,6 +42,11 @@ module Macron
         redirect_to articles_path, notice: "Article was successfully deleted."
       end
 
+      def purge_background_image
+        @article.background_image.purge if @article.background_image.attached?
+        redirect_to edit_article_path(@article), notice: "Background image was successfully removed."
+      end
+
       private
 
       def set_article
@@ -49,7 +54,16 @@ module Macron
       end
 
       def article_params
-        params.require(:article).permit(:title, :name, :meta_title, :meta_description)
+        params.require(:article).permit(
+          :title,
+          :name,
+          :meta_title,
+          :meta_description,
+          :background_color,
+          :text_color,
+          :background_image,
+          background_options: %i[repeat size position attachment]
+        )
       end
     end
   end

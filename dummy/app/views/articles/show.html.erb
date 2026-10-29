@@ -1,4 +1,7 @@
 <% cms_seo_meta(@article) %>
+<% if cms_article_background_style(@article).present? %>
+  <% content_for :body_style, cms_article_background_style(@article) %>
+<% end %>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
   <!-- Back navigation -->
@@ -13,12 +16,12 @@
 
   <!-- Article Header -->
   <header class="pb-8 mb-8 border-b border-zinc-200">
-    <div class="flex items-center gap-3 text-sm text-zinc-500 mb-3 font-mono">
+    <div class="flex items-center gap-3 text-sm <%= @article.text_color.present? ? 'opacity-70' : 'text-zinc-500' %> mb-3 font-mono" style="<%= "color: #{@article.text_color};" if @article.text_color.present? %>">
       <time datetime="<%= @article.created_at.iso8601 %>">
         <%= @article.created_at.strftime("%B %d, %Y") %>
       </time>
     </div>
-    <h1 class="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
+    <h1 class="text-3xl font-bold tracking-tight <%= 'text-zinc-900' unless @article.text_color.present? %> sm:text-4xl lg:text-5xl" style="<%= "color: #{@article.text_color};" if @article.text_color.present? %>">
       <%= @article.title %>
     </h1>
   </header>

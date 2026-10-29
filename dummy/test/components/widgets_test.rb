@@ -41,9 +41,37 @@ class WidgetsTest < ViewComponent::TestCase
     assert_includes rendered.to_html, "text-3xl"
   end
 
+  test "heading component adopts article text_color as fallback and allows widget color override" do
+    article = Macron::Cms::Article.create!(title: "Themed Art", text_color: "#10b981")
+    heading_type = Macron::Cms::Content.create!(name: "heading", fields: [])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: heading_type)
+
+    # Fallback to article text_color when heading color is blank
+    render_inline(Widgets::HeadingComponent.new(article_content: ac, payload: { "title" => "Green Heading", "level" => "h2" }))
+    assert_selector "h2[style='color: #10b981;']", text: "Green Heading"
+    assert_no_selector "h2.text-zinc-900"
+
+    # Specific heading color overrides article text_color
+    render_inline(Widgets::HeadingComponent.new(article_content: ac, payload: { "title" => "Red Heading", "level" => "h2", "color" => "#ef4444" }))
+    assert_selector "h2[style='color: #ef4444;']", text: "Red Heading"
+    assert_no_selector "h2[style='color: #10b981;']"
+    assert_no_selector "h2.text-zinc-900"
+  end
+
   test "paragraph component renders formatted paragraph text" do
     render_inline(Widgets::ParagraphComponent.new(payload: { "content" => "Lorem ipsum dolor sit amet." }))
-    assert_selector "p", text: "Lorem ipsum dolor sit amet."
+    assert_selector "p.text-zinc-700", text: "Lorem ipsum dolor sit amet."
+    assert_no_selector "p[style]"
+  end
+
+  test "paragraph component applies article text_color when set" do
+    article = Macron::Cms::Article.create!(title: "Themed Para Art", text_color: "#6366f1")
+    para_type = Macron::Cms::Content.create!(name: "paragraph", fields: [])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: para_type)
+
+    render_inline(Widgets::ParagraphComponent.new(article_content: ac, payload: { "content" => "Custom color paragraph." }))
+    assert_selector "p[style='color: #6366f1;']", text: "Custom color paragraph."
+    assert_no_selector "p.text-zinc-700"
   end
 
   test "image component renders image tag when file is attached" do
