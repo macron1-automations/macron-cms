@@ -77,7 +77,7 @@ class FieldsHelperTest < ActionView::TestCase
     assert_includes html, 'data-cms-editor="json"'
     assert_includes html, "(json)"
     assert_includes html, "CodeMirror"
-    assert_includes html, '{&quot;key&quot;: &quot;value&quot;}'
+    assert_includes html, "{&quot;key&quot;: &quot;value&quot;}"
   end
 
   test "cms_render_field renders color picker with reset button" do
