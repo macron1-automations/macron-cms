@@ -156,4 +156,51 @@ class WidgetsTest < ViewComponent::TestCase
     render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: { "size" => "full" }))
     assert_selector "div.w-full"
   end
+
+  test "markdown component renders formatted markdown to html with prose classes" do
+    markdown_text = <<~MD
+      # Heading 1
+      Here is **bold** text and [a link](https://example.com).
+
+      - Item 1
+      - Item 2
+    MD
+
+    render_inline(Widgets::MarkdownComponent.new(payload: { "content" => markdown_text }))
+    assert_selector "div.prose.prose-zinc"
+    assert_selector "h1", text: "Heading 1"
+    assert_selector "strong", text: "bold"
+    assert_selector "a[href='https://example.com']", text: "a link"
+    assert_selector "ul li", text: "Item 1"
+  end
+
+  test "markdown component sanitizes unsafe html script tags" do
+    unsafe_md = "Hello <script>alert('xss')</script> world"
+    render_inline(Widgets::MarkdownComponent.new(payload: { "content" => unsafe_md }))
+    assert_no_selector "script"
+    assert_includes rendered_content, "Hello"
+  end
+
+  test "markdown component applies article text_color when set" do
+    article = Macron::Cms::Article.create!(title: "Markdown Color Art", text_color: "#7c3aed")
+    md_type = Macron::Cms::Content.find_or_create_by!(name: "markdown") { |c| c.fields = [ { "name" => "content", "kind" => "markdown" } ] }
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: md_type)
+
+    render_inline(Widgets::MarkdownComponent.new(article_content: ac, payload: { "content" => "# Colored Title\n\n**Bold term** and `code`" }))
+    assert_selector "div.prose"
+    assert_no_selector "div.prose-zinc"
+    assert_includes rendered_content, "color: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-headings: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-bold: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-code: #7c3aed;"
+    assert_selector "h1", text: "Colored Title"
+    assert_selector "strong", text: "Bold term"
+    assert_selector "code", text: "code"
+  end
+
+  test "markdown component handles empty or nil content gracefully" do
+    render_inline(Widgets::MarkdownComponent.new(payload: { "content" => "" }))
+    assert_selector "div.prose.prose-zinc"
+    assert_equal "", rendered_content.strip.gsub(/<[^>]*>/, "")
+  end
 end

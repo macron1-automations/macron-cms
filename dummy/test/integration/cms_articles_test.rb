@@ -830,4 +830,39 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     article.reload
     assert_not article.background_image.attached?
   end
+
+  test "admin can add, edit, and view markdown content block on public article page" do
+    markdown_type = Macron::Cms::Content.find_or_create_by!(name: "markdown") do |c|
+      c.fields = [ { "name" => "content", "kind" => "markdown" } ]
+    end
+    article = Macron::Cms::Article.create!(title: "Markdown Showcase", name: "markdown-showcase")
+    sign_in @admin
+
+    # Add markdown block
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents", params: {
+        article_content: {
+          content_id: markdown_type.id,
+          payload: {
+            content: "# Welcome to Markdown\n\nThis is **empowered** with CodeMirror and Kramdown."
+          }
+        }
+      }
+    end
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+    assert_select "span", text: "markdown"
+    assert_select "textarea[data-cms-editor='markdown']"
+
+    block = article.article_contents.last
+    assert_equal "# Welcome to Markdown\n\nThis is **empowered** with CodeMirror and Kramdown.", block.payload["content"]
+
+    # Public article rendering
+    get "/articles/#{article.slug}"
+    assert_response :success
+    assert_select "div.prose.prose-zinc"
+    assert_select "h1", text: "Welcome to Markdown"
+    assert_select "strong", text: "empowered"
+  end
 end

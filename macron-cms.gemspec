@@ -25,6 +25,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "friendly_id", "~> 5.5"
   spec.add_dependency "devise", ">= 4.9"
   spec.add_dependency "view_component", ">= 3.0"
+  spec.add_dependency "kramdown", "~> 2.4"
+  spec.add_dependency "kramdown-parser-gfm", "~> 1.1"
 
   spec.add_development_dependency "tailwindcss-ruby", "~> 4.0"
 end

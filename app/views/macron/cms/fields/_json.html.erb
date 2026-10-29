@@ -1,0 +1,17 @@
+<div class="space-y-1.5">
+  <div class="flex items-center justify-between">
+    <label for="<%= input_id %>" class="block text-xs font-mono font-semibold text-zinc-700">
+      <%= field_name %>
+      <span class="ml-1 text-[10px] font-normal text-amber-600">(json)</span>
+    </label>
+    <span class="text-[10px] text-zinc-400 font-mono">CodeMirror</span>
+  </div>
+  <textarea
+    name="<%= input_name %>"
+    id="<%= input_id %>"
+    rows="6"
+    data-cms-editor="json"
+    class="block w-full font-mono rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 shadow-2xs placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+    placeholder="{}"
+  ><%= value %></textarea>
+</div>
