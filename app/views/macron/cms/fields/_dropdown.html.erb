@@ -1,0 +1,28 @@
+<%
+  raw_options = field["options"] || field[:options] || []
+  normalized_options = raw_options.map do |opt|
+    if opt.is_a?(Hash)
+      opt_hash = opt.stringify_keys
+      label = opt_hash["name"].presence || opt_hash["label"].presence || opt_hash["value"].to_s
+      [label, opt_hash["value"]]
+    else
+      [opt.to_s, opt.to_s]
+    end
+  end
+%>
+<div class="space-y-1.5">
+  <label for="<%= input_id %>" class="block text-xs font-mono font-semibold text-zinc-700">
+    <%= field_name %>
+    <span class="ml-1 text-[10px] font-normal text-zinc-400">(dropdown)</span>
+  </label>
+  <select
+    name="<%= input_name %>"
+    id="<%= input_id %>"
+    class="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-2xs focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+  >
+    <option value="">Select <%= field_name.to_s.humanize.downcase %>...</option>
+    <% normalized_options.each do |opt_name, opt_val| %>
+      <option value="<%= opt_val %>"<%= " selected" if value.present? && opt_val.to_s == value.to_s %>><%= opt_name %></option>
+    <% end %>
+  </select>
+</div>

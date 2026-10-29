@@ -80,6 +80,31 @@ class CmsContentTypesTest < ActionDispatch::IntegrationTest
     assert_select ".max-w-4xl", count: 0
   end
 
+  test "admin can view content type with dropdown options" do
+    sign_in @admin
+    heading = Macron::Cms::Content.create!(
+      name: "heading-dropdown-view",
+      fields: [
+        { "name" => "title", "kind" => "string" },
+        {
+          "name" => "level",
+          "kind" => "dropdown",
+          "options" => [
+            { "name" => "Heading 1", "value" => "h1" },
+            { "name" => "Heading 2", "value" => "h2" }
+          ]
+        }
+      ]
+    )
+
+    get "/cms/content_types/#{heading.id}"
+    assert_response :success
+    assert_select "table tbody td", text: /level/
+    assert_select "table tbody td span", text: /dropdown/
+    assert_select "table tbody td span", text: "Heading 1 (h1)"
+    assert_select "table tbody td span", text: "Heading 2 (h2)"
+  end
+
   test "sidebar displays content types navigation link" do
     sign_in @admin
     get "/cms/content_types"

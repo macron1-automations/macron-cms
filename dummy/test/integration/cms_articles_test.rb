@@ -303,6 +303,46 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "admin article show renders dropdown field for content types with dropdown kind" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Dropdown Article", name: "dropdown-article")
+    heading_type = Macron::Cms::Content.create!(
+      name: "heading-dropdown",
+      fields: [
+        { "name" => "title", "kind" => "string" },
+        {
+          "name" => "level",
+          "kind" => "dropdown",
+          "options" => [
+            { "name" => "Heading 1", "value" => "h1" },
+            { "name" => "Heading 2", "value" => "h2" }
+          ]
+        }
+      ]
+    )
+    block = Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: heading_type,
+      sort_order: 1,
+      payload: { "title" => "My Heading", "level" => "h2" }
+    )
+
+    get "/cms/articles/#{article.slug}"
+    assert_response :success
+
+    # Check new content block form has select
+    assert_select "select#new_content_#{heading_type.id}_payload_level" do
+      assert_select "option[value='']", text: "Select level..."
+      assert_select "option[value='h1']", text: "Heading 1"
+      assert_select "option[value='h2']", text: "Heading 2"
+    end
+
+    # Check inline edit form has select with selected value
+    assert_select "select#edit_article_content_#{block.id}_payload_level" do
+      assert_select "option[value='h2'][selected]", text: "Heading 2"
+    end
+  end
+
   test "admin can edit and update a content block payload inline" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Editable Article", name: "editable-article")
