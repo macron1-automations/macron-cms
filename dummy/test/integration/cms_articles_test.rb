@@ -75,7 +75,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     sign_in @admin
     get "/cms/articles/new"
     assert_response :success
-    assert_select "input[name='article[name]']:not([required])"
+    assert_select "input[name='article[slug]']:not([required])"
 
     assert_difference("Macron::Cms::Article.count", 1) do
       post "/cms/articles", params: {

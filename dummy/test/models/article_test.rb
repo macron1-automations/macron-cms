@@ -123,4 +123,25 @@ class ArticleTest < ActiveSupport::TestCase
     assert_equal blob, article.reload.featured_image
     assert_equal blob, article.featured_image_blob
   end
+
+  test "slug can be updated independently of name" do
+    article = Macron::Cms::Article.create!(title: "Independent Test", name: "fixed-name", slug: "initial-slug")
+    article.update!(slug: "updated-slug")
+
+    assert_equal "updated-slug", article.slug
+    assert_equal "fixed-name", article.name
+    assert article.slugs.where(slug: "initial-slug").exists?
+  end
+
+  test "slug is automatically parameterized on assignment" do
+    article = Macron::Cms::Article.create!(title: "Formatting Test", slug: "Custom Slug With Spaces & Special #1!")
+    assert_equal "custom-slug-with-spaces-special-1", article.slug
+  end
+
+  test "clearing slug re-derives slug from title" do
+    article = Macron::Cms::Article.create!(title: "Auto Regeneration Test", slug: "custom-temporary-slug")
+    article.update!(slug: "")
+
+    assert_equal "auto-regeneration-test", article.slug
+  end
 end
