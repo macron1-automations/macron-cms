@@ -1002,6 +1002,10 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "dt", text: /text/i
     assert_select "dt", text: /color/i
     assert_select "a[href*='view=compact']", text: /Compact/
+    # Inserters present, checkboxes absent in expanded view
+    assert_select "#inserter-zone-top", count: 1
+    assert_select ".block-inserter-zone", count: 2
+    assert_select ".block-select-checkbox", count: 0
 
     # 2. Compact view
     get "/cms/articles/#{article.slug}?view=compact"
@@ -1018,6 +1022,41 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     # Move buttons and reorder should include view=compact
     assert_select "#content-blocks-list[data-reorder-url*='view=compact']"
+
+    # In compact view, adding blocks is hidden (no inserters or dock)
+    assert_select "#inserter-zone-top", count: 0
+    assert_select ".block-inserter-zone", count: 0
+    assert_select "#form-dock-storage", count: 0
+
+    # Multi-select checkboxes must be present
+    assert_select ".block-select-checkbox[data-id='#{ac.id}']", count: 1
+  end
+
+  test "reorder multiple blocks persists multi-drag order via JSON" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Multi Drag Article", name: "multi-drag-article")
+    heading_type = Macron::Cms::Content.find_or_create_by!(name: "heading") do |c|
+      c.fields = [ { "name" => "title", "kind" => "string" } ]
+    end
+
+    b1 = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 1, payload: { "title" => "A" })
+    b2 = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 2, payload: { "title" => "B" })
+    b3 = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 3, payload: { "title" => "C" })
+    b4 = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 4, payload: { "title" => "D" })
+    b5 = Macron::Cms::ArticleContent.create!(article: article, content: heading_type, sort_order: 5, payload: { "title" => "E" })
+
+    # Reordering multiple blocks (e.g. moving [b1, b3] contiguously after b4 -> [b2, b4, b1, b3, b5])
+    new_order = [ b2.id, b4.id, b1.id, b3.id, b5.id ]
+    patch "/cms/articles/#{article.slug}/article_contents/reorder",
+          params: { ordered_ids: new_order }.to_json,
+          headers: { "Content-Type" => "application/json", "Accept" => "application/json" }
+
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal "ok", json["status"]
+
+    assert_equal new_order, article.article_contents.reload.pluck(:id)
+    assert_equal [ 1, 2, 3, 4, 5 ], new_order.map { |id| Macron::Cms::ArticleContent.find(id).sort_order }
   end
 
   test "move action preserves view=compact parameter on redirect" do
