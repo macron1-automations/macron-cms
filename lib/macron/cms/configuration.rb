@@ -1,12 +1,13 @@
 module Macron
   module Cms
     class Configuration
-      attr_accessor :user_class, :admin_flag, :content_types_path
+      attr_accessor :user_class, :admin_flag, :content_types_path, :api_key
 
       def initialize
         @user_class = "User"
         @admin_flag = :admin
         @content_types_path = nil
+        @api_key = ENV["MACRON_CMS_API_KEY"]
       end
 
       def devise_scope
