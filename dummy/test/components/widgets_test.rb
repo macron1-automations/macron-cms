@@ -183,11 +183,19 @@ class WidgetsTest < ViewComponent::TestCase
 
   test "markdown component applies article text_color when set" do
     article = Macron::Cms::Article.create!(title: "Markdown Color Art", text_color: "#7c3aed")
-    md_type = Macron::Cms::Content.find_or_create_by!(name: "markdown") { |c| c.fields = [{ "name" => "content", "kind" => "markdown" }] }
+    md_type = Macron::Cms::Content.find_or_create_by!(name: "markdown") { |c| c.fields = [ { "name" => "content", "kind" => "markdown" } ] }
     ac = Macron::Cms::ArticleContent.create!(article: article, content: md_type)
 
-    render_inline(Widgets::MarkdownComponent.new(article_content: ac, payload: { "content" => "# Colored Title" }))
-    assert_selector "div.prose.prose-inherit[style='color: #7c3aed;']"
+    render_inline(Widgets::MarkdownComponent.new(article_content: ac, payload: { "content" => "# Colored Title\n\n**Bold term** and `code`" }))
+    assert_selector "div.prose"
+    assert_no_selector "div.prose-zinc"
+    assert_includes rendered_content, "color: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-headings: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-bold: #7c3aed;"
+    assert_includes rendered_content, "--tw-prose-code: #7c3aed;"
+    assert_selector "h1", text: "Colored Title"
+    assert_selector "strong", text: "Bold term"
+    assert_selector "code", text: "code"
   end
 
   test "markdown component handles empty or nil content gracefully" do
