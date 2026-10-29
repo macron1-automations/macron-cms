@@ -52,11 +52,15 @@
     var quoteText = props.text || "";
     var quoteColor = props.color || DEFAULT_COLOR;
     var rotationAxis = props.rotationAxis || "x";
+    var rotationSpeed = typeof props.rotationSpeed === "number" ? props.rotationSpeed : 1.0;
     var fontSize = props.fontSize || "md";
     var font = props.font || "helvetiker";
     var backgroundColor = props.backgroundColor || null;
     var backgroundImage = props.backgroundImage || null;
     var backgroundMode = props.backgroundMode || "stretch";
+    var scanlinesIntensity = props.scanlinesIntensity || "off";
+    var scanlinesDensity = props.scanlinesDensity || "medium";
+    var scanlinesSpeed = props.scanlinesSpeed || "normal";
 
     React.useEffect(function() {
       var host = hostRef.current;
@@ -77,6 +81,27 @@
       };
       var sizeConfig = FONT_SIZE_SCALES[fontSize] || FONT_SIZE_SCALES.md;
 
+      var INTENSITY_VALUES = {
+        off: 0.0,
+        subtle: 0.22,
+        medium: 0.48,
+        strong: 0.78
+      };
+      var DENSITY_VALUES = {
+        fine: 750.0,
+        medium: 400.0,
+        coarse: 200.0
+      };
+      var SPEED_VALUES = {
+        still: 0.0,
+        slow: 0.35,
+        normal: 1.1,
+        fast: 2.4
+      };
+      var intensityVal = INTENSITY_VALUES[scanlinesIntensity] || 0.0;
+      var densityVal = DENSITY_VALUES[scanlinesDensity] || DENSITY_VALUES.medium;
+      var speedVal = SPEED_VALUES[scanlinesSpeed] || SPEED_VALUES.normal;
+
       var lines = wrapQuoteLines(quoteText, sizeConfig.maxChars);
       if (lines.length === 0) {
         return undefined;
@@ -92,6 +117,11 @@
       var canvas = null;
       var onWindowResize = null;
       var backgroundTexture = null;
+      var renderTarget = null;
+      var postScene = null;
+      var postCamera = null;
+      var postMaterial = null;
+      var postQuad = null;
 
       // Defer WebGL context & geometry setup until after the browser paints the Turbo transition
       initRafId = window.requestAnimationFrame(function() {
@@ -123,6 +153,55 @@
 
         var scene = new THREE.Scene();
         var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 1000);
+
+        if (intensityVal > 0.0 && THREE.WebGLRenderTarget && THREE.ShaderMaterial && THREE.OrthographicCamera && THREE.PlaneGeometry) {
+          renderTarget = new THREE.WebGLRenderTarget(1, 1, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat
+          });
+
+          postMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+              tDiffuse: { value: renderTarget.texture },
+              time: { value: 0 },
+              intensity: { value: intensityVal },
+              density: { value: densityVal },
+              speed: { value: speedVal }
+            },
+            vertexShader: [
+              "varying vec2 vUv;",
+              "void main() {",
+              "  vUv = uv;",
+              "  gl_Position = vec4(position, 1.0);",
+              "}"
+            ].join("\n"),
+            fragmentShader: [
+              "uniform sampler2D tDiffuse;",
+              "uniform float time;",
+              "uniform float intensity;",
+              "uniform float density;",
+              "uniform float speed;",
+              "varying vec2 vUv;",
+              "void main() {",
+              "  vec4 baseColor = texture2D(tDiffuse, vUv);",
+              "  if (intensity <= 0.0) {",
+              "    gl_FragColor = baseColor;",
+              "    return;",
+              "  }",
+              "  float scanline = sin((vUv.y + time * speed) * density * 3.14159);",
+              "  scanline = (scanline + 1.0) * 0.5;",
+              "  float factor = 1.0 - (intensity * (1.0 - scanline));",
+              "  gl_FragColor = vec4(baseColor.rgb * factor, baseColor.a);",
+              "}"
+            ].join("\n")
+          });
+
+          postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+          postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMaterial);
+          postScene = new THREE.Scene();
+          postScene.add(postQuad);
+        }
 
         if (backgroundColor) {
           try {
@@ -232,12 +311,28 @@
         pivotGroup.add(textContainer);
         scene.add(pivotGroup);
 
+        function renderScene() {
+          if (disposed || !renderer) return;
+          if (renderTarget && postScene && postCamera) {
+            renderer.setRenderTarget(renderTarget);
+            renderer.render(scene, camera);
+            renderer.setRenderTarget(null);
+            renderer.render(postScene, postCamera);
+          } else {
+            renderer.render(scene, camera);
+          }
+        }
+
         function updateLayoutAndCamera() {
           if (disposed || !renderer) return;
           var width = Math.max(host.clientWidth || 0, 1);
           var height = Math.max(host.clientHeight || 0, 1);
 
           renderer.setSize(width, height, false);
+          if (renderTarget) {
+            renderTarget.setSize(width, height);
+          }
+
           camera.aspect = width / height;
           camera.updateProjectionMatrix();
 
@@ -268,13 +363,13 @@
 
         onWindowResize = updateLayoutAndCamera;
         updateLayoutAndCamera();
-        renderer.render(scene, camera);
+        renderScene();
 
         if (window.ResizeObserver) {
           resizeObserver = new ResizeObserver(function() {
             if (disposed || !renderer) return;
             updateLayoutAndCamera();
-            renderer.render(scene, camera);
+            renderScene();
           });
           resizeObserver.observe(host);
         } else {
@@ -288,9 +383,12 @@
           getRotationY: function() { return pivotGroup.rotation.y; },
           getRotationZ: function() { return pivotGroup.rotation.z; },
           getRotationAxis: function() { return rotationAxis; },
+          getRotationSpeed: function() { return rotationSpeed; },
           getFontSize: function() { return fontSize; },
           getFont: function() { return font; },
           getBackgroundMode: function() { return backgroundMode; },
+          getScanlinesIntensity: function() { return scanlinesIntensity; },
+          hasScanlinesShader: function() { return !!renderTarget; },
           lineCount: lines.length
         };
 
@@ -299,14 +397,22 @@
           var dt = Math.min(Math.max((now - lastTime) / 1000, 0), 0.1);
           lastTime = now;
 
-          if (rotationAxis === "y") {
-            pivotGroup.rotation.y += ROTATION_SPEED_RAD_PER_SEC * dt;
-          } else if (rotationAxis === "z") {
-            pivotGroup.rotation.z += ROTATION_SPEED_RAD_PER_SEC * dt;
-          } else {
-            pivotGroup.rotation.x += ROTATION_SPEED_RAD_PER_SEC * dt;
+          if (rotationSpeed > 0) {
+            var dRot = ROTATION_SPEED_RAD_PER_SEC * rotationSpeed * dt;
+            if (rotationAxis === "y") {
+              pivotGroup.rotation.y += dRot;
+            } else if (rotationAxis === "z") {
+              pivotGroup.rotation.z += dRot;
+            } else {
+              pivotGroup.rotation.x += dRot;
+            }
           }
-          renderer.render(scene, camera);
+
+          if (renderTarget && postMaterial) {
+            postMaterial.uniforms.time.value += dt;
+          }
+
+          renderScene();
 
           animateRafId = window.requestAnimationFrame(animate);
         }
@@ -333,6 +439,21 @@
           backgroundTexture = null;
         }
 
+        if (renderTarget) {
+          renderTarget.dispose();
+          renderTarget = null;
+        }
+
+        if (postMaterial) {
+          postMaterial.dispose();
+          postMaterial = null;
+        }
+
+        if (postQuad) {
+          if (postQuad.geometry) postQuad.geometry.dispose();
+          postQuad = null;
+        }
+
         for (var g = 0; g < geometries.length; g++) {
           geometries[g].dispose();
         }
@@ -347,7 +468,7 @@
         }
         delete host._threeQuoteDebug;
       };
-    }, [quoteText, quoteColor, rotationAxis, fontSize, font, backgroundColor, backgroundImage, backgroundMode]);
+    }, [quoteText, quoteColor, rotationAxis, rotationSpeed, fontSize, font, backgroundColor, backgroundImage, backgroundMode, scanlinesIntensity, scanlinesDensity, scanlinesSpeed]);
 
     if (webglFailed) {
       var fallbackStyle = { color: quoteColor };
@@ -411,6 +532,10 @@
     if (axis !== "x" && axis !== "y" && axis !== "z") {
       axis = "x";
     }
+    var rotationSpeed = parseFloat(el.getAttribute("data-rotation-speed") || "1");
+    if (isNaN(rotationSpeed) || rotationSpeed < 0) {
+      rotationSpeed = 1.0;
+    }
     var fontSize = (el.getAttribute("data-font-size") || "md").toLowerCase();
     if (fontSize !== "sm" && fontSize !== "md" && fontSize !== "lg" && fontSize !== "xl") {
       fontSize = "md";
@@ -422,19 +547,31 @@
     if (backgroundMode !== "tile") {
       backgroundMode = "stretch";
     }
+    var scanlinesIntensity = (el.getAttribute("data-scanlines-intensity") || "off").toLowerCase();
+    var scanlinesDensity = (el.getAttribute("data-scanlines-density") || "medium").toLowerCase();
+    var scanlinesSpeed = (el.getAttribute("data-scanlines-speed") || "normal").toLowerCase();
 
     if (!text.trim()) return;
 
-    var propsKey = [text, color, axis, fontSize, font, backgroundColor || "", backgroundImage || "", backgroundMode].join("\u0000");
+    var propsKey = [
+      text, color, axis, rotationSpeed, fontSize, font,
+      backgroundColor || "", backgroundImage || "", backgroundMode,
+      scanlinesIntensity, scanlinesDensity, scanlinesSpeed
+    ].join("\u0000");
+
     var sceneProps = {
       text: text,
       color: color,
       rotationAxis: axis,
+      rotationSpeed: rotationSpeed,
       fontSize: fontSize,
       font: font,
       backgroundColor: backgroundColor,
       backgroundImage: backgroundImage,
-      backgroundMode: backgroundMode
+      backgroundMode: backgroundMode,
+      scanlinesIntensity: scanlinesIntensity,
+      scanlinesDensity: scanlinesDensity,
+      scanlinesSpeed: scanlinesSpeed
     };
 
     var existing = mountedRoots.get(el);

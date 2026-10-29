@@ -131,4 +131,41 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
       assert_equal "xl", font_size
     end
   end
+
+  test "mounts Three.js quote with paused rotation, custom height, and active scanline shader pass" do
+    article = Macron::Cms::Article.create!(
+      title: "Retro Scanlines Quote",
+      name: "retro-scanlines-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "Cyberpunk aesthetics in WebGL.",
+        "rotation_speed" => "0",
+        "canvas_height" => "lg",
+        "scanlines_intensity" => "strong",
+        "scanlines_density" => "fine",
+        "scanlines_speed" => "fast"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Retro Scanlines Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount].h-96.sm\\:h-\\[480px\\][data-rotation-speed='0'][data-canvas-height='lg'][data-scanlines-intensity='strong']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      has_shader = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.hasScanlinesShader()")
+      assert_equal true, has_shader
+      intensity = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getScanlinesIntensity()")
+      assert_equal "strong", intensity
+
+      initial_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationX()")
+      sleep 0.25
+      later_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationX()")
+      assert_equal initial_rot, later_rot, "Expected 3D quote rotation to remain paused when speed is 0"
+    end
+  end
 end

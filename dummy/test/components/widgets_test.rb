@@ -209,23 +209,28 @@ class WidgetsTest < ViewComponent::TestCase
 
     assert_selector "figure[data-three-js-quote-card].rounded-xl.border.border-zinc-200"
     assert_selector "blockquote.sr-only", text: "Simplicity is prerequisite for reliability."
-    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-font-size='md'][data-font='helvetiker'][data-background-mode='stretch']"
+    assert_selector "div[data-three-js-quote-mount].h-64.sm\\:h-80[data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-rotation-speed='1'][data-canvas-height='md'][data-font-size='md'][data-font='helvetiker'][data-background-mode='stretch'][data-scanlines-intensity='off'][data-scanlines-density='medium'][data-scanlines-speed='normal']"
     assert_no_selector "div[data-three-js-quote-mount][data-background-color]"
     assert_no_selector "div[data-three-js-quote-mount][data-background-image]"
   end
 
-  test "three_js_quote component renders custom rotation axis, background color, image URL, and tile mode" do
+  test "three_js_quote component renders custom rotation axis, speed, height, scanlines, background color, image URL, and tile mode" do
     render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {
       "text" => "Design is intelligence made visible.",
       "rotation_axis" => "y",
+      "rotation_speed" => "2",
+      "canvas_height" => "lg",
       "font_size" => "lg",
       "font" => "optimer",
       "background_color" => "#09090b",
       "upload" => "https://example.com/stars.png",
-      "background_mode" => "tile"
+      "background_mode" => "tile",
+      "scanlines_intensity" => "strong",
+      "scanlines_density" => "fine",
+      "scanlines_speed" => "fast"
     }))
 
-    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='y'][data-font-size='lg'][data-font='optimer'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile']"
+    assert_selector "div[data-three-js-quote-mount].h-96.sm\\:h-\\[480px\\][data-rotation-axis='y'][data-rotation-speed='2'][data-canvas-height='lg'][data-font-size='lg'][data-font='optimer'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile'][data-scanlines-intensity='strong'][data-scanlines-density='fine'][data-scanlines-speed='fast']"
   end
 
   test "three_js_quote component resolves ActiveStorage attached background image" do

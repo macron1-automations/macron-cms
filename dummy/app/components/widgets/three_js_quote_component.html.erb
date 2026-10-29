@@ -4,16 +4,21 @@
 >
   <blockquote class="sr-only"><%= quote_text %></blockquote>
   <div
-    class="relative w-full h-64 sm:h-80"
+    class="relative w-full <%= canvas_height_class %>"
     data-three-js-quote-mount
     data-quote-text="<%= quote_text %>"
     data-quote-color="<%= effective_color %>"
     data-rotation-axis="<%= rotation_axis %>"
+    data-rotation-speed="<%= rotation_speed %>"
+    data-canvas-height="<%= canvas_height %>"
     data-font-size="<%= font_size %>"
     data-font="<%= font %>"
     <% if background_color.present? %>data-background-color="<%= background_color %>"<% end %>
     <% if background_image_url.present? %>data-background-image="<%= background_image_url %>"<% end %>
     data-background-mode="<%= background_mode %>"
+    data-scanlines-intensity="<%= scanlines_intensity %>"
+    data-scanlines-density="<%= scanlines_density %>"
+    data-scanlines-speed="<%= scanlines_speed %>"
     role="img"
     aria-label="<%= quote_text %>"
   ></div>

@@ -927,4 +927,49 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "div.cms-latex-widget[data-cms-latex='E = mc^2']"
   end
+
+  test "admin can remove existing file attachment from content block" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Remove File Article", name: "remove-file-article")
+    image_type = Macron::Cms::Content.find_or_create_by!(name: "image") do |c|
+      c.fields = [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
+    end
+
+    file = Rack::Test::UploadedFile.new(StringIO.new("fake-image"), "image/png", original_filename: "test.png")
+    post "/cms/articles/#{article.slug}/article_contents", params: {
+      article_content: {
+        content_id: image_type.id,
+        payload: {
+          upload: file,
+          size: "md"
+        }
+      }
+    }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+
+    block = article.article_contents.last
+    assert block.files.attached?
+    assert_equal "test.png", block.payload["upload"]
+
+    # Verify form renders the removal checkbox
+    assert_select "input[type='checkbox'][name='article_content[remove_files][]'][value='upload']"
+
+    # Submit update with removal checkbox checked
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}", params: {
+      article_content: {
+        remove_files: [ "upload" ],
+        payload: {
+          size: "lg"
+        }
+      }
+    }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    follow_redirect!
+
+    block.reload
+    assert_not block.files.attached?, "Expected attached file to be purged"
+    assert_nil block.payload["upload"], "Expected payload upload key to be cleared"
+    assert_equal "lg", block.payload["size"]
+  end
 end
