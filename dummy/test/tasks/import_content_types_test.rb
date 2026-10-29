@@ -31,6 +31,12 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
 
     heading = Macron::Cms::Content.find_by!(name: "heading")
     assert_equal heading_expected_fields, heading.fields
+
+    image = Macron::Cms::Content.find_by!(name: "image")
+    assert_equal [ { "name" => "upload", "kind" => "file" } ], image.fields
+
+    embed = Macron::Cms::Content.find_by!(name: "embed")
+    assert_equal [ { "name" => "upload", "kind" => "file" } ], embed.fields
   end
 
   test "import task is idempotent and updates existing records" do

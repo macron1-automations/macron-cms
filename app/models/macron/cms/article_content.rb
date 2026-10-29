@@ -4,17 +4,49 @@ module Macron
       belongs_to :article, class_name: "Macron::Cms::Article"
       belongs_to :content, class_name: "Macron::Cms::Content"
 
+      has_many_attached :files
+
       before_validation :assign_default_sort_order, on: :create
 
       validates :sort_order, numericality: { only_integer: true }
 
       default_scope -> { order(:sort_order, :id) }
 
+      def upload
+        files.first
+      end
+
+      def file
+        files.first
+      end
+
+      def uploads
+        files
+      end
+
+      def attach_upload(uploaded, replace: false)
+        return unless uploaded.present?
+
+        if replace && files.attached?
+          files.purge
+        end
+
+        files.attach(uploaded)
+      end
+
       def filter_payload(raw_payload)
         return {} unless content && raw_payload.respond_to?(:to_h)
 
         allowed = content.field_names
-        raw_payload.to_h.stringify_keys.slice(*allowed)
+        raw_payload.to_h.stringify_keys.slice(*allowed).transform_values do |val|
+          if val.respond_to?(:original_filename)
+            val.original_filename
+          elsif val.is_a?(Array) && val.any? { |v| v.respond_to?(:original_filename) }
+            val.filter_map { |v| v.respond_to?(:original_filename) ? v.original_filename : v }
+          else
+            val
+          end
+        end
       end
 
       private

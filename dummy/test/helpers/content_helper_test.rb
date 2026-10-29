@@ -57,4 +57,24 @@ class ContentHelperTest < ActionView::TestCase
     article = Macron::Cms::Article.create!(title: "Empty Article", name: "empty-article")
     assert_equal "", cms_render_article_contents(article)
   end
+
+  test "cms_render_article_contents renders image and embed widgets" do
+    article = Macron::Cms::Article.create!(title: "Media Article", name: "media-article")
+    image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
+    embed_type = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" } ])
+
+    image_block = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 1)
+    image_file = Rack::Test::UploadedFile.new(StringIO.new("fake image"), "image/png", original_filename: "illustration.png")
+    image_block.files.attach(image_file)
+
+    embed_block = Macron::Cms::ArticleContent.create!(article: article, content: embed_type, sort_order: 2)
+    embed_file = Rack::Test::UploadedFile.new(StringIO.new("<p>Embed content</p>"), "text/html", original_filename: "app.html")
+    embed_block.files.attach(embed_file)
+
+    rendered = cms_render_article_contents(article)
+    assert_includes rendered, "<figure"
+    assert_includes rendered, "<img"
+    assert_includes rendered, "<iframe"
+    assert_includes rendered, "app.html"
+  end
 end

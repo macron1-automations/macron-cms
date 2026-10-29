@@ -89,4 +89,42 @@ class ArticleContentTest < ActiveSupport::TestCase
     assert_not Macron::Cms::ArticleContent.exists?(join.id)
     assert Macron::Cms::Content.exists?(content.id)
   end
+
+  test "has_many_attached :files with convenience methods upload, file, and uploads" do
+    article = Macron::Cms::Article.create!(title: "Attach Article", name: "attach-article")
+    content = Macron::Cms::Content.create!(name: "image-test", fields: [ { "name" => "upload", "kind" => "file" } ])
+    article_content = Macron::Cms::ArticleContent.create!(article: article, content: content)
+
+    assert_not article_content.files.attached?
+    assert_nil article_content.upload
+    assert_nil article_content.file
+
+    file1 = Rack::Test::UploadedFile.new(StringIO.new("fake image data"), "image/png", original_filename: "image1.png")
+    article_content.files.attach(file1)
+
+    assert article_content.files.attached?
+    assert_equal 1, article_content.files.count
+    assert_equal "image1.png", article_content.upload.filename.to_s
+    assert_equal "image1.png", article_content.file.filename.to_s
+    assert_equal article_content.files, article_content.uploads
+
+    # Test attach_upload with replace: true
+    file2 = Rack::Test::UploadedFile.new(StringIO.new("replacement data"), "image/png", original_filename: "image2.png")
+    article_content.attach_upload(file2, replace: true)
+
+    assert_equal 1, article_content.files.count
+    assert_equal "image2.png", article_content.upload.filename.to_s
+  end
+
+  test "filter_payload serializes UploadedFile to its original_filename" do
+    content = Macron::Cms::Content.create!(
+      name: "file-content",
+      fields: [ { "name" => "upload", "kind" => "file" } ]
+    )
+    article_content = Macron::Cms::ArticleContent.new(content: content)
+    uploaded = Rack::Test::UploadedFile.new(StringIO.new("content"), "text/html", original_filename: "widget.html")
+
+    filtered = article_content.filter_payload({ "upload" => uploaded })
+    assert_equal({ "upload" => "widget.html" }, filtered)
+  end
 end

@@ -1,7 +1,7 @@
 module Macron
   module Cms
     module FieldsHelper
-      SUPPORTED_KINDS = %w[string text dropdown].freeze
+      SUPPORTED_KINDS = %w[string text dropdown file].freeze
 
       def cms_render_field(field_def, value: nil, input_name: nil, input_id: nil)
         field_hash = field_def.stringify_keys

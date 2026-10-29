@@ -657,4 +657,93 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Content block was successfully removed."
     assert_includes response.body, "No content blocks yet"
   end
+
+  test "admin can add an image content block with file attachment" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Image Block Article", name: "image-block-article")
+    image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
+    uploaded = Rack::Test::UploadedFile.new(
+      StringIO.new("fake image data"),
+      "image/png",
+      original_filename: "banner.png"
+    )
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents",
+           as: :turbo_stream,
+           params: {
+             article_content: {
+               content_id: image_type.id,
+               insert_at: 1,
+               payload: {
+                 upload: uploaded
+               }
+             }
+           }
+    end
+
+    assert_response :success
+    new_block = article.article_contents.reload.first
+    assert new_block.files.attached?
+    assert_equal "banner.png", new_block.upload.filename.to_s
+    assert_equal "banner.png", new_block.payload["upload"]
+  end
+
+  test "admin can add an embed content block with html file attachment" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Embed Block Article", name: "embed-block-article")
+    embed_type = Macron::Cms::Content.create!(name: "embed", fields: [ { "name" => "upload", "kind" => "file" } ])
+    uploaded = Rack::Test::UploadedFile.new(
+      StringIO.new("<div>Embedded Widget</div>"),
+      "text/html",
+      original_filename: "widget.html"
+    )
+
+    assert_difference -> { article.article_contents.count }, 1 do
+      post "/cms/articles/#{article.slug}/article_contents",
+           as: :turbo_stream,
+           params: {
+             article_content: {
+               content_id: embed_type.id,
+               insert_at: 1,
+               payload: {
+                 upload: uploaded
+               }
+             }
+           }
+    end
+
+    assert_response :success
+    new_block = article.article_contents.reload.first
+    assert new_block.files.attached?
+    assert_equal "widget.html", new_block.upload.filename.to_s
+    assert_equal "widget.html", new_block.payload["upload"]
+  end
+
+  test "admin can update an image block by replacing the attached file" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Replace Image Article", name: "replace-image-article")
+    image_type = Macron::Cms::Content.create!(name: "image", fields: [ { "name" => "upload", "kind" => "file" } ])
+    block = Macron::Cms::ArticleContent.create!(article: article, content: image_type, payload: { "upload" => "old.png" })
+    old_file = Rack::Test::UploadedFile.new(StringIO.new("old"), "image/png", original_filename: "old.png")
+    block.files.attach(old_file)
+
+    new_file = Rack::Test::UploadedFile.new(StringIO.new("new"), "image/png", original_filename: "new.png")
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}",
+          as: :turbo_stream,
+          params: {
+            article_content: {
+              payload: {
+                upload: new_file
+              }
+            }
+          }
+
+    assert_response :success
+    block.reload
+    assert_equal 1, block.files.count
+    assert_equal "new.png", block.upload.filename.to_s
+    assert_equal "new.png", block.payload["upload"]
+  end
 end
