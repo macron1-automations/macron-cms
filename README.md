@@ -1,6 +1,6 @@
 # MacronCMS
 
-[![Gem Version](https://img.shields.io/badge/version-1.0.0-emerald.svg)](#version)
+[![Gem Version](https://img.shields.io/badge/version-2.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
@@ -10,7 +10,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 
 ## Overview
 
-**MacronCMS** brings simplicity and developer joy back to content management, without sacrificing the power needed to create dynamic digital experiences. Built natively for Ruby on Rails, it gives developers total freedom to define content structures with Rails models while effortlessly powering modern front-end presentations.
+**MacronCMS** brings simplicity and developer joy back to content management, without sacrificing the power needed to create dynamic digital experiences. Built natively for Ruby on Rails 8, it gives developers total freedom to define content structures with Rails models while effortlessly powering modern front-end presentations.
 
 ---
 
@@ -22,11 +22,35 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Deletion Safeguards**: Browser confirmation dialogs on delete actions with article titles to prevent accidental deletion.
 - **Host App Integration**: Quick links between the CMS admin console and public-facing host views.
 
-### 🧱 Dynamic Article Content Blocks & Payload Storage
-- **Multiple Blocks Per Article**: Associate an arbitrary series of content blocks with an article (`Macron::Cms::ArticleContent`). Add multiple blocks of the same content type (e.g. multiple headings or paragraphs) with distinct values.
-- **Dynamic Field Populating**: When adding or editing a block, input controls are automatically generated based on the content type's defined fields. Values are validated against the schema and saved into the block's `payload` JSONB column.
-- **Extensible Field Kinds**: Out-of-the-box support for `string` (text input), `text` (multiline textarea), and `dropdown` (select menu with configured options), with a partial-based architecture (`app/views/macron/cms/fields/_<kind>.html.erb`) making it effortless to add new field types.
-- **Inline Editing & Deletion**: Edit block payloads inline directly on the Article show page, or remove blocks with confirmation.
+### 🧱 Dynamic Article Content Blocks & In-Place Inserters
+- **Multiple Blocks Per Article**: Associate an arbitrary series of content blocks with an article (`Macron::Cms::ArticleContent`). Add multiple blocks of the same content type (e.g. headings, markdown blocks, images) with distinct values.
+- **In-Place Block Inserters**: Add new blocks directly above, between, or below existing blocks on the Article management screen with one click.
+- **Inline Turbo Stream Updates**: Add, edit, and reorder content blocks with instantaneous Turbo Stream updates—no full-page reloads.
+- **Dynamic Field Generation**: Field controls are generated dynamically based on the content type schema and validated before saving into the block's `payload` JSONB column.
+- **7 Extensible Field Kinds**:
+  - `string`: Single-line text input.
+  - `text`: Multiline text area.
+  - `dropdown`: Select menu configured with custom option lists from the schema YAML.
+  - `color`: Interactive color picker with hex value support.
+  - `markdown`: CodeMirror-backed markdown editor with formatted preview on the article show page.
+  - `file`: Direct file attachment powered by Active Storage.
+  - `json`: Dedicated JSON data editor.
+
+### 🎨 Article Background & Typography Customization
+- **Custom Background Colors & Images**: Configure an optional background color or attach a background image directly to any article via Active Storage, with live image previews and one-click purge.
+- **CSS Background Display Controls**: Fine-tune background display settings per article:
+  - **Size**: `cover`, `contain`, `auto`
+  - **Repeat**: `no-repeat`, `repeat`, `repeat-x`, `repeat-y`
+  - **Position**: `center`, `top`, `bottom`, `left`, `right`
+  - **Attachment**: `scroll`, `fixed`
+- **Article-Wide Text Color Propagation**: Set a custom text color at the article level that automatically propagates to the host view's `<body>` and header, as well as to child `WidgetComponent` instances (headings, paragraphs, and markdown prose).
+- **Public Style Helper**: Use `cms_article_background_style(@article)` to generate clean inline CSS applied directly to the host application's `<body>` tag.
+
+### 📝 CodeMirror Markdown & Rich Media
+- **CodeMirror Markdown Editor**: Integrated CodeMirror editor in the CMS admin for writing Markdown content with syntax highlighting.
+- **Formatted Markdown Previews**: Formatted GitHub Flavored Markdown (GFM) previews rendered directly on the article management page.
+- **Sandboxed Embeds**: Render third-party media and raw HTML snippets safely inside isolated `<iframe>` elements using `srcdoc` to prevent Active Storage download blocks and script collisions.
+- **Responsive Media Controls**: Configure image and embed widgets with responsive width options (`25%`, `33%`, `50%`, `66%`, `75%`, `100%`) and alignment (`left`, `center`, `right`).
 
 ### ↕️ Drag-and-Drop & Button Reordering
 - **HTML5 Drag-and-Drop**: Easily re-arrange article content blocks on the Article show page with immediate position updates and asynchronous persistence.
@@ -38,7 +62,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Rake Import Pipeline**: Idempotently sync YAML definitions into database records (`Macron::Cms::Content`) with automatic schema introspection and admin dashboard views.
 
 ### ⚡ Front-End ViewComponent Widgets
-- **`Macron::Cms::WidgetComponent`**: Base component class providing automatic method accessors for all defined schema fields and payload values.
+- **`Macron::Cms::WidgetComponent`**: Base component class providing automatic method accessors for schema fields, payload values, attached files (`file`, `upload`), and article-level styles (`article_text_color`).
 - **Seamless Rendering Helpers**: Render all article content blocks ordered by `sort_order` with `<%= cms_render_article_contents(@article) %>`, or render individual blocks via `<%= cms_render_widget(article_content) %>`.
 - **Informative Error Handling**: Raises `Macron::Cms::MissingWidgetError` if a content type does not have a corresponding `Widgets::<Name>Component` in the host application.
 
@@ -85,7 +109,15 @@ Or install it directly:
 $ gem install macron-cms
 ```
 
-### Engine Mounting & Migrations
+### 1. Active Storage Setup
+
+MacronCMS utilizes Active Storage for block file attachments (such as images) and article background images. If your application does not already have Active Storage installed, set it up:
+
+```bash
+$ bin/rails active_storage:install
+```
+
+### 2. Engine Mounting & Migrations
 
 Mount the engine inside your host application's `config/routes.rb`:
 
@@ -111,9 +143,11 @@ $ bin/rails db:migrate
 Scaffold content types using the built-in Rails generator:
 
 ```bash
-$ bin/rails generate macron:cms:content_type heading title:string level:string
+$ bin/rails generate macron:cms:content_type heading title:string level:dropdown color:color
 $ bin/rails generate macron:cms:content_type paragraph content:text
-$ bin/rails generate macron:cms:content_type image url:string caption:text
+$ bin/rails generate macron:cms:content_type markdown content:markdown
+$ bin/rails generate macron:cms:content_type image file:file width:dropdown align:dropdown caption:string
+$ bin/rails generate macron:cms:content_type embed html:text width:dropdown align:dropdown
 ```
 
 This generates:
@@ -121,7 +155,106 @@ This generates:
 2. `app/components/widgets/<name>_component.rb` (the ViewComponent class)
 3. `app/components/widgets/<name>_component.html.erb` (the ViewComponent template)
 
-### 2. Importing Content Types
+---
+
+### 2. Supported Field Kinds
+
+| Kind | Description | Config Options | Accessor in Widget |
+|---|---|---|---|
+| `string` | Single-line text input | — | `field_name` |
+| `text` | Multiline textarea | — | `field_name` |
+| `dropdown` | Select dropdown menu | `options: [...]` in YAML schema | `field_name` |
+| `color` | Color picker input (hex color code) | — | `field_name` |
+| `markdown` | Multiline markdown with CodeMirror editor | — | `field_name` |
+| `file` | File upload backed by Active Storage | — | `file` or `upload` (Active Storage attachment) |
+| `json` | Formatted JSON editor | — | `field_name` |
+
+---
+
+### 3. Schema Examples
+
+#### Section Heading (`config/content_types/heading.yml`)
+```yaml
+name: Heading
+description: Section heading with customizable level and color
+fields:
+  - name: title
+    kind: string
+  - name: level
+    kind: dropdown
+    options:
+      - h1
+      - h2
+      - h3
+      - h4
+      - h5
+      - h6
+  - name: color
+    kind: color
+```
+
+#### GitHub-Flavored Markdown (`config/content_types/markdown.yml`)
+```yaml
+name: Markdown
+description: Rich formatted content using GitHub-flavored Markdown
+fields:
+  - name: content
+    kind: markdown
+```
+
+#### Responsive Image with Active Storage (`config/content_types/image.yml`)
+```yaml
+name: Image
+description: Image with configurable responsive width, alignment, and optional caption
+fields:
+  - name: file
+    kind: file
+  - name: width
+    kind: dropdown
+    options:
+      - 25%
+      - 33%
+      - 50%
+      - 66%
+      - 75%
+      - 100%
+  - name: align
+    kind: dropdown
+    options:
+      - left
+      - center
+      - right
+  - name: caption
+    kind: string
+```
+
+#### Sandboxed Embed / HTML (`config/content_types/embed.yml`)
+```yaml
+name: Embed
+description: Embed external rich media or raw HTML snippets safely
+fields:
+  - name: html
+    kind: text
+  - name: width
+    kind: dropdown
+    options:
+      - 25%
+      - 33%
+      - 50%
+      - 66%
+      - 75%
+      - 100%
+  - name: align
+    kind: dropdown
+    options:
+      - left
+      - center
+      - right
+```
+
+---
+
+### 4. Importing Content Types
 
 Import all YAML content type definitions into the database (`Macron::Cms::Content`):
 
@@ -137,23 +270,44 @@ $ bin/rails macron:cms:content:import
 
 The import task is idempotent and creates or updates existing records. Once imported, content types can be inspected at `/cms/content_types` and added as content blocks to articles in `/cms/articles/:id`.
 
-### 3. Rendering Content Blocks on the Front End
+---
 
-In your front-end article view (e.g. `app/views/articles/show.html.erb`), render all blocks ordered by `sort_order`:
+### 5. Front-End Integration & ViewComponent Widgets
+
+#### Host Application View (`app/views/articles/show.html.erb`)
+
+Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply custom background colors, images, and text colors directly to the layout:
 
 ```erb
 <% cms_seo_meta(@article) %>
+<% if cms_article_background_style(@article).present? %>
+  <% content_for :body_style, cms_article_background_style(@article) %>
+<% end %>
 
-<article class="max-w-3xl mx-auto py-12">
-  <h1 class="text-4xl font-bold"><%= @article.title %></h1>
+<article class="max-w-4xl mx-auto px-4 py-12">
+  <header class="pb-8 mb-8 border-b border-zinc-200">
+    <h1 class="text-4xl font-bold" style="<%= "color: #{@article.text_color};" if @article.text_color.present? %>">
+      <%= @article.title %>
+    </h1>
+  </header>
 
-  <div class="mt-8 space-y-6">
+  <!-- Render all content blocks in order -->
+  <div class="space-y-6">
     <%= cms_render_article_contents(@article) %>
   </div>
 </article>
 ```
 
-Each widget inherits from `Macron::Cms::WidgetComponent`, allowing you to access fields directly by name or via `field_value(name)`:
+In your application layout (`app/views/layouts/application.html.erb`), apply the `:body_style` slot:
+
+```erb
+<body class="min-h-screen text-zinc-900 <%= 'bg-zinc-50' unless content_for?(:body_style) %>"
+      style="<%= yield :body_style if content_for?(:body_style) %>">
+  <%= yield %>
+</body>
+```
+
+#### Heading Widget Component Example
 
 ```ruby
 # app/components/widgets/heading_component.rb
@@ -162,13 +316,136 @@ module Widgets
     def tag_name
       level.presence || "h2"
     end
+
+    def resolved_color
+      color.presence || article_text_color
+    end
   end
 end
 ```
 
 ```erb
 <%# app/components/widgets/heading_component.html.erb %>
-<%= content_tag(tag_name, title, class: "font-bold text-zinc-900") %>
+<%= content_tag(tag_name, title, class: "font-bold tracking-tight", style: ("color: #{resolved_color};" if resolved_color.present?)) %>
+```
+
+#### Markdown Widget Component Example
+
+Render Markdown with Kramdown and inherit article-level text styling:
+
+```ruby
+# app/components/widgets/markdown_component.rb
+module Widgets
+  class MarkdownComponent < Macron::Cms::WidgetComponent
+    def rendered_markdown
+      raw = field_value(:content).to_s
+      return "".html_safe if raw.blank?
+
+      Kramdown::Document.new(raw, input: "GFM").to_html.html_safe
+    end
+
+    def text_style
+      "color: #{article_text_color};" if article_text_color.present?
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/markdown_component.html.erb %>
+<div class="prose max-w-none text-inherit dark:prose-invert" style="<%= text_style %>">
+  <%= rendered_markdown %>
+</div>
+```
+
+#### Image Widget Component Example
+
+Access Active Storage attachments using `file` or `upload`:
+
+```ruby
+# app/components/widgets/image_component.rb
+module Widgets
+  class ImageComponent < Macron::Cms::WidgetComponent
+    def attached_file
+      file
+    end
+
+    def width_class
+      case width
+      when "25%" then "max-w-xs"
+      when "33%" then "max-w-sm"
+      when "50%" then "max-w-md"
+      when "66%" then "max-w-lg"
+      when "75%" then "max-w-2xl"
+      else "w-full"
+      end
+    end
+
+    def align_class
+      case align
+      when "left" then "mr-auto"
+      when "right" then "ml-auto"
+      else "mx-auto"
+      end
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/image_component.html.erb %>
+<% if attached_file.present? %>
+  <figure class="<%= width_class %> <%= align_class %> my-6">
+    <%= image_tag attached_file, class: "rounded-lg shadow-sm w-full h-auto" %>
+    <% if caption.present? %>
+      <figcaption class="mt-2 text-center text-sm text-zinc-500"><%= caption %></figcaption>
+    <% end %>
+  </figure>
+<% end %>
+```
+
+#### Sandboxed Embed Widget Component Example
+
+```ruby
+# app/components/widgets/embed_component.rb
+module Widgets
+  class EmbedComponent < Macron::Cms::WidgetComponent
+    def embed_html
+      field_value(:html).to_s
+    end
+
+    def width_class
+      case width
+      when "25%" then "max-w-xs"
+      when "33%" then "max-w-sm"
+      when "50%" then "max-w-md"
+      when "66%" then "max-w-lg"
+      when "75%" then "max-w-2xl"
+      else "w-full"
+      end
+    end
+
+    def align_class
+      case align
+      when "left" then "mr-auto"
+      when "right" then "ml-auto"
+      else "mx-auto"
+      end
+    end
+  end
+end
+```
+
+```erb
+<%# app/components/widgets/embed_component.html.erb %>
+<div class="<%= width_class %> <%= align_class %> my-6">
+  <iframe
+    srcdoc="<%= embed_html %>"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+    class="w-full border-0 rounded overflow-hidden"
+    loading="lazy">
+  </iframe>
+</div>
 ```
 
 ---
