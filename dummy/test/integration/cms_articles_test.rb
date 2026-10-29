@@ -858,6 +858,13 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     block = article.article_contents.last
     assert_equal "# Welcome to Markdown\n\nThis is **empowered** with CodeMirror and Kramdown.", block.payload["content"]
 
+    # Verify rendered markdown in the admin content block view mode
+    assert_select "#view-payload-#{block.id} div.sm\\:col-span-2"
+    assert_select "#view-payload-#{block.id} .prose.prose-zinc" do
+      assert_select "h1", text: "Welcome to Markdown"
+      assert_select "strong", text: "empowered"
+    end
+
     # Public article rendering
     get "/articles/#{article.slug}"
     assert_response :success

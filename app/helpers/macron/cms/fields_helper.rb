@@ -1,7 +1,17 @@
+require "kramdown"
+require "kramdown-parser-gfm"
+
 module Macron
   module Cms
     module FieldsHelper
       SUPPORTED_KINDS = %w[string text dropdown file color markdown json].freeze
+
+      def cms_render_markdown(text)
+        return "".html_safe if text.blank?
+
+        raw_html = Kramdown::Document.new(text.to_s, input: "GFM").to_html
+        sanitize(raw_html)
+      end
 
       def cms_render_field(field_def, value: nil, input_name: nil, input_id: nil)
         field_hash = field_def.stringify_keys

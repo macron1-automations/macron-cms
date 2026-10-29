@@ -120,14 +120,18 @@
                   <% fname = f["name"] %>
                   <% fkind = f["kind"] %>
                   <% fval = ac.payload[fname] %>
-                  <div class="<%= fkind == 'text' ? 'sm:col-span-2' : '' %>">
+                  <div class="<%= fkind.in?(%w[text markdown]) ? 'sm:col-span-2' : '' %>">
                     <dt class="text-xs font-mono font-medium text-zinc-500 uppercase tracking-wide">
                       <%= fname %>
                       <span class="text-[10px] text-zinc-400 lowercase font-normal">(<%= fkind %>)</span>
                     </dt>
                     <dd class="mt-1 text-sm text-zinc-900 bg-zinc-50/80 rounded-lg p-2.5 border border-zinc-100 font-sans">
                       <% if fval.present? || ac.files.attached? %>
-                        <% if fkind == 'text' %>
+                        <% if fkind == 'markdown' %>
+                          <div class="prose prose-zinc prose-sm max-w-none">
+                            <%= cms_render_markdown(fval) %>
+                          </div>
+                        <% elsif fkind == 'text' %>
                           <div class="whitespace-pre-wrap"><%= fval %></div>
                         <% elsif fkind == 'file' && ac.files.attached? %>
                           <div class="space-y-2">
