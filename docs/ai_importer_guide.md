@@ -2,6 +2,9 @@
 
 This guide describes how to programmatically import articles and rich content blocks into **Macron CMS** using the API (`/cms/api/v1/articles`).
 
+> [!NOTE]
+> For the comprehensive REST API endpoint schemas, request/response structures, and status codes, see the [REST API Reference](api.md).
+
 ---
 
 ## 1. API Endpoints & Authentication
