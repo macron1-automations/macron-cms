@@ -122,4 +122,33 @@ class FieldsHelperTest < ActionView::TestCase
     assert_includes html_with_file, "Current file"
     assert_includes html_with_file, "Choose a new file to replace the existing one"
   end
+
+  test "cms_render_markdown renders markdown content to formatted html" do
+    markdown = "# Main Title\n\nThis is **bold** text with a [link](https://example.com) and `inline code`.\n\n- Item 1\n- Item 2"
+    result = cms_render_markdown(markdown)
+
+    assert_includes result, "<h1>Main Title</h1>"
+    assert_includes result, "<strong>bold</strong>"
+    assert_includes result, '<a href="https://example.com">link</a>'
+    assert_includes result, "<code>inline code</code>"
+    assert_includes result, "<ul>"
+    assert_includes result, "<li>Item 1</li>"
+  end
+
+  test "cms_render_markdown returns empty string for blank input" do
+    assert_equal "", cms_render_markdown(nil)
+    assert_equal "", cms_render_markdown("")
+    assert_equal "", cms_render_markdown("   ")
+  end
+
+  test "cms_render_markdown sanitizes malicious html script tags" do
+    malicious = "# Heading\n\n<script>alert('xss');</script>\n\n<p onclick=\"steal()\">Paragraph</p>"
+    result = cms_render_markdown(malicious)
+
+    assert_includes result, "<h1>Heading</h1>"
+    assert_not_includes result, "<script>"
+    assert_not_includes result, "</script>"
+    assert_not_includes result, "onclick"
+    assert_includes result, "<p>Paragraph</p>"
+  end
 end
