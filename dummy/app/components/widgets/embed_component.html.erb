@@ -1,9 +1,25 @@
 <% if embed_html.present? %>
-  <div class="my-6 <%= container_classes %> overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+  <div class="relative group my-6 <%= container_classes %> overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&:fullscreen]:m-0 [&:fullscreen]:max-w-none [&:fullscreen]:w-screen [&:fullscreen]:h-screen [&:fullscreen]:rounded-none [&:fullscreen]:border-0" data-embed-card>
+    <button
+      type="button"
+      class="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900/60 text-white backdrop-blur-xs transition hover:bg-zinc-900/90 focus:outline-none focus:ring-2 focus:ring-white/50 opacity-70 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+      data-embed-fullscreen-btn
+      aria-label="Maximize"
+      title="Maximize"
+    >
+      <svg class="h-4 w-4" data-icon-enter-fullscreen xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+      </svg>
+      <svg class="h-4 w-4 hidden" data-icon-exit-fullscreen xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+      </svg>
+    </button>
     <iframe
       srcdoc="<%= embed_html %>"
-      class="w-full <%= height_class %> border-0"
+      class="w-full <%= height_class %> border-0 [&.is-fullscreen-iframe]:h-full [div:fullscreen_&]:h-full"
       sandbox="allow-scripts allow-same-origin allow-popups"
+      allowfullscreen
+      allow="fullscreen"
       loading="lazy"
       title="Embedded HTML content"
     ></iframe>

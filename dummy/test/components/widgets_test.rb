@@ -99,8 +99,14 @@ class WidgetsTest < ViewComponent::TestCase
     ac.files.attach(file)
 
     rendered = render_inline(Widgets::EmbedComponent.new(article_content: ac, payload: ac.payload))
+    assert_selector "div[data-embed-card]"
+    assert_selector "button[data-embed-fullscreen-btn][aria-label='Maximize']"
+    assert_selector "button[data-embed-fullscreen-btn] svg[data-icon-enter-fullscreen]"
+    assert_selector "button[data-embed-fullscreen-btn] svg[data-icon-exit-fullscreen].hidden"
     assert_selector "iframe[title='Embedded HTML content']"
     assert_selector "iframe[sandbox='allow-scripts allow-same-origin allow-popups']"
+    assert_selector "iframe[allowfullscreen]"
+    assert_selector "iframe[allow='fullscreen']"
     assert_includes rendered.to_html, "<h1>Interactive chart</h1>"
   end
 
