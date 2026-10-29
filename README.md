@@ -2,6 +2,8 @@
 
 [![Gem Version](https://img.shields.io/badge/version-4.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev)
+[![Three.js](https://img.shields.io/badge/Three.js-black?logo=three.js&logoColor=white)](https://threejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
 A simple, flexible CMS engine for Ruby on Rails, designed for building highly interactive content with dynamic content blocks, declarative schemas, and ViewComponent widgets.
