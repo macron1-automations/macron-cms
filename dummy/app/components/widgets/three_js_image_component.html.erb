@@ -1,0 +1,29 @@
+<% if render? %>
+  <figure class="my-6 <%= container_classes %>" data-three-js-image-card>
+    <div
+      class="relative w-full <%= canvas_height_class %> overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-900 shadow-xs"
+      data-three-js-image-mount
+      data-image-url="<%= image_source %>"
+      data-effect="<%= effect %>"
+      data-animation-speed="<%= animation_speed %>"
+      data-intensity="<%= intensity %>"
+      data-canvas-height="<%= canvas_height %>"
+      data-fit-mode="<%= fit_mode %>"
+      role="img"
+      aria-label="Interactive Three.js effect image"
+    >
+      <div
+        class="absolute inset-0 flex items-center justify-center bg-zinc-900 transition-opacity duration-300"
+        data-three-js-image-placeholder
+      >
+        <div class="flex flex-col items-center justify-center gap-2 text-zinc-400">
+          <svg class="h-8 w-8 animate-spin text-zinc-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span class="text-xs font-medium tracking-wide uppercase text-zinc-400">Loading FX...</span>
+        </div>
+      </div>
+    </div>
+  </figure>
+<% end %>
