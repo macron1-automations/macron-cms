@@ -1,6 +1,6 @@
 # MacronCMS
 
-[![Gem Version](https://img.shields.io/badge/version-3.0.0-emerald.svg)](#version)
+[![Gem Version](https://img.shields.io/badge/version-4.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
@@ -18,13 +18,15 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 
 ### 🛠️ Dedicated Admin Dashboard (`/cms`)
 - **Modern Zinc Aesthetic**: Clean, responsive monochrome layout with sticky sidebar navigation, top breadcrumbs, metric cards, quick-action buttons, and flash notification banners.
-- **Article CRUD & Friendly URLs**: Manage articles (`Macron::Cms::Article`) out-of-the-box with dedicated create, edit, show, and delete interfaces. Automatic slug generation via `friendly_id` produces clean SEO URLs.
+- **Article CRUD & Canonical Slugs**: Manage articles (`Macron::Cms::Article`) out-of-the-box with dedicated create, edit, show, and delete interfaces. Automatic slug generation via `friendly_id` produces clean SEO URLs.
+- **Slug History & Canonical 301 Redirects**: Automatic FriendlyId slug history tracking. Host controllers use the `Macron::Cms::SlugRedirectable` concern to automatically issue permanent 301 redirects when an article is accessed via a previous slug, maintaining SEO equity and preventing 404s.
 - **Deletion Safeguards**: Browser confirmation dialogs on delete actions with article titles to prevent accidental deletion.
 - **Host App Integration**: Quick links between the CMS admin console and public-facing host views.
 
 ### 🧱 Dynamic Article Content Blocks & In-Place Inserters
 - **Multiple Blocks Per Article**: Associate an arbitrary series of content blocks with an article (`Macron::Cms::ArticleContent`). Add multiple blocks of the same content type (e.g. headings, markdown blocks, images) with distinct values.
 - **In-Place Block Inserters**: Add new blocks directly above, between, or below existing blocks on the Article management screen with one click.
+- **Declarative In-Place Block Conversion**: Convert blocks between compatible content types directly in-place (e.g. `image` <-> `three_js_image`) via the `convertible_to` schema definition. Conversions update records in place without duplicating Active Storage file attachments, and preserve existing and dormant JSONB `payload` attributes non-destructively.
 - **Inline Turbo Stream Updates**: Add, edit, and reorder content blocks with instantaneous Turbo Stream updates—no full-page reloads.
 - **Dynamic Field Generation**: Field controls are generated dynamically based on the content type schema and validated before saving into the block's `payload` JSONB column.
 - **8 Extensible Field Kinds**:
@@ -37,6 +39,11 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
   - `json`: Dedicated JSON data editor.
   - `latex`: CodeMirror LaTeX editor with `stex` syntax mode and KaTeX mathematical equation preview.
 - **File Attachment Purging**: Remove or replace existing Active Storage attachments directly from the block editor with a dedicated purge checkbox, keeping payloads clean without recreating blocks.
+
+### 🖼️ Automatic Featured Image Bubbling
+- **Declarative Tagging**: Tag image-bearing content types with `featured_image: true` in their YAML schemas (`config/content_types/*.yml`).
+- **Write-Time Image Bubbling**: Active Storage image attachments on eligible blocks automatically bubble up to `article.featured_image_blob` upon saving or deleting blocks, pointing to the first attached image in block sort order.
+- **Zero-Join Editorial Streams**: Eager-load and render article feeds or homepage streams (`@articles = Macron::Cms::Article.includes(:featured_image_blob)`) and access `article.featured_image` without expensive multi-table joins across heterogeneous content blocks.
 
 ### 🎨 Article Background & Typography Customization
 - **Custom Background Colors & Images**: Configure an optional background color or attach a background image directly to any article via Active Storage, with live image previews and one-click purge.
@@ -52,12 +59,15 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **CodeMirror Markdown & LaTeX Editors**: Integrated CodeMirror editors in the CMS admin for writing Markdown content and raw LaTeX expressions with syntax highlighting (`stex` mode).
 - **Fast KaTeX Math Rendering**: Embedded KaTeX engine renders complex LaTeX equations, mathematical notation, and symbols instantaneously in both admin previews and front-end layouts.
 - **Formatted Markdown Previews**: Formatted GitHub Flavored Markdown (GFM) previews rendered directly on the article management page.
-- **Sandboxed Embeds**: Render third-party media and raw HTML snippets safely inside isolated `<iframe>` elements using `srcdoc` to prevent Active Storage download blocks and script collisions.
+- **Sandboxed Embeds with Configurable Heights**: Render third-party media and raw HTML snippets safely inside isolated `<iframe>` elements using `srcdoc` to prevent Active Storage download blocks and script collisions. Configure display heights (`sm`: 240px, `md`: 320px, `lg`: 480px, `xl`: 640px, `2xl`: 800px) alongside responsive widths (`25%` to `100%`).
+- **Native Fullscreen Maximize**: Embed containers feature a floating toggle button powered by the HTML5 Fullscreen API (`widgets/embed.js`), allowing users to expand embedded presentations, charts, or maps to full screen.
 - **Responsive Media Controls**: Configure image and embed widgets with responsive width options (`25%`, `33%`, `50%`, `66%`, `75%`, `100%`) and alignment (`left`, `center`, `right`).
 
-### ↕️ Drag-and-Drop & Button Reordering
+### ↕️ Drag-and-Drop, Compact View & Batch Reordering
 - **HTML5 Drag-and-Drop**: Easily re-arrange article content blocks on the Article show page with immediate position updates and asynchronous persistence.
 - **Accessible Move Up / Down Buttons**: Keyboard- and mobile-friendly reordering buttons on each block card as a built-in fallback.
+- **High-Density Compact View**: Segmented toggle (`?view=compact`) for rapid content reordering across long articles. Compact mode hides in-between inserters, displays the primary field defined in the schema (`primary_field`), and clamps text output to two lines for streamlined scanning.
+- **Shift+Click Multi-Selection & Multi-Drag**: Select multiple blocks in compact view using checkboxes or Shift+Click contiguous range selection with an active selection count badge. Dragging any selected card moves the entire group contiguously to the drop target.
 
 ### 🧩 Declarative Content Types & Generators
 - **YAML-Defined Schemas**: Define structured content types with typed fields (`name:kind`) stored directly in source control (`config/content_types/*.yml`).
@@ -76,7 +86,8 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 ### 🤖 REST API & AI Content Ingestion (`/cms/api/v1`)
 - **Atomic Nested Import**: Create or update articles and complete sequences of typed content blocks in a single atomic transaction.
 - **Automated Remote Asset Ingestion**: Remote image URLs (e.g. Substack, Medium, WordPress) are automatically downloaded, validated, and attached to Active Storage blobs.
-- **Idempotent Upsert Support**: Re-run imports safely using `upsert: true` without creating duplicate articles.
+- **Idempotent Upsert Support**: Re-run imports safely using `upsert: true` matching on canonical `slug` or `title` without creating duplicate articles.
+- **Historical Slug Resolution**: Requests referencing previous slugs resolve with `200 OK` and return the current canonical slug in the response, preventing integration breaks.
 - **Content Type Schema Introspection**: Query `GET /cms/api/v1/content_types` dynamically so AI agents know exact fields and widget types available.
 - **Bearer Token Auth**: Secure endpoints with `Authorization: Bearer <token>` or `X-API-Key`.
 - **Full API Documentation**: Complete endpoint specifications, payload schemas, and response models in [`docs/api.md`](docs/api.md).
@@ -166,7 +177,7 @@ This generates:
 
 ---
 
-### 2. Supported Field Kinds
+### 2. Supported Field Kinds & Schema Options
 
 | Kind | Description | Config Options | Accessor in Widget |
 |---|---|---|---|
@@ -178,6 +189,18 @@ This generates:
 | `file` | File upload backed by Active Storage | — | `file` or `upload` (Active Storage attachment) |
 | `json` | Formatted JSON editor | — | `field_name` |
 | `latex` | Mathematical formula editor with CodeMirror & KaTeX | — | `field_name` |
+
+#### Schema Configuration Options
+
+In addition to fields, content type schemas support top-level configuration options:
+
+| Option | Type | Description |
+|---|---|---|
+| `name` | String | Human-readable name of the content type |
+| `description` | String | Detailed description displayed in the CMS admin dashboard |
+| `featured_image` | Boolean | Set to `true` to declare this block as an image source for article featured image bubbling |
+| `convertible_to` | Array of strings | Target content types eligible for declarative in-place conversion |
+| `primary_field` | String | Designation of the field displayed as the primary preview in compact block view |
 
 ---
 
@@ -216,6 +239,9 @@ fields:
 ```yaml
 name: Image
 description: Image with configurable responsive width, alignment, and optional caption
+featured_image: true
+convertible_to:
+  - three_js_image
 fields:
   - name: file
     kind: file
@@ -254,6 +280,19 @@ fields:
       - 66%
       - 75%
       - 100%
+  - name: height
+    kind: dropdown
+    options:
+      - name: Small (240px)
+        value: sm
+      - name: Medium (320px)
+        value: md
+      - name: Large (480px)
+        value: lg
+      - name: Extra Large (640px)
+        value: xl
+      - name: Very Large (800px)
+        value: 2xl
   - name: align
     kind: dropdown
     options:
@@ -349,6 +388,9 @@ fields:
 
 #### Interactive 3D Image Effects (`config/content_types/three_js_image.yml`)
 ```yaml
+featured_image: true
+convertible_to:
+  - image
 fields:
   - name: upload
     kind: file
@@ -432,6 +474,53 @@ The import task is idempotent and creates or updates existing records. Once impo
 
 ### 5. Front-End Integration & ViewComponent Widgets
 
+#### Host Application Controller (`app/controllers/articles_controller.rb`)
+
+Include `Macron::Cms::SlugRedirectable` in your host controller to automatically issue canonical 301 permanent redirects if a visitor or search engine arrives via an outdated historical slug:
+
+```ruby
+class ArticlesController < ApplicationController
+  include Macron::Cms::SlugRedirectable
+
+  def show
+    @article = Macron::Cms::Article.friendly.find(params[:id])
+    redirect_to_canonical_slug_if_needed(@article)
+  end
+end
+```
+
+#### Editorial Stream & Featured Images (`app/views/pages/index.html.erb`)
+
+When listing articles on a homepage or editorial index, eager-load `:featured_image_blob` to display automatically bubbled featured images with zero N+1 database queries:
+
+```ruby
+# app/controllers/pages_controller.rb
+class PagesController < ApplicationController
+  def index
+    @articles = Macron::Cms::Article.includes(:featured_image_blob).order(created_at: :desc)
+  end
+end
+```
+
+```erb
+<%# app/views/pages/index.html.erb %>
+<div class="space-y-6">
+  <% @articles.each do |article| %>
+    <div class="flex items-start gap-4">
+      <% if article.featured_image.present? %>
+        <%= link_to article_path(article), class: "shrink-0" do %>
+          <%= image_tag article.featured_image, class: "w-24 h-24 object-cover rounded-lg border border-zinc-200" %>
+        <% end %>
+      <% end %>
+      <div>
+        <h2 class="text-xl font-bold"><%= link_to article.title, article_path(article) %></h2>
+        <p class="text-sm text-zinc-600 line-clamp-2"><%= article.seo_description %></p>
+      </div>
+    </div>
+  <% end %>
+</div>
+```
+
 #### Host Application View (`app/views/articles/show.html.erb`)
 
 Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply custom background colors, images, and text colors directly to the layout:
@@ -476,6 +565,7 @@ In your application layout (`app/views/layouts/application.html.erb`), apply the
   <%= javascript_include_tag "vendor/three_fonts_bundle", "data-turbo-track": "reload", defer: true %>
   <%= javascript_include_tag "widgets/three_js_quote", "data-turbo-track": "reload", defer: true %>
   <%= javascript_include_tag "widgets/three_js_image", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "widgets/embed", "data-turbo-track": "reload", defer: true %>
 </head>
 
 <body class="min-h-screen text-zinc-900 <%= 'bg-zinc-50' unless content_for?(:body_style) %>"
@@ -587,8 +677,17 @@ end
 # app/components/widgets/embed_component.rb
 module Widgets
   class EmbedComponent < Macron::Cms::WidgetComponent
+    HEIGHT_CLASSES = {
+      "sm"  => "h-60 sm:h-72",
+      "md"  => "h-72 sm:h-80",
+      "lg"  => "h-96 sm:h-[480px]",
+      "xl"  => "h-[540px] sm:h-[640px]",
+      "2xl" => "h-[640px] sm:h-[800px]"
+    }.freeze
+    DEFAULT_HEIGHT = "lg"
+
     def embed_html
-      field_value(:html).to_s
+      field_value(:html).presence || (upload.present? ? upload.download.force_encoding("UTF-8") : nil)
     end
 
     def width_class
@@ -609,18 +708,42 @@ module Widgets
       else "mx-auto"
       end
     end
+
+    def height_class
+      h = field_value(:height).to_s.strip.downcase
+      HEIGHT_CLASSES[h] || HEIGHT_CLASSES[DEFAULT_HEIGHT]
+    end
   end
 end
 ```
 
 ```erb
 <%# app/components/widgets/embed_component.html.erb %>
-<div class="<%= width_class %> <%= align_class %> my-6">
+<div class="relative group my-6 <%= width_class %> <%= align_class %> overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&:fullscreen]:m-0 [&:fullscreen]:w-screen [&:fullscreen]:h-screen [&:fullscreen]:rounded-none" data-embed-card>
+  <!-- Fullscreen Toggle Button -->
+  <button
+    type="button"
+    class="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900/60 text-white backdrop-blur-xs transition hover:bg-zinc-900/90 focus:outline-none opacity-70 group-hover:opacity-100 cursor-pointer"
+    data-embed-fullscreen-btn
+    aria-label="Maximize"
+    title="Maximize"
+  >
+    <svg class="h-4 w-4" data-icon-enter-fullscreen fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+    </svg>
+    <svg class="h-4 w-4 hidden" data-icon-exit-fullscreen fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+    </svg>
+  </button>
+
   <iframe
     srcdoc="<%= embed_html %>"
+    class="w-full <%= height_class %> border-0 [&.is-fullscreen-iframe]:h-full"
     sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-    class="w-full border-0 rounded overflow-hidden"
-    loading="lazy">
+    allowfullscreen
+    allow="fullscreen"
+    loading="lazy"
+    title="Embedded content">
   </iframe>
 </div>
 ```
@@ -862,14 +985,21 @@ AI agents can query `/cms/api/v1/content_types` before generating payloads to dy
         { "name": "title", "kind": "string" },
         { "name": "level", "kind": "dropdown", "options": ["h1", "h2", "h3", "h4", "h5", "h6"] },
         { "name": "color", "kind": "color" }
-      ]
+      ],
+      "convertible_to": [],
+      "featured_image": false
     },
     {
       "id": 2,
-      "name": "markdown",
+      "name": "image",
       "fields": [
-        { "name": "content", "kind": "markdown" }
-      ]
+        { "name": "upload", "kind": "file" },
+        { "name": "size", "kind": "dropdown", "options": ["sm", "md", "lg", "full"] }
+      ],
+      "convertible_to": [
+        "three_js_image"
+      ],
+      "featured_image": true
     }
   ]
 }
