@@ -139,6 +139,26 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
 
     json = JSON.parse(response.body)
     assert_equal "Retrieve Me", json["article"]["title"]
+    assert_nil json["article"]["featured_image"]
+  end
+
+  test "GET /cms/api/v1/articles/:id returns article with featured_image metadata when attached" do
+    article = Macron::Cms::Article.create!(title: "Featured Article", name: "featured-article-api")
+    image_type = Macron::Cms::Content.find_by!(name: "image")
+    image_type.update!(featured_image: true)
+
+    block = article.article_contents.create!(content: image_type, sort_order: 1)
+    file = Rack::Test::UploadedFile.new(StringIO.new("img-data"), "image/png", original_filename: "cover.png")
+    block.files.attach(file)
+
+    get "/cms/api/v1/articles/#{article.slug}", headers: @auth_headers
+    assert_response :success
+
+    json = JSON.parse(response.body)
+    assert_not_nil json["article"]["featured_image"]
+    assert_equal "cover.png", json["article"]["featured_image"]["filename"]
+    assert_equal "image/png", json["article"]["featured_image"]["content_type"]
+    assert_match %r{/rails/active_storage/blobs/}, json["article"]["featured_image"]["url"]
   end
 
   test "GET /cms/api/v1/articles/:id returns 404 for unknown article" do

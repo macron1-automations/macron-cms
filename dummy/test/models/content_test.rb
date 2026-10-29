@@ -80,4 +80,15 @@ class ContentTest < ActiveSupport::TestCase
     assert_equal [ embed, three_js ], image.convertible_targets([ three_js, embed, image ])
     assert image.convertible_to?(three_js)
   end
+
+  test "featured_image defaults to false and featured_image_capable scope filters correctly" do
+    content = Macron::Cms::Content.new(name: "plain_content", fields: [])
+    assert_not content.featured_image?
+
+    featured = Macron::Cms::Content.create!(name: "featured_type", fields: [], featured_image: true)
+    unfeatured = Macron::Cms::Content.create!(name: "unfeatured_type", fields: [], featured_image: false)
+
+    assert_includes Macron::Cms::Content.featured_image_capable, featured
+    assert_not_includes Macron::Cms::Content.featured_image_capable, unfeatured
+  end
 end

@@ -154,6 +154,7 @@ module Macron
                 background_color: article.background_color,
                 text_color: article.text_color,
                 background_options: article.background_options,
+                featured_image: serialize_featured_image(article),
                 created_at: article.created_at&.iso8601,
                 updated_at: article.updated_at&.iso8601
               },
@@ -177,6 +178,18 @@ module Macron
 
                 block_data
               end
+            }
+          end
+
+          def serialize_featured_image(article)
+            return nil unless article.featured_image.present?
+
+            file = article.featured_image
+            {
+              filename: file.filename.to_s,
+              content_type: file.content_type,
+              byte_size: file.byte_size,
+              url: Rails.application.routes.url_helpers.rails_blob_path(file, only_path: true)
             }
           end
         end

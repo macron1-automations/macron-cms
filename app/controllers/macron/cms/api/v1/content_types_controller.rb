@@ -9,7 +9,8 @@ module Macron
                 id: ct.id,
                 name: ct.name,
                 fields: ct.normalized_fields,
-                convertible_to: ct.normalized_convertible_to
+                convertible_to: ct.normalized_convertible_to,
+                featured_image: ct.featured_image
               }
             end
 

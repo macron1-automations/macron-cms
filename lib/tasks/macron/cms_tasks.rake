@@ -26,10 +26,13 @@ namespace :macron do
         fields = data["fields"] || data[:fields] || {}
         raw_convertible = data["convertible_to"] || data[:convertible_to] || []
         convertible_to = Array(raw_convertible).filter_map { |v| v.to_s.strip.presence }.uniq
+        raw_featured_image = data.key?("featured_image") ? data["featured_image"] : data[:featured_image]
+        featured_image = ActiveModel::Type::Boolean.new.cast(raw_featured_image) || false
 
         content = Macron::Cms::Content.find_or_initialize_by(name: content_type_name)
         content.fields = fields
         content.convertible_to = convertible_to
+        content.featured_image = featured_image
         content.save!
 
         puts "Imported content type: #{content_type_name}"

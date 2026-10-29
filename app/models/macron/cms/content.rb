@@ -6,6 +6,8 @@ module Macron
       has_many :article_contents, class_name: "Macron::Cms::ArticleContent", dependent: :destroy
       has_many :articles, through: :article_contents
 
+      scope :featured_image_capable, -> { where(featured_image: true) }
+
       def normalized_fields
         raw = if fields.is_a?(Array)
           fields

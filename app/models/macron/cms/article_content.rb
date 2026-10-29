@@ -6,6 +6,9 @@ module Macron
 
       has_many_attached :files
 
+      after_save :sync_article_featured_image
+      after_destroy :sync_article_featured_image, unless: -> { destroyed_by_association.present? }
+
       before_validation :assign_default_sort_order, on: :create
 
       validates :sort_order, numericality: { only_integer: true }
@@ -72,6 +75,10 @@ module Macron
 
         max_order = article.article_contents.unscoped.where(article_id: article.id).maximum(:sort_order)
         self.sort_order = max_order ? max_order + 1 : 1
+      end
+
+      def sync_article_featured_image
+        article&.sync_featured_image!
       end
     end
   end

@@ -135,20 +135,25 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     heading = Macron::Cms::Content.find_by!(name: "heading")
     assert_equal heading_expected_fields, heading.fields
     assert_equal [], heading.convertible_to
+    assert_not heading.featured_image?
 
     image = Macron::Cms::Content.find_by!(name: "image")
     assert_equal media_expected_fields, image.fields
     assert_equal [ "three_js_image" ], image.convertible_to
+    assert image.featured_image?
 
     three_js_image = Macron::Cms::Content.find_by!(name: "three_js_image")
     assert_equal three_js_image_expected_fields, three_js_image.fields
     assert_equal [ "image" ], three_js_image.convertible_to
+    assert three_js_image.featured_image?
 
     embed = Macron::Cms::Content.find_by!(name: "embed")
     assert_equal embed_expected_fields, embed.fields
+    assert_not embed.featured_image?
 
     markdown = Macron::Cms::Content.find_by!(name: "markdown")
     assert_equal [ { "name" => "content", "kind" => "markdown" } ], markdown.fields
+    assert_not markdown.featured_image?
 
     three_js_quote = Macron::Cms::Content.find_by!(name: "three_js_quote")
     assert_equal [
@@ -245,6 +250,7 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
         ]
       }
     ], three_js_quote.fields
+    assert_not three_js_quote.featured_image?
   end
 
   test "import task is idempotent and updates existing records" do
