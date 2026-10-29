@@ -8,6 +8,10 @@
     data-three-js-quote-mount
     data-quote-text="<%= quote_text %>"
     data-quote-color="<%= effective_color %>"
+    data-rotation-axis="<%= rotation_axis %>"
+    <% if background_color.present? %>data-background-color="<%= background_color %>"<% end %>
+    <% if background_image_url.present? %>data-background-image="<%= background_image_url %>"<% end %>
+    data-background-mode="<%= background_mode %>"
     role="img"
     aria-label="<%= quote_text %>"
   ></div>

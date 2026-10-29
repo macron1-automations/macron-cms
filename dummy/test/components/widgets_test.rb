@@ -209,7 +209,36 @@ class WidgetsTest < ViewComponent::TestCase
 
     assert_selector "figure[data-three-js-quote-card].rounded-xl.border.border-zinc-200"
     assert_selector "blockquote.sr-only", text: "Simplicity is prerequisite for reliability."
-    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b']"
+    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-background-mode='stretch']"
+    assert_no_selector "div[data-three-js-quote-mount][data-background-color]"
+    assert_no_selector "div[data-three-js-quote-mount][data-background-image]"
+  end
+
+  test "three_js_quote component renders custom rotation axis, background color, image URL, and tile mode" do
+    render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {
+      "text" => "Design is intelligence made visible.",
+      "rotation_axis" => "y",
+      "background_color" => "#09090b",
+      "upload" => "https://example.com/stars.png",
+      "background_mode" => "tile"
+    }))
+
+    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='y'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile']"
+  end
+
+  test "three_js_quote component resolves ActiveStorage attached background image" do
+    article = Macron::Cms::Article.create!(title: "3D Quote with Image")
+    content = Macron::Cms::Content.create!(name: "three_js_quote", fields: [
+      { "name" => "text", "kind" => "string" },
+      { "name" => "upload", "kind" => "file" }
+    ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("fake-image"), "image/png", original_filename: "bg.png")
+    ac.files.attach(file)
+
+    render_inline(Widgets::ThreeJsQuoteComponent.new(article_content: ac, payload: { "text" => "Starlight", "rotation_axis" => "z" }))
+    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='z']"
+    assert_selector "div[data-three-js-quote-mount][data-background-image*='bg.png']"
   end
 
   test "three_js_quote component adopts article text_color as fallback and allows widget color override" do

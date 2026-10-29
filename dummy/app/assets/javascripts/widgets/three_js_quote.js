@@ -51,6 +51,10 @@
 
     var quoteText = props.text || "";
     var quoteColor = props.color || DEFAULT_COLOR;
+    var rotationAxis = props.rotationAxis || "x";
+    var backgroundColor = props.backgroundColor || null;
+    var backgroundImage = props.backgroundImage || null;
+    var backgroundMode = props.backgroundMode || "stretch";
 
     React.useEffect(function() {
       var host = hostRef.current;
@@ -74,6 +78,7 @@
       var geometries = [];
       var canvas = null;
       var onWindowResize = null;
+      var backgroundTexture = null;
 
       // Defer WebGL context & geometry setup until after the browser paints the Turbo transition
       initRafId = window.requestAnimationFrame(function() {
@@ -106,7 +111,48 @@
         var scene = new THREE.Scene();
         var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 1000);
 
-        // Multi-directional lighting so extruded faces stay legible throughout a 360-degree X-axis flip
+        if (backgroundColor) {
+          try {
+            scene.background = new THREE.Color(backgroundColor);
+          } catch (_bgColErr) {
+            // Ignore invalid color string
+          }
+        }
+
+        if (backgroundImage && THREE.TextureLoader) {
+          var loader = new THREE.TextureLoader();
+          loader.load(
+            backgroundImage,
+            function(texture) {
+              if (disposed) {
+                texture.dispose();
+                return;
+              }
+              backgroundTexture = texture;
+              if (THREE.SRGBColorSpace && "colorSpace" in texture) {
+                texture.colorSpace = THREE.SRGBColorSpace;
+              }
+              if (backgroundMode === "tile") {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(4, 4);
+              } else {
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+              }
+              scene.background = texture;
+              if (renderer) {
+                renderer.render(scene, camera);
+              }
+            },
+            undefined,
+            function(_loadErr) {
+              // Silently handle texture loading failure
+            }
+          );
+        }
+
+        // Multi-directional lighting so extruded faces stay legible throughout rotation
         var ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
         scene.add(ambientLight);
 
@@ -162,7 +208,7 @@
           textContainer.add(lineMesh);
         }
 
-        // Shift textContainer so pivotGroup's (0, 0, 0) horizontal X-axis passes directly through the 3D centroid
+        // Shift textContainer so pivotGroup's (0, 0, 0) centroid aligns with rotation pivot
         var combinedBox = new THREE.Box3().setFromObject(textContainer);
         var boxCenter = new THREE.Vector3();
         var boxSize = new THREE.Vector3();
@@ -185,11 +231,11 @@
           var vFov = THREE.MathUtils.degToRad(camera.fov);
           var hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
 
-          // Account for full vertical/depth sweep while flipping 360 degrees around the X-axis
-          var rotationalVerticalDiameter = Math.hypot(boxSize.y, boxSize.z);
-          var distY = (rotationalVerticalDiameter * 0.5) / Math.tan(vFov / 2);
-          var distX = (boxSize.x * 0.5) / Math.tan(Math.max(hFov / 2, 0.05));
-          var distance = Math.max(distX, distY, 2.5) * 1.32;
+          // Account for full rotational sweep across X, Y, or Z rotation
+          var maxRotRadius = Math.hypot(boxSize.x, boxSize.y, boxSize.z) * 0.5;
+          var distY = maxRotRadius / Math.tan(vFov / 2);
+          var distX = maxRotRadius / Math.tan(Math.max(hFov / 2, 0.05));
+          var distance = Math.max(distX, distY, 2.5) * 1.35;
 
           camera.position.set(0, 0, distance);
           camera.lookAt(0, 0, 0);
@@ -214,6 +260,10 @@
 
         host._threeQuoteDebug = {
           getRotationX: function() { return pivotGroup.rotation.x; },
+          getRotationY: function() { return pivotGroup.rotation.y; },
+          getRotationZ: function() { return pivotGroup.rotation.z; },
+          getRotationAxis: function() { return rotationAxis; },
+          getBackgroundMode: function() { return backgroundMode; },
           lineCount: lines.length
         };
 
@@ -222,7 +272,13 @@
           var dt = Math.min(Math.max((now - lastTime) / 1000, 0), 0.1);
           lastTime = now;
 
-          pivotGroup.rotation.x += ROTATION_SPEED_RAD_PER_SEC * dt;
+          if (rotationAxis === "y") {
+            pivotGroup.rotation.y += ROTATION_SPEED_RAD_PER_SEC * dt;
+          } else if (rotationAxis === "z") {
+            pivotGroup.rotation.z += ROTATION_SPEED_RAD_PER_SEC * dt;
+          } else {
+            pivotGroup.rotation.x += ROTATION_SPEED_RAD_PER_SEC * dt;
+          }
           renderer.render(scene, camera);
 
           animateRafId = window.requestAnimationFrame(animate);
@@ -245,6 +301,11 @@
           window.removeEventListener("resize", onWindowResize);
         }
 
+        if (backgroundTexture) {
+          backgroundTexture.dispose();
+          backgroundTexture = null;
+        }
+
         for (var g = 0; g < geometries.length; g++) {
           geometries[g].dispose();
         }
@@ -259,15 +320,19 @@
         }
         delete host._threeQuoteDebug;
       };
-    }, [quoteText, quoteColor]);
+    }, [quoteText, quoteColor, rotationAxis, backgroundColor, backgroundImage, backgroundMode]);
 
     if (webglFailed) {
+      var fallbackStyle = { color: quoteColor };
+      if (backgroundColor) {
+        fallbackStyle.backgroundColor = backgroundColor;
+      }
       return React.createElement(
         "div",
         {
           className: "flex h-full w-full items-center justify-center px-6 text-center",
           "data-three-js-fallback": "true",
-          style: { color: quoteColor }
+          style: fallbackStyle
         },
         React.createElement(
           "p",
@@ -315,9 +380,29 @@
 
     var text = el.getAttribute("data-quote-text") || "";
     var color = el.getAttribute("data-quote-color") || DEFAULT_COLOR;
+    var axis = (el.getAttribute("data-rotation-axis") || "x").toLowerCase();
+    if (axis !== "x" && axis !== "y" && axis !== "z") {
+      axis = "x";
+    }
+    var backgroundColor = el.getAttribute("data-background-color") || null;
+    var backgroundImage = el.getAttribute("data-background-image") || null;
+    var backgroundMode = (el.getAttribute("data-background-mode") || "stretch").toLowerCase();
+    if (backgroundMode !== "tile") {
+      backgroundMode = "stretch";
+    }
+
     if (!text.trim()) return;
 
-    var propsKey = text + "\u0000" + color;
+    var propsKey = [text, color, axis, backgroundColor || "", backgroundImage || "", backgroundMode].join("\u0000");
+    var sceneProps = {
+      text: text,
+      color: color,
+      rotationAxis: axis,
+      backgroundColor: backgroundColor,
+      backgroundImage: backgroundImage,
+      backgroundMode: backgroundMode
+    };
+
     var existing = mountedRoots.get(el);
 
     if (existing) {
@@ -326,7 +411,7 @@
       }
       existing.propsKey = propsKey;
       existing.root.render(
-        window.React.createElement(ThreeJsQuoteScene, { text: text, color: color })
+        window.React.createElement(ThreeJsQuoteScene, sceneProps)
       );
       return;
     }
@@ -334,7 +419,7 @@
     var root = window.ReactDOM.createRoot(el);
     mountedRoots.set(el, { root: root, propsKey: propsKey });
     root.render(
-      window.React.createElement(ThreeJsQuoteScene, { text: text, color: color })
+      window.React.createElement(ThreeJsQuoteScene, sceneProps)
     );
   }
 

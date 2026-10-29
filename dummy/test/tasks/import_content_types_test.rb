@@ -61,7 +61,26 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     three_js_quote = Macron::Cms::Content.find_by!(name: "three_js_quote")
     assert_equal [
       { "name" => "text", "kind" => "string" },
-      { "name" => "color", "kind" => "color" }
+      { "name" => "color", "kind" => "color" },
+      {
+        "name" => "rotation_axis",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "X Axis", "value" => "x" },
+          { "name" => "Y Axis", "value" => "y" },
+          { "name" => "Z Axis", "value" => "z" }
+        ]
+      },
+      { "name" => "background_color", "kind" => "color" },
+      { "name" => "upload", "kind" => "file" },
+      {
+        "name" => "background_mode",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Stretch", "value" => "stretch" },
+          { "name" => "Tile", "value" => "tile" }
+        ]
+      }
     ], three_js_quote.fields
   end
 

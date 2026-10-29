@@ -60,4 +60,40 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
     assert_equal 1, page.evaluate_script("window.MacronThreeJsQuote.getMountedCount()")
     assert_equal "alive", page.evaluate_script("window.__turboSessionMarker")
   end
+
+  test "mounts Three.js quote with Y-axis rotation and background configuration" do
+    article = Macron::Cms::Article.create!(
+      title: "Y Axis Quote",
+      name: "y-axis-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "Creativity is intelligence having fun.",
+        "color" => "#10b981",
+        "rotation_axis" => "y",
+        "background_color" => "#0f172a",
+        "background_mode" => "tile"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Y Axis Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-rotation-axis='y'][data-background-color='#0f172a'][data-background-mode='tile']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      axis = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationAxis()")
+      assert_equal "y", axis
+      mode = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getBackgroundMode()")
+      assert_equal "tile", mode
+
+      initial_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationY()")
+      sleep 0.25
+      later_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationY()")
+      assert_operator later_rot, :>, initial_rot, "Expected 3D quote mesh to rotate continuously around its Y-axis"
+    end
+  end
 end
