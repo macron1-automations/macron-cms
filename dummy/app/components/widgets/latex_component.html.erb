@@ -1,0 +1,9 @@
+<% if formula.present? %>
+  <%= content_tag(
+    :div,
+    content_tag(:span, formula, class: "font-mono text-xs opacity-75"),
+    class: latex_classes,
+    style: custom_style,
+    data: { cms_latex: formula, cms_latex_display: "true" }
+  ) %>
+<% end %>

@@ -209,7 +209,43 @@ class WidgetsTest < ViewComponent::TestCase
 
     assert_selector "figure[data-three-js-quote-card].rounded-xl.border.border-zinc-200"
     assert_selector "blockquote.sr-only", text: "Simplicity is prerequisite for reliability."
-    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b']"
+    assert_selector "div[data-three-js-quote-mount].h-64.sm\\:h-80[data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b'][data-rotation-axis='x'][data-rotation-speed='1'][data-canvas-height='md'][data-font-size='md'][data-font='helvetiker'][data-background-mode='stretch'][data-scanlines-intensity='off'][data-scanlines-density='medium'][data-scanlines-speed='normal']"
+    assert_no_selector "div[data-three-js-quote-mount][data-background-color]"
+    assert_no_selector "div[data-three-js-quote-mount][data-background-image]"
+  end
+
+  test "three_js_quote component renders custom rotation axis, speed, height, scanlines, background color, image URL, and tile mode" do
+    render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {
+      "text" => "Design is intelligence made visible.",
+      "rotation_axis" => "y",
+      "rotation_speed" => "2",
+      "canvas_height" => "lg",
+      "font_size" => "lg",
+      "font" => "optimer",
+      "background_color" => "#09090b",
+      "upload" => "https://example.com/stars.png",
+      "background_mode" => "tile",
+      "scanlines_intensity" => "strong",
+      "scanlines_density" => "fine",
+      "scanlines_speed" => "fast"
+    }))
+
+    assert_selector "div[data-three-js-quote-mount].h-96.sm\\:h-\\[480px\\][data-rotation-axis='y'][data-rotation-speed='2'][data-canvas-height='lg'][data-font-size='lg'][data-font='optimer'][data-background-color='#09090b'][data-background-image='https://example.com/stars.png'][data-background-mode='tile'][data-scanlines-intensity='strong'][data-scanlines-density='fine'][data-scanlines-speed='fast']"
+  end
+
+  test "three_js_quote component resolves ActiveStorage attached background image" do
+    article = Macron::Cms::Article.create!(title: "3D Quote with Image")
+    content = Macron::Cms::Content.create!(name: "three_js_quote", fields: [
+      { "name" => "text", "kind" => "string" },
+      { "name" => "upload", "kind" => "file" }
+    ])
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: content)
+    file = Rack::Test::UploadedFile.new(StringIO.new("fake-image"), "image/png", original_filename: "bg.png")
+    ac.files.attach(file)
+
+    render_inline(Widgets::ThreeJsQuoteComponent.new(article_content: ac, payload: { "text" => "Starlight", "rotation_axis" => "z" }))
+    assert_selector "div[data-three-js-quote-mount][data-rotation-axis='z']"
+    assert_selector "div[data-three-js-quote-mount][data-background-image*='bg.png']"
   end
 
   test "three_js_quote component adopts article text_color as fallback and allows widget color override" do
@@ -232,5 +268,75 @@ class WidgetsTest < ViewComponent::TestCase
 
     rendered_nil = render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {}))
     assert_empty rendered_nil.to_html.strip
+  end
+
+  test "latex component renders container with data-cms-latex and fallback formula" do
+    formula = "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}"
+    rendered = render_inline(Widgets::LatexComponent.new(payload: { "content" => formula }))
+
+    assert_selector "div.cms-latex-widget[data-cms-latex][data-cms-latex-display='true']"
+    assert_includes rendered.to_html, %(data-cms-latex="#{formula}")
+    assert_includes rendered_content, formula
+  end
+
+  test "latex component applies article text_color when present" do
+    article = Macron::Cms::Article.create!(title: "Math Art", text_color: "#6366f1")
+    latex_type = Macron::Cms::Content.find_or_create_by!(name: "latex") do |c|
+      c.fields = [ { "name" => "content", "kind" => "latex" } ]
+    end
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: latex_type)
+
+    render_inline(Widgets::LatexComponent.new(article_content: ac, payload: { "content" => "E = mc^2" }))
+    assert_selector "div.cms-latex-widget[style='color: #6366f1;']"
+  end
+
+  test "latex component does not render when formula is blank" do
+    rendered = render_inline(Widgets::LatexComponent.new(payload: { "content" => "" }))
+    assert_empty rendered.to_html.strip
+
+    rendered_nil = render_inline(Widgets::LatexComponent.new(payload: {}))
+    assert_empty rendered_nil.to_html.strip
+  end
+
+  test "blockquote component renders markdown formatted html inside blockquote" do
+    markdown_text = <<~MD
+      "Simplicity is the soul of efficiency."
+
+      -- **Austin Freeman** with a [link](https://example.com)
+    MD
+
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => markdown_text }))
+    assert_selector "blockquote.border-l-4.pl-4.italic.my-6"
+    assert_selector "strong", text: "Austin Freeman"
+    assert_selector "a[href='https://example.com']", text: "link"
+  end
+
+  test "blockquote component sanitizes unsafe html script tags" do
+    unsafe_md = "Quote with <script>alert('xss')</script> in it"
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => unsafe_md }))
+    assert_no_selector "script"
+    assert_includes rendered_content, "Quote with"
+  end
+
+  test "blockquote component applies article text_color to inline style and border" do
+    article = Macron::Cms::Article.create!(title: "Quote Color Article", text_color: "#2563eb")
+    bq_type = Macron::Cms::Content.find_or_create_by!(name: "blockquote") { |c| c.fields = [ { "name" => "content", "kind" => "markdown" } ] }
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: bq_type)
+
+    render_inline(Widgets::BlockquoteComponent.new(article_content: ac, payload: { "content" => "**Bold quote**" }))
+    assert_selector "blockquote.border-l-4"
+    assert_no_selector "blockquote.border-zinc-300"
+    assert_includes rendered_content, "color: #2563eb;"
+    assert_includes rendered_content, "border-color: #2563eb;"
+    assert_selector "strong", text: "Bold quote"
+  end
+
+  test "blockquote component handles empty or nil content gracefully" do
+    render_inline(Widgets::BlockquoteComponent.new(payload: { "content" => "" }))
+    assert_selector "blockquote.border-l-4.border-zinc-300.text-zinc-800"
+    assert_equal "", rendered_content.strip.gsub(/<[^>]*>/, "")
+
+    render_inline(Widgets::BlockquoteComponent.new(payload: {}))
+    assert_selector "blockquote.border-l-4.border-zinc-300.text-zinc-800"
   end
 end

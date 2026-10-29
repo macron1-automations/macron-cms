@@ -4,7 +4,7 @@ require "kramdown-parser-gfm"
 module Macron
   module Cms
     module FieldsHelper
-      SUPPORTED_KINDS = %w[string text dropdown file color markdown json].freeze
+      SUPPORTED_KINDS = %w[string text dropdown file color markdown json latex].freeze
 
       def cms_render_markdown(text)
         return "".html_safe if text.blank?

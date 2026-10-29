@@ -8,7 +8,9 @@
 
   <%= stylesheet_link_tag "macron/cms/application", media: "all" %>
   <%= stylesheet_link_tag "macron/cms/codemirror", media: "all" %>
+  <%= stylesheet_link_tag "macron/cms/katex.min", media: "all" %>
   <%= turbo_include_tags %>
+  <%= javascript_include_tag "macron/cms/katex.min", defer: true %>
   <%= javascript_include_tag "macron/cms/codemirror", defer: true %>
   <%= javascript_include_tag "macron/cms/editor", defer: true %>
   <%= yield :head %>

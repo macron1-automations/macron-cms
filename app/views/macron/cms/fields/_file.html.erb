@@ -12,6 +12,10 @@
       <span class="truncate font-medium"><%= value %></span>
       <span class="text-[10px] text-zinc-400 font-sans ml-auto shrink-0">Current file</span>
     </div>
+    <label class="flex items-center gap-2 mt-1 cursor-pointer text-xs text-rose-600 hover:text-rose-700 font-sans">
+      <input type="checkbox" name="article_content[remove_files][]" value="<%= field_name %>" class="rounded border-zinc-300 text-rose-600 focus:ring-rose-500">
+      <span>Remove current file (<%= value %>)</span>
+    </label>
   <% end %>
 
   <input

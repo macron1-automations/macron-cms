@@ -60,4 +60,112 @@ class ThreeJsQuoteTurboTest < ApplicationSystemTestCase
     assert_equal 1, page.evaluate_script("window.MacronThreeJsQuote.getMountedCount()")
     assert_equal "alive", page.evaluate_script("window.__turboSessionMarker")
   end
+
+  test "mounts Three.js quote with Y-axis rotation and background configuration" do
+    article = Macron::Cms::Article.create!(
+      title: "Y Axis Quote",
+      name: "y-axis-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "Creativity is intelligence having fun.",
+        "color" => "#10b981",
+        "rotation_axis" => "y",
+        "font_size" => "lg",
+        "font" => "optimer",
+        "background_color" => "#0f172a",
+        "background_mode" => "tile"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Y Axis Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-rotation-axis='y'][data-font-size='lg'][data-font='optimer'][data-background-color='#0f172a'][data-background-mode='tile']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      axis = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationAxis()")
+      assert_equal "y", axis
+      font_size = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFontSize()")
+      assert_equal "lg", font_size
+      font = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFont()")
+      assert_equal "optimer", font
+      mode = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getBackgroundMode()")
+      assert_equal "tile", mode
+
+      initial_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationY()")
+      sleep 0.25
+      later_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationY()")
+      assert_operator later_rot, :>, initial_rot, "Expected 3D quote mesh to rotate continuously around its Y-axis"
+    end
+  end
+
+  test "mounts Three.js quote with Droid Serif font and extra large size" do
+    article = Macron::Cms::Article.create!(
+      title: "Serif Quote",
+      name: "serif-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "All that glitters is not gold.",
+        "font_size" => "xl",
+        "font" => "droid_serif"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Serif Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-font-size='xl'][data-font='droid_serif']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      font = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFont()")
+      assert_equal "droid_serif", font
+      font_size = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getFontSize()")
+      assert_equal "xl", font_size
+    end
+  end
+
+  test "mounts Three.js quote with paused rotation, custom height, and active scanline shader pass" do
+    article = Macron::Cms::Article.create!(
+      title: "Retro Scanlines Quote",
+      name: "retro-scanlines-quote"
+    )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: @quote_type,
+      sort_order: 1,
+      payload: {
+        "text" => "Cyberpunk aesthetics in WebGL.",
+        "rotation_speed" => "0",
+        "canvas_height" => "lg",
+        "scanlines_intensity" => "strong",
+        "scanlines_density" => "fine",
+        "scanlines_speed" => "fast"
+      }
+    )
+
+    visit article_path(article)
+    assert_text "Retro Scanlines Quote"
+
+    assert_selector "figure[data-three-js-quote-card] div[data-three-js-quote-mount].h-96.sm\\:h-\\[480px\\][data-rotation-speed='0'][data-canvas-height='lg'][data-scanlines-intensity='strong']"
+
+    if page.has_selector?("canvas[data-three-js-canvas='true']", wait: 3)
+      has_shader = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.hasScanlinesShader()")
+      assert_equal true, has_shader
+      intensity = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getScanlinesIntensity()")
+      assert_equal "strong", intensity
+
+      initial_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationX()")
+      sleep 0.25
+      later_rot = page.evaluate_script("document.querySelector('[data-three-js-scene-host]')._threeQuoteDebug.getRotationX()")
+      assert_equal initial_rot, later_rot, "Expected 3D quote rotation to remain paused when speed is 0"
+    end
+  end
 end

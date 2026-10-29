@@ -61,7 +61,97 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
     three_js_quote = Macron::Cms::Content.find_by!(name: "three_js_quote")
     assert_equal [
       { "name" => "text", "kind" => "string" },
-      { "name" => "color", "kind" => "color" }
+      { "name" => "color", "kind" => "color" },
+      {
+        "name" => "rotation_axis",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "X Axis", "value" => "x" },
+          { "name" => "Y Axis", "value" => "y" },
+          { "name" => "Z Axis", "value" => "z" }
+        ]
+      },
+      {
+        "name" => "rotation_speed",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "0x (Paused)", "value" => "0" },
+          { "name" => "0.5x", "value" => "0.5" },
+          { "name" => "1x", "value" => "1" },
+          { "name" => "1.5x", "value" => "1.5" },
+          { "name" => "2x", "value" => "2" },
+          { "name" => "3x", "value" => "3" }
+        ]
+      },
+      {
+        "name" => "canvas_height",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small (240px)", "value" => "sm" },
+          { "name" => "Medium (320px)", "value" => "md" },
+          { "name" => "Large (480px)", "value" => "lg" },
+          { "name" => "Extra Large (640px)", "value" => "xl" }
+        ]
+      },
+      {
+        "name" => "font_size",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Small", "value" => "sm" },
+          { "name" => "Medium", "value" => "md" },
+          { "name" => "Large", "value" => "lg" },
+          { "name" => "Extra Large", "value" => "xl" }
+        ]
+      },
+      {
+        "name" => "font",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Helvetiker (Sans-serif)", "value" => "helvetiker" },
+          { "name" => "Optimer (Modern Sans)", "value" => "optimer" },
+          { "name" => "Gentilis (Humanist Sans)", "value" => "gentilis" },
+          { "name" => "Droid Serif (Serif)", "value" => "droid_serif" }
+        ]
+      },
+      { "name" => "background_color", "kind" => "color" },
+      { "name" => "upload", "kind" => "file" },
+      {
+        "name" => "background_mode",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Stretch", "value" => "stretch" },
+          { "name" => "Tile", "value" => "tile" }
+        ]
+      },
+      {
+        "name" => "scanlines_intensity",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Off", "value" => "off" },
+          { "name" => "Subtle", "value" => "subtle" },
+          { "name" => "Medium", "value" => "medium" },
+          { "name" => "Strong", "value" => "strong" }
+        ]
+      },
+      {
+        "name" => "scanlines_density",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Fine", "value" => "fine" },
+          { "name" => "Medium", "value" => "medium" },
+          { "name" => "Coarse", "value" => "coarse" }
+        ]
+      },
+      {
+        "name" => "scanlines_speed",
+        "kind" => "dropdown",
+        "options" => [
+          { "name" => "Still", "value" => "still" },
+          { "name" => "Slow", "value" => "slow" },
+          { "name" => "Normal", "value" => "normal" },
+          { "name" => "Fast", "value" => "fast" }
+        ]
+      }
     ], three_js_quote.fields
   end
 

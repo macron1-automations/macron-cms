@@ -54,11 +54,22 @@ module Macron
 
       def update
         filtered = @article_content.filter_payload(payload_param)
-        if filtered.key?("upload") && filtered["upload"].blank? && @article_content.payload["upload"].present?
-          filtered["upload"] = @article_content.payload["upload"]
+        remove_files = Array(params.dig(:article_content, :remove_files)).map(&:to_s)
+
+        remove_files.each do |fname|
+          filtered[fname] = nil
+          if %w[upload file].include?(fname) && @article_content.files.attached?
+            @article_content.files.purge
+          end
         end
 
-        attach_files_if_present!
+        @article_content.payload.each do |k, v|
+          if filtered.key?(k) && filtered[k].blank? && v.present? && !remove_files.include?(k)
+            filtered[k] = v
+          end
+        end
+
+        attach_files_if_present! unless remove_files.include?("upload") || remove_files.include?("file")
 
         if @article_content.update(payload: filtered)
           respond_to do |format|
