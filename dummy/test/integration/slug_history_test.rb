@@ -40,6 +40,11 @@ class SlugHistoryTest < ActionDispatch::IntegrationTest
     assert_response :moved_permanently
     assert_redirected_to "/articles/renamed-launch-post"
 
+    # Query parameters are preserved across the 301 redirect
+    get "/articles/initial-launch-post?ref=newsletter"
+    assert_response :moved_permanently
+    assert_redirected_to "/articles/renamed-launch-post?ref=newsletter"
+
     # Following the redirect reaches the new slug with 200 OK
     follow_redirect!
     assert_response :success
