@@ -203,4 +203,34 @@ class WidgetsTest < ViewComponent::TestCase
     assert_selector "div.prose.prose-zinc"
     assert_equal "", rendered_content.strip.gsub(/<[^>]*>/, "")
   end
+
+  test "three_js_quote component renders framed card, sr-only quote, and mount attributes with default color" do
+    render_inline(Widgets::ThreeJsQuoteComponent.new(payload: { "text" => "Simplicity is prerequisite for reliability." }))
+
+    assert_selector "figure[data-three-js-quote-card].rounded-xl.border.border-zinc-200"
+    assert_selector "blockquote.sr-only", text: "Simplicity is prerequisite for reliability."
+    assert_selector "div[data-three-js-quote-mount][data-quote-text='Simplicity is prerequisite for reliability.'][data-quote-color='#18181b']"
+  end
+
+  test "three_js_quote component adopts article text_color as fallback and allows widget color override" do
+    article = Macron::Cms::Article.create!(title: "3D Quote Art", text_color: "#0ea5e9")
+    quote_type = Macron::Cms::Content.find_or_create_by!(name: "three_js_quote") do |c|
+      c.fields = [ { "name" => "text", "kind" => "string" }, { "name" => "color", "kind" => "color" } ]
+    end
+    ac = Macron::Cms::ArticleContent.create!(article: article, content: quote_type)
+
+    render_inline(Widgets::ThreeJsQuoteComponent.new(article_content: ac, payload: { "text" => "Stay curious", "color" => "" }))
+    assert_selector "div[data-three-js-quote-mount][data-quote-color='#0ea5e9']"
+
+    render_inline(Widgets::ThreeJsQuoteComponent.new(article_content: ac, payload: { "text" => "Stay curious", "color" => "#e11d48" }))
+    assert_selector "div[data-three-js-quote-mount][data-quote-color='#e11d48']"
+  end
+
+  test "three_js_quote component does not render when text is blank" do
+    rendered = render_inline(Widgets::ThreeJsQuoteComponent.new(payload: { "text" => "   " }))
+    assert_empty rendered.to_html.strip
+
+    rendered_nil = render_inline(Widgets::ThreeJsQuoteComponent.new(payload: {}))
+    assert_empty rendered_nil.to_html.strip
+  end
 end

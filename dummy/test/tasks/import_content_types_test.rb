@@ -57,6 +57,12 @@ class ImportContentTypesTaskTest < ActiveSupport::TestCase
 
     markdown = Macron::Cms::Content.find_by!(name: "markdown")
     assert_equal [ { "name" => "content", "kind" => "markdown" } ], markdown.fields
+
+    three_js_quote = Macron::Cms::Content.find_by!(name: "three_js_quote")
+    assert_equal [
+      { "name" => "text", "kind" => "string" },
+      { "name" => "color", "kind" => "color" }
+    ], three_js_quote.fields
   end
 
   test "import task is idempotent and updates existing records" do

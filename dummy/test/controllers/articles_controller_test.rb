@@ -52,6 +52,9 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     paragraph_type = Macron::Cms::Content.find_or_create_by!(name: "paragraph") do |c|
       c.fields = [ { "name" => "content", "kind" => "text" } ]
     end
+    quote_type = Macron::Cms::Content.find_or_create_by!(name: "three_js_quote") do |c|
+      c.fields = [ { "name" => "text", "kind" => "string" }, { "name" => "color", "kind" => "color" } ]
+    end
 
     Macron::Cms::ArticleContent.create!(
       article: article,
@@ -65,10 +68,21 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
       sort_order: 2,
       payload: { "content" => "This is a body paragraph in the article." }
     )
+    Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: quote_type,
+      sort_order: 3,
+      payload: { "text" => "Make it work, make it right, make it fast.", "color" => "#2563eb" }
+    )
 
     get article_url(article)
     assert_response :success
     assert_select "h2", text: "Subheading Title"
     assert_select "p", text: "This is a body paragraph in the article."
+    assert_select "figure[data-three-js-quote-card] div[data-three-js-quote-mount][data-quote-text='Make it work, make it right, make it fast.'][data-quote-color='#2563eb']"
+    assert_select "script[src*='turbo']"
+    assert_select "script[src*='react_bundle']"
+    assert_select "script[src*='three_text_bundle']"
+    assert_select "script[src*='three_js_quote']"
   end
 end
