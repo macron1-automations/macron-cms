@@ -79,6 +79,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Idempotent Upsert Support**: Re-run imports safely using `upsert: true` without creating duplicate articles.
 - **Content Type Schema Introspection**: Query `GET /cms/api/v1/content_types` dynamically so AI agents know exact fields and widget types available.
 - **Bearer Token Auth**: Secure endpoints with `Authorization: Bearer <token>` or `X-API-Key`.
+- **Full API Documentation**: Complete endpoint specifications, payload schemas, and response models in [`docs/api.md`](docs/api.md).
 
 ### 🎨 Self-Contained Tailwind CSS v4
 - **Zero Host Setup Required**: MacronCMS packages its own standalone, precompiled Tailwind CSS v4 bundle (`app/assets/stylesheets/macron/cms/application.css`). Host applications do not need Tailwind installed to display the CMS admin interface.
@@ -768,6 +769,9 @@ end
 
 MacronCMS provides a JSON REST API under `/cms/api/v1/` designed for programmatic ingestion, automated scripts, and autonomous AI agents migrating content from external platforms (such as Substack, WordPress, or Medium).
 
+> [!TIP]
+> For the complete endpoint reference, request/response payload schemas, parameter definitions, and status codes, see the dedicated [**REST API Documentation (`docs/api.md`)**](docs/api.md). If you are building an automated ingestion pipeline or AI migration agent, refer to the [**AI Article Importer Guide (`docs/ai_importer_guide.md`)**](docs/ai_importer_guide.md).
+
 ### Authentication
 
 API endpoints are secured using a Bearer token or API key header:
@@ -788,10 +792,10 @@ Configure your key in an initializer (`config.api_key`) or via the `MACRON_CMS_A
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/cms/api/v1/articles` | Create or upsert an article with nested content blocks |
-| `GET` | `/cms/api/v1/articles/:id` | Retrieve article metadata and ordered content blocks (JSON) |
-| `PATCH` | `/cms/api/v1/articles/:id` | Update article attributes and synchronize content blocks |
-| `GET` | `/cms/api/v1/content_types` | Introspect available content types and schema field requirements |
+| `POST` | [`/cms/api/v1/articles`](docs/api.md#2-create-or-upsert-article-post-cmsapiv1articles) | Create or upsert an article with nested content blocks |
+| `GET` | [`/cms/api/v1/articles/:id`](docs/api.md#3-retrieve-article-get-cmsapiv1articlesid) | Retrieve article metadata and ordered content blocks (JSON) |
+| `PATCH` | [`/cms/api/v1/articles/:id`](docs/api.md#4-update-article-patch-cmsapiv1articlesid) | Update article attributes and synchronize content blocks |
+| `GET` | [`/cms/api/v1/content_types`](docs/api.md#1-list-content-types-get-cmsapiv1content_types) | Introspect available content types and schema field requirements |
 
 ---
 
@@ -871,7 +875,7 @@ AI agents can query `/cms/api/v1/content_types` before generating payloads to dy
 }
 ```
 
-For complete mapping rules from Substack HTML tags and a ready-to-use prompt template for AI agents, see [`docs/ai_importer_guide.md`](docs/ai_importer_guide.md).
+For complete endpoint specifications, payload schemas, and response formats, see [`docs/api.md`](docs/api.md). For Substack HTML mapping rules and a ready-to-use prompt template for AI agents, see [`docs/ai_importer_guide.md`](docs/ai_importer_guide.md).
 
 ---
 
