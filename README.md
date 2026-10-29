@@ -70,6 +70,13 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Configurable Access Guard**: Protect the `/cms` engine namespace behind host application authentication.
 - **Role Customization**: Configure custom user models (`user_class`) and admin flags (`admin_flag`) via initializers.
 
+### 🤖 REST API & AI Content Ingestion (`/cms/api/v1`)
+- **Atomic Nested Import**: Create or update articles and complete sequences of typed content blocks in a single atomic transaction.
+- **Automated Remote Asset Ingestion**: Remote image URLs (e.g. Substack, Medium, WordPress) are automatically downloaded, validated, and attached to Active Storage blobs.
+- **Idempotent Upsert Support**: Re-run imports safely using `upsert: true` without creating duplicate articles.
+- **Content Type Schema Introspection**: Query `GET /cms/api/v1/content_types` dynamically so AI agents know exact fields and widget types available.
+- **Bearer Token Auth**: Secure endpoints with `Authorization: Bearer <token>` or `X-API-Key`.
+
 ### 🎨 Self-Contained Tailwind CSS v4
 - **Zero Host Setup Required**: MacronCMS packages its own standalone, precompiled Tailwind CSS v4 bundle (`app/assets/stylesheets/macron/cms/application.css`). Host applications do not need Tailwind installed to display the CMS admin interface.
 - **Isolated Styling**: The admin layout operates within its own styling boundary to avoid conflicts with host application design systems.
@@ -83,9 +90,6 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 
 ### 🌊 React & Three.js Hydration Plugins
 Drop in React plugins where heavy client-side interactivity is needed, making hydrating complex client components—such as interactive 3D [Three.js](https://threejs.org/) scenes, interactive canvases, and custom calculators—effortless and isolated.
-
-### 🤖 AI-Friendly API for Content Migration
-An AI-friendly ingest and transformation API for migrating existing content quickly and programmatically across legacy datasets, CMS exports, and unstructured assets.
 
 ---
 
@@ -450,6 +454,117 @@ end
 
 ---
 
+## REST API & AI Content Ingestion
+
+MacronCMS provides a JSON REST API under `/cms/api/v1/` designed for programmatic ingestion, automated scripts, and autonomous AI agents migrating content from external platforms (such as Substack, WordPress, or Medium).
+
+### Authentication
+
+API endpoints are secured using a Bearer token or API key header:
+
+```http
+Authorization: Bearer <MACRON_CMS_API_KEY>
+```
+Or:
+```http
+X-API-Key: <MACRON_CMS_API_KEY>
+```
+
+Configure your key in an initializer (`config.api_key`) or via the `MACRON_CMS_API_KEY` environment variable. In `development` and `test` environments, authentication is optional if no key is configured.
+
+---
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/cms/api/v1/articles` | Create or upsert an article with nested content blocks |
+| `GET` | `/cms/api/v1/articles/:id` | Retrieve article metadata and ordered content blocks (JSON) |
+| `PATCH` | `/cms/api/v1/articles/:id` | Update article attributes and synchronize content blocks |
+| `GET` | `/cms/api/v1/content_types` | Introspect available content types and schema field requirements |
+
+---
+
+### 1. Ingesting Articles with Nested Content Blocks
+
+You can import an entire article—including its metadata, SEO tags, colors, and an ordered list of typed content blocks—in a single atomic transaction:
+
+```bash
+curl -X POST http://localhost:3000/cms/api/v1/articles \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer test-secret-key" \
+  -d '{
+    "upsert": true,
+    "article": {
+      "title": "The Myth of Your Limitations",
+      "name": "the-myth-of-your-limitations",
+      "meta_title": "The Myth of Your Limitations | Mindset Guide",
+      "meta_description": "How a simple mindset shift can prove you wrong.",
+      "background_color": "#ffffff",
+      "text_color": "#18181b"
+    },
+    "content_blocks": [
+      {
+        "content_type": "heading",
+        "payload": {
+          "title": "The Rule of Congruency",
+          "level": "h3"
+        }
+      },
+      {
+        "content_type": "markdown",
+        "payload": {
+          "content": "There is a principle in geometry called the **congruency of triangles**..."
+        }
+      },
+      {
+        "content_type": "image",
+        "payload": { "size": "lg" },
+        "image_url": "https://substack-post-media.s3.amazonaws.com/public/images/7343afc4-325e-42a1-9145-dd916d0de54d_1024x1024.png"
+      }
+    ]
+  }'
+```
+
+#### Automated Remote Asset Ingestion
+When an `image_url` (or `upload_url`) is provided in a content block, MacronCMS automatically downloads the asset from the remote source (e.g. Substack CDN), verifies content size and type, and attaches it as an Active Storage blob on the content block. If the remote server is unreachable, it gracefully falls back to storing the direct URL in the block payload.
+
+#### Idempotent Upserting
+When `"upsert": true` is specified, the API searches for an existing article matching `name`, `slug`, or `title`. If found, it updates the article attributes and atomically replaces its content blocks with the incoming sequence, making bulk migrations safe to re-run.
+
+---
+
+### 2. Schema Introspection (`GET /cms/api/v1/content_types`)
+
+AI agents can query `/cms/api/v1/content_types` before generating payloads to dynamically discover which widget types exist and what fields they require:
+
+```json
+{
+  "content_types": [
+    {
+      "id": 1,
+      "name": "heading",
+      "fields": [
+        { "name": "title", "kind": "string" },
+        { "name": "level", "kind": "dropdown", "options": ["h1", "h2", "h3", "h4", "h5", "h6"] },
+        { "name": "color", "kind": "color" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "markdown",
+      "fields": [
+        { "name": "content", "kind": "markdown" }
+      ]
+    }
+  ]
+}
+```
+
+For complete mapping rules from Substack HTML tags and a ready-to-use prompt template for AI agents, see [`docs/ai_importer_guide.md`](docs/ai_importer_guide.md).
+
+---
+
 ## Configuration
 
 Customize CMS options in an initializer:
@@ -459,6 +574,7 @@ Customize CMS options in an initializer:
 Macron::Cms.configure do |config|
   config.user_class = "User"                   # Devise user model (default: "User")
   config.admin_flag = :admin                   # Method or boolean column for admin check (default: :admin)
+  config.api_key    = ENV["MACRON_CMS_API_KEY"] # Bearer token for /cms/api/v1 (default: ENV["MACRON_CMS_API_KEY"])
   config.content_types_path = Rails.root.join("config", "content_types") # Custom schema directory
 end
 ```
