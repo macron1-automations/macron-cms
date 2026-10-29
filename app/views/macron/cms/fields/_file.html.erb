@@ -1,0 +1,27 @@
+<div class="space-y-1.5">
+  <label for="<%= input_id %>" class="block text-xs font-mono font-semibold text-zinc-700">
+    <%= field_name %>
+    <span class="ml-1 text-[10px] font-normal text-zinc-400">(file)</span>
+  </label>
+
+  <% if value.present? %>
+    <div class="flex items-center gap-2 p-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-700 font-mono">
+      <svg class="w-4 h-4 text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+      </svg>
+      <span class="truncate font-medium"><%= value %></span>
+      <span class="text-[10px] text-zinc-400 font-sans ml-auto shrink-0">Current file</span>
+    </div>
+  <% end %>
+
+  <input
+    type="file"
+    name="<%= input_name %>"
+    id="<%= input_id %>"
+    class="block w-full text-xs text-zinc-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-900 file:text-white hover:file:bg-zinc-800 file:cursor-pointer border border-zinc-300 rounded-lg bg-white shadow-2xs focus:outline-none focus:border-zinc-900 cursor-pointer"
+  />
+
+  <% if value.present? %>
+    <p class="text-[11px] text-zinc-400">Choose a new file to replace the existing one.</p>
+  <% end %>
+</div>

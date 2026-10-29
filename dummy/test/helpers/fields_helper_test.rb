@@ -40,7 +40,28 @@ class FieldsHelperTest < ActionView::TestCase
     assert_includes html, '<option value="blue">blue</option>'
   end
 
-  test "SUPPORTED_KINDS includes dropdown" do
+  test "SUPPORTED_KINDS includes dropdown and file" do
     assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "dropdown"
+    assert_includes Macron::Cms::FieldsHelper::SUPPORTED_KINDS, "file"
+  end
+
+  test "cms_render_field renders file input with label and optional current value" do
+    field_def = {
+      "name" => "upload",
+      "kind" => "file"
+    }
+
+    # Empty value
+    html = cms_render_field(field_def, value: nil, input_name: "article_content[payload][upload]", input_id: "test_upload")
+    assert_includes html, 'type="file"'
+    assert_includes html, 'name="article_content[payload][upload]"'
+    assert_includes html, 'id="test_upload"'
+    assert_includes html, '(file)'
+
+    # With existing filename
+    html_with_file = cms_render_field(field_def, value: "hero.jpg", input_name: "article_content[payload][upload]", input_id: "test_upload")
+    assert_includes html_with_file, 'hero.jpg'
+    assert_includes html_with_file, 'Current file'
+    assert_includes html_with_file, 'Choose a new file to replace the existing one'
   end
 end

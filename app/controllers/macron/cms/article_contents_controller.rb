@@ -18,6 +18,7 @@ module Macron
           end
 
           @article_content.payload = @article_content.filter_payload(payload_param)
+          attach_files_if_present!
 
           if @article_content.save
             normalize_sort_orders!
@@ -53,6 +54,12 @@ module Macron
 
       def update
         filtered = @article_content.filter_payload(payload_param)
+        if filtered.key?("upload") && filtered["upload"].blank? && @article_content.payload["upload"].present?
+          filtered["upload"] = @article_content.payload["upload"]
+        end
+
+        attach_files_if_present!
+
         if @article_content.update(payload: filtered)
           respond_to do |format|
             format.turbo_stream do
@@ -153,6 +160,17 @@ module Macron
         else
           {}
         end
+      end
+
+      def attach_files_if_present!
+        payload = params.dig(:article_content, :payload)
+        file_input = (payload && (payload[:upload] || payload["upload"])) ||
+                     params.dig(:article_content, :upload) ||
+                     params.dig(:article_content, :files)
+
+        return unless file_input.present?
+
+        @article_content.attach_upload(file_input, replace: true)
       end
 
       def normalize_sort_orders!

@@ -126,9 +126,31 @@
                       <span class="text-[10px] text-zinc-400 lowercase font-normal">(<%= fkind %>)</span>
                     </dt>
                     <dd class="mt-1 text-sm text-zinc-900 bg-zinc-50/80 rounded-lg p-2.5 border border-zinc-100 font-sans">
-                      <% if fval.present? %>
+                      <% if fval.present? || ac.files.attached? %>
                         <% if fkind == 'text' %>
                           <div class="whitespace-pre-wrap"><%= fval %></div>
+                        <% elsif fkind == 'file' && ac.files.attached? %>
+                          <div class="space-y-2">
+                            <% ac.files.each do |att| %>
+                              <div class="flex items-center gap-2.5">
+                                <% if att.image? %>
+                                  <div class="w-10 h-10 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                                    <%= image_tag main_app.rails_blob_path(att), class: "w-full h-full object-cover" %>
+                                  </div>
+                                <% else %>
+                                  <div class="w-8 h-8 rounded-md bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0 text-zinc-500">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                                    </svg>
+                                  </div>
+                                <% end %>
+                                <div class="min-w-0">
+                                  <p class="text-xs font-medium font-mono text-zinc-900 truncate"><%= att.filename %></p>
+                                  <p class="text-[10px] text-zinc-400"><%= number_to_human_size(att.byte_size) %></p>
+                                </div>
+                              </div>
+                            <% end %>
+                          </div>
                         <% else %>
                           <span><%= fval %></span>
                         <% end %>
@@ -146,7 +168,7 @@
 
           <!-- Inline Edit Form -->
           <div id="edit-form-<%= ac.id %>" class="hidden p-5 border-t border-zinc-100 bg-zinc-50/30">
-            <%= form_with(model: [article, ac], class: "space-y-4") do |f| %>
+            <%= form_with(model: [article, ac], multipart: true, class: "space-y-4") do |f| %>
               <div class="space-y-4">
                 <% fields.each do |field_def| %>
                   <% fname = field_def["name"] %>
@@ -274,7 +296,7 @@
             <% content_types.each do |ct| %>
               <% ct_fields = ct.normalized_fields %>
               <div id="new-content-type-form-<%= ct.id %>" class="new-content-type-form hidden pt-4 border-t border-zinc-100">
-                <%= form_with(url: article_article_contents_path(article), scope: :article_content, class: "space-y-4") do |f| %>
+                <%= form_with(url: article_article_contents_path(article), scope: :article_content, multipart: true, class: "space-y-4") do |f| %>
                   <%= f.hidden_field :content_id, value: ct.id %>
                   <%= f.hidden_field :insert_at, value: 1, class: "insert-at-field" %>
 

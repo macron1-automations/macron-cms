@@ -22,6 +22,7 @@ module Macron
         end
 
         render widget_class.new(
+          article_content: article_content,
           payload: article_content.payload,
           fields: article_content.content.normalized_fields
         )
