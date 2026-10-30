@@ -1257,4 +1257,62 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     body = response.body
     assert body.index("Earlier Article") < body.index("Later Article")
   end
+
+  test "show page retrieves article contents and attachments efficiently without N+1 queries" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "N+1 Verification Article")
+    file_type = Macron::Cms::Content.create!(
+      name: "gallery_item",
+      fields: [ { "name" => "upload", "kind" => "file" } ]
+    )
+
+    5.times do |i|
+      ac = Macron::Cms::ArticleContent.create!(article: article, content: file_type, sort_order: i + 1)
+      ac.files.attach(Rack::Test::UploadedFile.new(StringIO.new("file-data-#{i}"), "image/png", original_filename: "gallery_#{i}.png"))
+    end
+
+    # Expanded view
+    queries_expanded = count_queries do
+      get "/cms/articles/#{article.slug}"
+      assert_response :success
+    end
+
+    # Compact view
+    queries_compact = count_queries do
+      get "/cms/articles/#{article.slug}?view=compact"
+      assert_response :success
+    end
+
+    # Both views should require a small, constant number of queries (auth + article + content_types + article_contents with batch attachments & blobs)
+    # With 5 attached blocks, an N+1 would execute 15+ individual queries.
+    assert_operator queries_expanded, :<=, 10, "Expected bounded query count in expanded view, got #{queries_expanded}"
+    assert_operator queries_compact, :<=, 10, "Expected bounded query count in compact view, got #{queries_compact}"
+    assert_select ".content-block-item", count: 5
+  end
+
+  test "turbo stream block creation re-renders content blocks section with preloaded display scope" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Turbo Preload Test")
+    file_type = Macron::Cms::Content.create!(
+      name: "gallery_stream",
+      fields: [ { "name" => "upload", "kind" => "file" } ]
+    )
+
+    file_upload = Rack::Test::UploadedFile.new(StringIO.new("img content"), "image/png", original_filename: "stream_img.png")
+
+    queries_stream = count_queries do
+      post "/cms/articles/#{article.slug}/article_contents",
+           params: {
+             article_content: {
+               content_id: file_type.id,
+               upload: file_upload
+             }
+           },
+           as: :turbo_stream
+      assert_response :success
+    end
+
+    assert_includes response.body, "stream_img.png"
+    assert_operator queries_stream, :<=, 20, "Expected stream render to avoid N+1 queries, got #{queries_stream}"
+  end
 end

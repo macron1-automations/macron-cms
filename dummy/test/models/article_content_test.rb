@@ -230,4 +230,30 @@ class ArticleContentTest < ActiveSupport::TestCase
     block2.destroy!
     assert_nil article.reload.featured_image_blob_id
   end
+
+  test "for_display eager loads content, files_attachments, and blobs without N+1 queries" do
+    article = Macron::Cms::Article.create!(title: "Display Scope Test")
+    image_type = Macron::Cms::Content.create!(
+      name: "scope_image",
+      fields: [ { "name" => "upload", "kind" => "file" } ]
+    )
+
+    3.times do |i|
+      ac = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: i + 1)
+      ac.files.attach(Rack::Test::UploadedFile.new(StringIO.new("data#{i}"), "image/png", original_filename: "img#{i}.png"))
+    end
+
+    blocks = article.article_contents.for_display.to_a
+    assert_equal 3, blocks.size
+
+    queries = count_queries do
+      blocks.each do |b|
+        assert_equal "scope_image", b.content.name
+        assert b.files.attached?
+        assert_not_nil b.files.first.blob.filename
+      end
+    end
+
+    assert_equal 0, queries, "Expected zero database queries when accessing preloaded content and attachments"
+  end
 end

@@ -15,6 +15,8 @@ module Macron
 
       default_scope -> { order(:sort_order, :id) }
 
+      scope :for_display, -> { with_attached_files.includes(:content) }
+
       def upload
         files.first
       end

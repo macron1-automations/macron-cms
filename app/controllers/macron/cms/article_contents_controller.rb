@@ -231,7 +231,7 @@ module Macron
             partial: "macron/cms/articles/content_blocks_section",
             locals: {
               article: @article,
-              article_contents: @article.article_contents.reload,
+              article_contents: @article.article_contents.for_display.order(:sort_order, :id).load,
               content_types: @content_types,
               compact: compact,
               newly_added_id: newly_added_id,

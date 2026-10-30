@@ -10,7 +10,15 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    def count_queries(&block)
+      count = 0
+      counter = ->(*, payload) {
+        count += 1 unless %w[SCHEMA TRANSACTION].include?(payload[:name]) ||
+                          payload[:sql].match?(/\A\s*(BEGIN|COMMIT|ROLLBACK|RELEASE SAVEPOINT|SAVEPOINT)/i)
+      }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+      count
+    end
   end
 end
 

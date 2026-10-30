@@ -4,7 +4,7 @@ module Macron
       def cms_render_article_contents(article)
         return "".html_safe if article.nil?
 
-        contents = article.article_contents.includes(:content).order(:sort_order, :id)
+        contents = article.article_contents.for_display.order(:sort_order, :id)
         rendered = contents.map { |ac| cms_render_widget(ac) }
         safe_join(rendered)
       end
