@@ -1,9 +1,10 @@
 # MacronCMS
 
-[![Gem Version](https://img.shields.io/badge/version-4.0.0-emerald.svg)](#version)
+[![Gem Version](https://img.shields.io/badge/version-5.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-black?logo=three.js&logoColor=white)](https://threejs.org)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-purple.svg)](https://github.com/macron1-automations/macron-cms-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
 A simple, flexible CMS engine for Ruby on Rails, designed for building highly interactive content with dynamic content blocks, declarative schemas, and ViewComponent widgets.
@@ -21,6 +22,7 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 ### 🛠️ Dedicated Admin Dashboard (`/cms`)
 - **Modern Zinc Aesthetic**: Clean, responsive monochrome layout with sticky sidebar navigation, top breadcrumbs, metric cards, quick-action buttons, and flash notification banners.
 - **Article CRUD & Canonical Slugs**: Manage articles (`Macron::Cms::Article`) out-of-the-box with dedicated create, edit, show, and delete interfaces. Automatic slug generation via `friendly_id` produces clean SEO URLs.
+- **Publication Scheduling & Custom Chronology**: Configure exact `published_at` timestamps with an integrated datetime picker. Articles default to descending publication order (`published_at: :desc, created_at: :desc`), enabling scheduled publishing and custom sorting.
 - **Slug History & Canonical 301 Redirects**: Automatic FriendlyId slug history tracking. Host controllers use the `Macron::Cms::SlugRedirectable` concern to automatically issue permanent 301 redirects when an article is accessed via a previous slug, maintaining SEO equity and preventing 404s.
 - **Deletion Safeguards**: Browser confirmation dialogs on delete actions with article titles to prevent accidental deletion.
 - **Host App Integration**: Quick links between the CMS admin console and public-facing host views.
@@ -81,18 +83,27 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 - **Seamless Rendering Helpers**: Render all article content blocks ordered by `sort_order` with `<%= cms_render_article_contents(@article) %>`, or render individual blocks via `<%= cms_render_widget(article_content) %>`.
 - **Informative Error Handling**: Raises `Macron::Cms::MissingWidgetError` if a content type does not have a corresponding `Widgets::<Name>Component` in the host application.
 
+### ⚡ High-Performance Preloading & O(1) Queries
+- **Zero N+1 Query Overhead**: Built-in `ArticleContent.for_display` scope combines Active Storage's `with_attached_files` with `.includes(:content)` to preload associations in constant-time batches.
+- **Bounded Query Execution**: Admin show views, high-frequency Turbo Stream inserts/reorders, and public host rendering (`cms_render_article_contents`) run in bounded O(1) database queries regardless of article length or attached media count.
+
 ### 🔒 Devise Authentication & Authorization
 - **Configurable Access Guard**: Protect the `/cms` engine namespace behind host application authentication.
 - **Role Customization**: Configure custom user models (`user_class`) and admin flags (`admin_flag`) via initializers.
 
-### 🤖 REST API & AI Content Ingestion (`/cms/api/v1`)
-- **Atomic Nested Import**: Create or update articles and complete sequences of typed content blocks in a single atomic transaction.
-- **Automated Remote Asset Ingestion**: Remote image URLs (e.g. Substack, Medium, WordPress) are automatically downloaded, validated, and attached to Active Storage blobs.
-- **Idempotent Upsert Support**: Re-run imports safely using `upsert: true` matching on canonical `slug` or `title` without creating duplicate articles.
+### 🤖 Granular REST API & Headless Operations (`/cms/api/v1`)
+- **Granular Block-Level Operations**: Full REST control over article blocks under `/cms/api/v1/articles/:article_id/content_blocks`—create with relative positioning (`insert_at`), update payloads, move blocks (`PATCH :id/move`), convert types in place (`PATCH :id/convert`), delete blocks, and batch reorder (`PATCH reorder`).
+- **Inline & Remote Asset Ingestion**: Attach files directly using base64 data payloads (`file_upload`) or provide remote URLs (`image_url` / `upload_url`) with automatic MIME detection and background Active Storage attachment.
+- **Atomic Nested Import & Upsert**: Create or update articles and complete sequences of typed content blocks in a single atomic transaction with `upsert: true`.
+- **Article Lifecycle Control**: Programmatically manage article metadata, publishing timestamps (`published_at`), and deletion via `PATCH` and `DELETE /cms/api/v1/articles/:id`.
 - **Historical Slug Resolution**: Requests referencing previous slugs resolve with `200 OK` and return the current canonical slug in the response, preventing integration breaks.
 - **Content Type Schema Introspection**: Query `GET /cms/api/v1/content_types` dynamically so AI agents know exact fields and widget types available.
 - **Bearer Token Auth**: Secure endpoints with `Authorization: Bearer <token>` or `X-API-Key`.
 - **Full API Documentation**: Complete endpoint specifications, payload schemas, and response models in [`docs/api.md`](docs/api.md).
+
+### 🧠 Model Context Protocol (MCP) Server
+- **Turnkey AI Pair-Programming**: Connect Claude Desktop, Cursor, Antigravity, or autonomous agents to MacronCMS via the official [macron-cms-mcp](https://github.com/macron1-automations/macron-cms-mcp) server.
+- **Native AI Tool Calling**: Enables LLMs to dynamically inspect schemas, draft articles, insert/edit blocks, reorder sections, and upload media assets natively using structured tool definitions.
 
 ### 🎨 Self-Contained Tailwind CSS v4
 - **Zero Host Setup Required**: MacronCMS packages its own standalone, precompiled Tailwind CSS v4 bundle (`app/assets/stylesheets/macron/cms/application.css`). Host applications do not need Tailwind installed to display the CMS admin interface.
@@ -918,16 +929,24 @@ Configure your key in an initializer (`config.api_key`) or via the `MACRON_CMS_A
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | [`/cms/api/v1/articles`](docs/api.md#2-create-or-upsert-article-post-cmsapiv1articles) | Create or upsert an article with nested content blocks |
-| `GET` | [`/cms/api/v1/articles/:id`](docs/api.md#3-retrieve-article-get-cmsapiv1articlesid) | Retrieve article metadata and ordered content blocks (JSON) |
-| `PATCH` | [`/cms/api/v1/articles/:id`](docs/api.md#4-update-article-patch-cmsapiv1articlesid) | Update article attributes and synchronize content blocks |
 | `GET` | [`/cms/api/v1/content_types`](docs/api.md#1-list-content-types-get-cmsapiv1content_types) | Introspect available content types and schema field requirements |
+| `GET` | [`/cms/api/v1/articles`](docs/api.md#2-list-articles-get-cmsapiv1articles) | List articles with metadata, slugs, and publication dates |
+| `POST` | [`/cms/api/v1/articles`](docs/api.md#3-create-or-upsert-article-post-cmsapiv1articles) | Create or upsert an article with nested content blocks |
+| `GET` | [`/cms/api/v1/articles/:id`](docs/api.md#4-retrieve-article-get-cmsapiv1articlesid) | Retrieve article metadata and ordered content blocks (JSON) |
+| `PATCH` | [`/cms/api/v1/articles/:id`](docs/api.md#5-update-article-patch-cmsapiv1articlesid) | Update article metadata and synchronize content blocks |
+| `DELETE` | [`/cms/api/v1/articles/:id`](docs/api.md#6-delete-article-delete-cmsapiv1articlesid) | Delete an article and its associated content blocks |
+| `POST` | [`/cms/api/v1/articles/:article_id/content_blocks`](docs/api.md#7-content-block-operations) | Insert a content block (supports `insert_at` and `file_upload`) |
+| `PATCH` | [`/cms/api/v1/articles/:article_id/content_blocks/:id`](docs/api.md#7-content-block-operations) | Update payload attributes, replace files, or purge attachments |
+| `DELETE` | [`/cms/api/v1/articles/:article_id/content_blocks/:id`](docs/api.md#7-content-block-operations) | Delete a content block and re-normalize sequence order |
+| `PATCH` | [`/cms/api/v1/articles/:article_id/content_blocks/:id/move`](docs/api.md#7-content-block-operations) | Move block position (`up`, `down`, or target position) |
+| `PATCH` | [`/cms/api/v1/articles/:article_id/content_blocks/:id/convert`](docs/api.md#7-content-block-operations) | Convert block in-place to compatible schema type |
+| `PATCH` | [`/cms/api/v1/articles/:article_id/content_blocks/reorder`](docs/api.md#7-content-block-operations) | Batch reorder blocks via array of ordered IDs |
 
 ---
 
 ### 1. Ingesting Articles with Nested Content Blocks
 
-You can import an entire article—including its metadata, SEO tags, colors, and an ordered list of typed content blocks—in a single atomic transaction:
+You can import an entire article—including its metadata, SEO tags, colors, publication timestamp (`published_at`), and an ordered list of typed content blocks—in a single atomic transaction:
 
 ```bash
 curl -X POST http://localhost:3000/cms/api/v1/articles \
@@ -938,6 +957,7 @@ curl -X POST http://localhost:3000/cms/api/v1/articles \
     "article": {
       "title": "The Myth of Your Limitations",
       "slug": "the-myth-of-your-limitations",
+      "published_at": "2026-10-29T19:30:00Z",
       "meta_title": "The Myth of Your Limitations | Mindset Guide",
       "meta_description": "How a simple mindset shift can prove you wrong.",
       "background_color": "#ffffff",
@@ -1008,7 +1028,99 @@ AI agents can query `/cms/api/v1/content_types` before generating payloads to dy
 }
 ```
 
+---
+
+### 3. Granular Content Block Operations
+
+MacronCMS supports fine-grained REST manipulation of article blocks, allowing agents and scripts to make targeted edits without replacing the entire article:
+
+#### Add Block with Inline Base64 Asset
+```bash
+curl -X POST http://localhost:3000/cms/api/v1/articles/the-myth-of-your-limitations/content_blocks \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer test-secret-key" \
+  -d '{
+    "content_type": "image",
+    "insert_at": 2,
+    "payload": { "size": "md" },
+    "file_upload": {
+      "filename": "diagram.png",
+      "content_type": "image/png",
+      "data_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    }
+  }'
+```
+
+#### In-Place Block Conversion
+```bash
+curl -X PATCH http://localhost:3000/cms/api/v1/articles/the-myth-of-your-limitations/content_blocks/42/convert \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer test-secret-key" \
+  -d '{ "target_content_type": "three_js_image" }'
+```
+
+#### Reordering and Relative Moves
+```bash
+# Shift block up or down relative to its current position
+curl -X PATCH http://localhost:3000/cms/api/v1/articles/the-myth-of-your-limitations/content_blocks/42/move \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer test-secret-key" \
+  -d '{ "direction": "up" }'
+
+# Or batch reorder by an explicit list of block IDs
+curl -X PATCH http://localhost:3000/cms/api/v1/articles/the-myth-of-your-limitations/content_blocks/reorder \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer test-secret-key" \
+  -d '{ "ordered_ids": [45, 42, 43, 44] }'
+```
+
 For complete endpoint specifications, payload schemas, and response formats, see [`docs/api.md`](docs/api.md). For Substack HTML mapping rules and a ready-to-use prompt template for AI agents, see [`docs/ai_importer_guide.md`](docs/ai_importer_guide.md).
+
+---
+
+## 🤖 Model Context Protocol (MCP) Server
+
+MacronCMS includes an official **Model Context Protocol (MCP) Server**: [**`macron-cms-mcp`**](https://github.com/macron1-automations/macron-cms-mcp).
+
+The MCP server connects AI coding assistants and autonomous agents—including Claude Desktop, Cursor, and Antigravity—directly to MacronCMS, exposing rich tool-calling capabilities to manage and pair-program content directly from within your agent workflow.
+
+### Available MCP Tools
+
+| Tool | Description |
+|---|---|
+| `list_content_types` | Introspect all registered YAML content types, field specifications, and type converters |
+| `list_articles` | Retrieve articles with metadata, canonical slugs, and publication timestamps |
+| `get_article` | Fetch article details and its ordered content blocks |
+| `create_article` | Scaffold a new article with optional nested blocks and publication scheduling |
+| `update_article_metadata` | Update article title, slug, publication date, text/background styling, or SEO tags |
+| `delete_article` | Delete an article and its content blocks |
+| `add_content_block` | Insert a new content block at a specific position with payload or Base64 attachments |
+| `update_content_block` | Modify block payload attributes, replace attachments, or purge files |
+| `delete_content_block` | Remove a block and automatically re-normalize sequence ordering |
+| `move_content_block` | Shift block position up, down, or to an explicit target index |
+| `reorder_content_blocks` | Batch reorder all blocks on an article |
+| `convert_content_block` | In-place convert a block between compatible content types (e.g. `image` ↔ `three_js_image`) |
+
+### AI Agent / Client Configuration
+
+Add the server to your MCP client configuration (such as `claude_desktop_config.json` or your Antigravity / Cursor MCP configuration):
+
+```json
+{
+  "mcpServers": {
+    "macron-cms": {
+      "command": "npx",
+      "args": ["-y", "@macron1/cms-mcp"],
+      "env": {
+        "MACRON_CMS_BASE_URL": "http://localhost:3000/cms/api/v1",
+        "MACRON_CMS_API_KEY": "<your-api-key>"
+      }
+    }
+  }
+}
+```
+
+For full installation and tool usage documentation, visit the [**macron-cms-mcp repository on GitHub**](https://github.com/macron1-automations/macron-cms-mcp).
 
 ---
 
