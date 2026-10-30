@@ -8,7 +8,7 @@ module Macron
       end
 
       def show
-        @article_contents = @article.article_contents.includes(:content).order(:sort_order, :id)
+        @article_contents = @article.article_contents.for_display.order(:sort_order, :id).load
         @content_types = Content.order(:name)
       end
 

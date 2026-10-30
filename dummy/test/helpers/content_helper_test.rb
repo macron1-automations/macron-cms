@@ -127,4 +127,25 @@ class ContentHelperTest < ActionView::TestCase
     style = cms_article_background_style(article)
     assert_includes style, "color: #e2e8f0;"
   end
+
+  test "cms_render_article_contents renders widgets with attached files without N+1 queries" do
+    article = Macron::Cms::Article.create!(title: "Widgets N+1 Article")
+    image_type = Macron::Cms::Content.find_or_create_by!(name: "image") do |c|
+      c.fields = [ { "name" => "upload", "kind" => "file" }, { "name" => "size", "kind" => "dropdown" } ]
+    end
+
+    5.times do |i|
+      ac = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: i + 1, payload: { "size" => "md" })
+      ac.files.attach(Rack::Test::UploadedFile.new(StringIO.new("widget data #{i}"), "image/png", original_filename: "widget_#{i}.png"))
+    end
+
+    rendered = nil
+    queries = count_queries do
+      rendered = cms_render_article_contents(article)
+    end
+
+    assert_not_empty rendered
+    # O(1) constant queries: ArticleContent + Attachment batch IN + Blob batch IN + VariantRecord batch IN + Content batch IN
+    assert_operator queries, :<=, 6, "Expected cms_render_article_contents to execute constant batch queries, got #{queries}"
+  end
 end
