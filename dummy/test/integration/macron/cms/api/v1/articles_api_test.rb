@@ -195,4 +195,104 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
     assert_equal Time.iso8601(updated_time), Time.iso8601(json["article"]["published_at"])
     assert_equal Time.iso8601(updated_time), article.reload.published_at
   end
+
+  test "GET /cms/api/v1/articles lists and searches articles with pagination" do
+    Macron::Cms::Article.create!(title: "Alpha Article", slug: "alpha-slug")
+    Macron::Cms::Article.create!(title: "Beta Guide", slug: "beta-guide")
+    Macron::Cms::Article.create!(title: "Gamma Post", slug: "gamma-post")
+
+    # Search by q
+    get "/cms/api/v1/articles?q=guide", headers: @auth_headers
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal 1, json["articles"].size
+    assert_equal "Beta Guide", json["articles"][0]["title"]
+    assert_equal 1, json["meta"]["total_count"]
+
+    # Pagination
+    get "/cms/api/v1/articles?per_page=2&page=1", headers: @auth_headers
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal 2, json["articles"].size
+    assert_equal 1, json["meta"]["page"]
+    assert_equal 2, json["meta"]["per_page"]
+    assert json["meta"]["total_count"] >= 3
+  end
+
+  test "DELETE /cms/api/v1/articles/:id deletes article and its blocks" do
+    article = Macron::Cms::Article.create!(title: "To Be Deleted")
+    heading_type = Macron::Cms::Content.find_by!(name: "heading")
+    article.article_contents.create!(content: heading_type, payload: { "title" => "Block" })
+
+    delete "/cms/api/v1/articles/#{article.slug}", headers: @auth_headers
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert_equal true, json["deleted"]
+    assert_equal article.id, json["id"]
+    assert_nil Macron::Cms::Article.find_by(id: article.id)
+  end
+
+  test "POST and PATCH /cms/api/v1/articles manages background image" do
+    png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    payload = {
+      article: {
+        title: "Article With BG",
+        background_image_upload: {
+          filename: "bg.png",
+          content_type: "image/png",
+          data_base64: png_base64
+        }
+      }
+    }
+
+    post "/cms/api/v1/articles", params: payload.to_json, headers: @auth_headers
+    assert_response :created
+
+    json = JSON.parse(response.body)
+    assert_not_nil json["article"]["background_image"]
+    assert_equal "bg.png", json["article"]["background_image"]["filename"]
+
+    slug = json["article"]["slug"]
+
+    # Purge background image
+    patch "/cms/api/v1/articles/#{slug}",
+          params: { article: { purge_background_image: true } }.to_json,
+          headers: @auth_headers
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert_nil json["article"]["background_image"]
+  end
+
+  test "PATCH /cms/api/v1/articles/:id preserves block attachments when updating in-place" do
+    png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    article = Macron::Cms::Article.create!(title: "Preserve Test")
+    image_type = Macron::Cms::Content.find_by!(name: "image")
+    block = article.article_contents.create!(content: image_type, sort_order: 1, payload: { "size" => "sm" })
+    Macron::Cms::InlineAssetAttacher.attach(
+      article_content: block,
+      upload_data: { filename: "orig.png", content_type: "image/png", data_base64: png_base64 }
+    )
+
+    patch "/cms/api/v1/articles/#{article.slug}",
+          params: {
+            content_blocks: [
+              {
+                id: block.id,
+                content_type: "image",
+                payload: { size: "full" }
+              }
+            ]
+          }.to_json,
+          headers: @auth_headers
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert_equal 1, json["content_blocks"].size
+    assert_equal "full", json["content_blocks"][0]["payload"]["size"]
+    # Attachment still preserved
+    assert_not_nil json["content_blocks"][0]["attached_file"]
+    assert_equal "orig.png", json["content_blocks"][0]["attached_file"]["filename"]
+  end
 end

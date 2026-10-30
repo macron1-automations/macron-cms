@@ -9,11 +9,17 @@ module Macron
       OPEN_TIMEOUT = 5
 
       def self.attach(article_content:, url:, replace: true)
-        new(article_content: article_content, url: url, replace: replace).call
+        new(record: article_content, association: :files, url: url, replace: replace).call
       end
 
-      def initialize(article_content:, url:, replace: true)
-        @article_content = article_content
+      def self.attach_background(article:, url:, replace: true)
+        new(record: article, association: :background_image, url: url, replace: replace).call
+      end
+
+      def initialize(record: nil, association: :files, article_content: nil, url:, replace: true)
+        @record = record || article_content
+        @association = association
+        @article_content = article_content || (@record.is_a?(ArticleContent) ? @record : nil)
         @url = url.to_s.strip
         @replace = replace
       end
@@ -51,13 +57,15 @@ module Macron
         filename = derive_filename(uri, downloaded_io)
         content_type = downloaded_io.content_type || "application/octet-stream"
 
-        if @replace && @article_content.files.attached?
-          @article_content.files.purge
+        target_assoc = @record.public_send(@association)
+
+        if @replace && target_assoc.respond_to?(:attached?) && target_assoc.attached?
+          target_assoc.purge
         end
 
         downloaded_io.rewind if downloaded_io.respond_to?(:rewind)
 
-        @article_content.files.attach(
+        target_assoc.attach(
           io: downloaded_io,
           filename: filename,
           content_type: content_type
@@ -77,6 +85,8 @@ module Macron
       end
 
       def fallback_to_payload_url
+        return unless @article_content
+
         current_payload = (@article_content.payload || {}).dup
         current_payload["upload"] = @url
         @article_content.payload = current_payload
