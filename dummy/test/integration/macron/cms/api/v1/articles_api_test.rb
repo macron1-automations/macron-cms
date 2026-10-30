@@ -165,4 +165,34 @@ class ArticlesApiTest < ActionDispatch::IntegrationTest
     get "/cms/api/v1/articles/does-not-exist", headers: @auth_headers
     assert_response :not_found
   end
+
+  test "POST and PATCH /cms/api/v1/articles supports custom published_at" do
+    custom_time = "2024-03-15T10:30:00Z"
+    payload = {
+      article: {
+        title: "API Date Article",
+        published_at: custom_time
+      }
+    }
+
+    post "/cms/api/v1/articles", params: payload.to_json, headers: @auth_headers
+    assert_response :created
+
+    json = JSON.parse(response.body)
+    assert_equal Time.iso8601(custom_time), Time.iso8601(json["article"]["published_at"])
+
+    article = Macron::Cms::Article.find_by!(title: "API Date Article")
+    assert_equal Time.iso8601(custom_time), article.published_at
+
+    # Update published_at
+    updated_time = "2027-08-20T18:00:00Z"
+    patch "/cms/api/v1/articles/#{article.slug}",
+          params: { article: { published_at: updated_time } }.to_json,
+          headers: @auth_headers
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert_equal Time.iso8601(updated_time), Time.iso8601(json["article"]["published_at"])
+    assert_equal Time.iso8601(updated_time), article.reload.published_at
+  end
 end

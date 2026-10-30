@@ -5,7 +5,7 @@
         <thead class="bg-zinc-50 text-zinc-700 font-semibold text-xs uppercase tracking-wider">
           <tr>
             <th scope="col" class="px-6 py-3.5">Title</th>
-            <th scope="col" class="px-6 py-3.5">Created At</th>
+            <th scope="col" class="px-6 py-3.5">Published At</th>
             <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
           </tr>
         </thead>
@@ -16,7 +16,7 @@
                 <%= link_to article.title, article_path(article), class: "hover:underline" %>
               </td>
               <td class="px-6 py-4 text-zinc-500 text-xs whitespace-nowrap">
-                <%= article.created_at.strftime("%b %d, %Y") %>
+                <%= (article.published_at || article.created_at).strftime("%b %d, %Y %H:%M") %>
               </td>
               <td class="px-6 py-4 text-right text-xs font-medium whitespace-nowrap">
                 <div class="flex items-center justify-end gap-3 whitespace-nowrap">
@@ -26,7 +26,7 @@
                   <%= link_to "Show", article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
                   <%= link_to "Edit", edit_article_path(article), class: "text-zinc-700 hover:text-zinc-900 hover:underline" %>
                   <% delete_confirm = "Are you sure you want to delete \"#{article.title}\"?" %>
-                  <%= button_to "Delete", article_path(article), method: :delete, form_class: "inline", onclick: "return confirm(#{delete_confirm.to_json});", data: { turbo_confirm: delete_confirm }, class: "text-rose-600 hover:text-rose-800 hover:underline cursor-pointer" %>
+                  <%= button_to "Delete", article_path(article), method: :delete, form_class: "inline", data: { turbo_confirm: delete_confirm }, class: "text-rose-600 hover:text-rose-800 hover:underline cursor-pointer" %>
                 </div>
               </td>
             </tr>

@@ -11,7 +11,11 @@ module Macron
       DEFAULT_BACKGROUND_POSITION = "center"
       DEFAULT_BACKGROUND_ATTACHMENT = "scroll"
 
+      default_scope { order(published_at: :desc, created_at: :desc) }
+
       before_validation :normalize_slug
+      before_validation :set_default_published_at, on: :create
+      before_save :ensure_published_at
 
       extend FriendlyId
       friendly_id :slug_candidate, use: %i[slugged history]
@@ -87,6 +91,14 @@ module Macron
       end
 
       private
+
+      def set_default_published_at
+        self.published_at = Time.current if published_at.blank?
+      end
+
+      def ensure_published_at
+        self.published_at ||= (created_at.presence || Time.current)
+      end
 
       def normalize_slug
         self.slug = slug.to_s.parameterize.presence

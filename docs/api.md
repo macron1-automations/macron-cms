@@ -234,6 +234,7 @@ Creates a new article or updates an existing article, atomically synchronizing i
 
 - `title` (*String, Required*): The display title of the article.
 - `slug` (*String, Optional*): URL slug managed by FriendlyId. If omitted, parameterized from `title` automatically.
+- `published_at` (*ISO 8601 String, Optional*): Publication timestamp used for custom chronological sorting and display date. Defaults to current time on create if omitted.
 - `meta_title` (*String, Optional*): HTML `<title>` and Open Graph title tag.
 - `meta_description` (*String, Optional*): SEO `<meta name="description">` tag.
 - `background_color` (*String, Optional*): CSS color / hex string for the host view background.
@@ -277,6 +278,7 @@ An array of content block objects. When `content_blocks` is passed:
       "byte_size": 104230,
       "url": "/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCZz09.../sample-photo.png"
     },
+    "published_at": "2026-10-29T19:30:00Z",
     "created_at": "2026-10-29T19:30:00Z",
     "updated_at": "2026-10-29T19:30:00Z"
   },
@@ -403,6 +405,7 @@ Authorization: Bearer test-secret-key
       "attachment": "scroll"
     },
     "featured_image": null,
+    "published_at": "2026-10-29T19:30:00Z",
     "created_at": "2026-10-29T19:30:00Z",
     "updated_at": "2026-10-29T19:30:00Z"
   },

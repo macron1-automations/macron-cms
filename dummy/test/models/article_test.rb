@@ -135,4 +135,36 @@ class ArticleTest < ActiveSupport::TestCase
 
     assert_equal "auto-regeneration-test", article.slug
   end
+
+  test "defaults published_at to current time on create when omitted" do
+    freeze_time = Time.zone.parse("2026-10-29 12:00:00")
+    travel_to freeze_time do
+      article = Macron::Cms::Article.create!(title: "Default Published At")
+      assert_not_nil article.published_at
+      assert_equal freeze_time, article.published_at
+    end
+  end
+
+  test "preserves explicitly set published_at on create and update" do
+    custom_date = Time.zone.parse("2024-05-15 09:30:00")
+    article = Macron::Cms::Article.create!(title: "Custom Date Article", published_at: custom_date)
+    assert_equal custom_date, article.reload.published_at
+
+    new_date = Time.zone.parse("2027-01-01 00:00:00")
+    article.update!(published_at: new_date)
+    assert_equal new_date, article.reload.published_at
+  end
+
+  test "orders articles by published_at desc by default" do
+    oldest = Macron::Cms::Article.create!(title: "Oldest", published_at: 10.days.ago)
+    newest = Macron::Cms::Article.create!(title: "Newest", published_at: 1.day.ago)
+    middle = Macron::Cms::Article.create!(title: "Middle", published_at: 5.days.ago)
+
+    articles = Macron::Cms::Article.where(id: [ oldest.id, newest.id, middle.id ])
+    assert_equal [ newest.id, middle.id, oldest.id ], articles.pluck(:id)
+
+    # Now update oldest to be the future/top article
+    oldest.update!(published_at: 1.day.from_now)
+    assert_equal [ oldest.id, newest.id, middle.id ], Macron::Cms::Article.where(id: [ oldest.id, newest.id, middle.id ]).pluck(:id)
+  end
 end
