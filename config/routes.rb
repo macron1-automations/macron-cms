@@ -19,7 +19,17 @@ Macron::Cms::Engine.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :content_types, only: %i[index]
-      resources :articles, only: %i[create show update]
+      resources :articles, only: %i[index create show update destroy] do
+        resources :content_blocks, controller: "article_contents", only: %i[create update destroy] do
+          member do
+            patch :move
+            patch :convert
+          end
+          collection do
+            patch :reorder
+          end
+        end
+      end
     end
   end
 end

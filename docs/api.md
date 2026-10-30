@@ -13,9 +13,12 @@ MacronCMS provides a JSON REST API under `/cms/api/v1/` designed for headless co
   - [Remote Asset Ingestion](#remote-asset-ingestion)
 - [API Endpoints](#api-endpoints)
   - [1. List Content Types (`GET /cms/api/v1/content_types`)](#1-list-content-types-get-cmsapiv1content_types)
-  - [2. Create or Upsert Article (`POST /cms/api/v1/articles`)](#2-create-or-upsert-article-post-cmsapiv1articles)
-  - [3. Retrieve Article (`GET /cms/api/v1/articles/:id`)](#3-retrieve-article-get-cmsapiv1articlesid)
-  - [4. Update Article (`PATCH /cms/api/v1/articles/:id`)](#4-update-article-patch-cmsapiv1articlesid)
+  - [2. List Articles (`GET /cms/api/v1/articles`)](#2-list-articles-get-cmsapiv1articles)
+  - [3. Create or Upsert Article (`POST /cms/api/v1/articles`)](#3-create-or-upsert-article-post-cmsapiv1articles)
+  - [4. Retrieve Article (`GET /cms/api/v1/articles/:id`)](#4-retrieve-article-get-cmsapiv1articlesid)
+  - [5. Update Article (`PATCH /cms/api/v1/articles/:id`)](#5-update-article-patch-cmsapiv1articlesid)
+  - [6. Delete Article (`DELETE /cms/api/v1/articles/:id`)](#6-delete-article-delete-cmsapiv1articlesid)
+  - [7. Content Block Operations (`/cms/api/v1/articles/:article_id/content_blocks`)](#7-content-block-operations)
 - [Status Codes & Error Responses](#status-codes--error-responses)
 - [Related Documentation](#related-documentation)
 
@@ -173,7 +176,53 @@ curl -X GET http://localhost:3000/cms/api/v1/content_types \
 
 ---
 
-### 2. Create or Upsert Article (`POST /cms/api/v1/articles`)
+### 2. List Articles (`GET /cms/api/v1/articles`)
+
+Retrieves a paginated list of articles, with optional keyword search across titles, slugs, and SEO metadata.
+
+#### Query Parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `q` | `string` | — | Search query matched against title, slug, meta_title, and meta_description. |
+| `page` | `integer` | `1` | Page number. |
+| `per_page` | `integer` | `20` | Items per page (max 100). |
+| `include_blocks` | `boolean` | `false` | When `true`, includes serialized `content_blocks` in each article item. |
+
+#### Response (`200 OK`)
+
+```json
+{
+  "articles": [
+    {
+      "id": 14,
+      "title": "My Article Title",
+      "slug": "my-article-title",
+      "meta_title": "SEO Meta Title",
+      "meta_description": "SEO Meta Description",
+      "background_color": "#ffffff",
+      "text_color": "#18181b",
+      "background_options": {},
+      "featured_image": null,
+      "background_image": null,
+      "blocks_count": 3,
+      "published_at": "2026-10-29T19:30:00Z",
+      "created_at": "2026-10-29T19:30:00Z",
+      "updated_at": "2026-10-29T19:30:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "per_page": 20,
+    "total_count": 1,
+    "total_pages": 1
+  }
+}
+```
+
+---
+
+### 3. Create or Upsert Article (`POST /cms/api/v1/articles`)
 
 Creates a new article or updates an existing article, atomically synchronizing its metadata and ordered content blocks in a single database transaction.
 
@@ -368,7 +417,7 @@ curl -X POST http://localhost:3000/cms/api/v1/articles \
 
 ---
 
-### 3. Retrieve Article (`GET /cms/api/v1/articles/:id`)
+### 4. Retrieve Article (`GET /cms/api/v1/articles/:id`)
 
 Fetches article metadata, featured image information, and ordered content blocks with active file attachments.
 
@@ -442,7 +491,7 @@ curl -X GET http://localhost:3000/cms/api/v1/articles/my-article-title \
 
 ---
 
-### 4. Update Article (`PATCH /cms/api/v1/articles/:id`)
+### 5. Update Article (`PATCH /cms/api/v1/articles/:id`)
 
 Updates an existing article's metadata and optionally replaces its content blocks in an atomic transaction.
 
@@ -502,6 +551,52 @@ curl -X PATCH http://localhost:3000/cms/api/v1/articles/my-article-title \
     }
   }'
 ```
+
+---
+
+### 6. Delete Article (`DELETE /cms/api/v1/articles/:id`)
+
+Deletes an article and all of its associated content blocks by ID or slug.
+
+#### Response (`200 OK`)
+
+```json
+{
+  "deleted": true,
+  "id": 14,
+  "slug": "my-article-title"
+}
+```
+
+---
+
+### 7. Content Block Operations
+
+MacronCMS provides granular REST endpoints for block-level content editing under `/cms/api/v1/articles/:article_id/content_blocks`:
+
+#### Append or Insert Block (`POST /cms/api/v1/articles/:article_id/content_blocks`)
+- `content_type`: String (required).
+- `insert_at`: Integer (optional, 1-indexed). Shifts subsequent blocks down.
+- `payload`: Object matching schema fields.
+- `file_upload`: Object `{ filename, content_type, data_base64 }` for inline asset upload.
+- `image_url` / `file_url`: String for remote download.
+
+#### Update Block (`PATCH /cms/api/v1/articles/:article_id/content_blocks/:id`)
+- `payload`: Object (merged by default, or replaced if `replace_payload: true`).
+- `purge_attachment`: Boolean (purges Active Storage file attachment).
+- `file_upload` or `image_url`: Uploads or downloads a new attachment.
+
+#### Delete Block (`DELETE /cms/api/v1/articles/:article_id/content_blocks/:id`)
+Deletes the block, re-normalizes sequence order, and recalculates the article's featured image.
+
+#### Reorder Blocks (`PATCH /cms/api/v1/articles/:article_id/content_blocks/reorder`)
+- `ordered_ids`: Array of integer block IDs in desired sequence.
+
+#### Move Block (`PATCH /cms/api/v1/articles/:article_id/content_blocks/:id/move`)
+- `direction`: `"up" | "down"` or `position`: Integer (1-indexed).
+
+#### Convert Block Type (`PATCH /cms/api/v1/articles/:article_id/content_blocks/:id/convert`)
+- `target_content_type`: String (must be listed in source type's `convertible_to`). Preserves attachments and dormant JSONB keys.
 
 ---
 
