@@ -135,6 +135,16 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     article = Macron::Cms::Article.create!(title: 'Special "Guide" Article')
     expected_confirm = %(Are you sure you want to delete "Special "Guide" Article"?)
 
+    # Dashboard view
+    get "/cms"
+    assert_response :success
+    assert_select "form.inline button[data-turbo-confirm=?]", expected_confirm
+    assert_select "form.inline button" do |buttons|
+      dash_btn = buttons.find { |b| b.text.strip == "Delete" }
+      assert dash_btn
+      assert_nil dash_btn["onclick"]
+    end
+
     # Table view on articles index
     get "/cms/articles"
     assert_response :success
@@ -142,8 +152,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "form.inline button" do |buttons|
       table_btn = buttons.find { |b| b.text.strip == "Delete" }
       assert table_btn
-      assert_includes table_btn["onclick"], "return confirm("
-      assert_includes table_btn["onclick"], "Special"
+      assert_nil table_btn["onclick"]
     end
 
     # Show view
@@ -153,8 +162,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "form button" do |buttons|
       show_btn = buttons.find { |b| b.text.strip == "Delete" }
       assert show_btn
-      assert_includes show_btn["onclick"], "return confirm("
-      assert_includes show_btn["onclick"], "Special"
+      assert_nil show_btn["onclick"]
     end
   end
 
