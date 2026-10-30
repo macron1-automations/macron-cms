@@ -86,6 +86,7 @@ module Macron
             raw.permit(
               :title,
               :slug,
+              :published_at,
               :meta_title,
               :meta_description,
               :background_color,
@@ -142,6 +143,7 @@ module Macron
                 id: article.id,
                 title: article.title,
                 slug: article.slug,
+                published_at: article.published_at&.iso8601,
                 meta_title: article.meta_title,
                 meta_description: article.meta_description,
                 background_color: article.background_color,

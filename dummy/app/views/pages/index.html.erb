@@ -32,8 +32,8 @@
             <% end %>
           </div>
 
-          <time datetime="<%= article.created_at.iso8601 %>" class="shrink-0 text-sm text-zinc-500 font-mono text-right whitespace-nowrap pt-0.5">
-            <%= article.created_at.strftime("%b %d, %Y") %>
+          <time datetime="<%= (article.published_at || article.created_at).iso8601 %>" class="shrink-0 text-sm text-zinc-500 font-mono text-right whitespace-nowrap pt-0.5">
+            <%= (article.published_at || article.created_at).strftime("%b %d, %Y") %>
           </time>
         </li>
       <% end %>

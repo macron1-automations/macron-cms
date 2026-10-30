@@ -499,7 +499,8 @@ When listing articles on a homepage or editorial index, eager-load `:featured_im
 # app/controllers/pages_controller.rb
 class PagesController < ApplicationController
   def index
-    @articles = Macron::Cms::Article.includes(:featured_image_blob).order(created_at: :desc)
+    # Default scope orders chronologically by published_at DESC, created_at DESC
+    @articles = Macron::Cms::Article.includes(:featured_image_blob)
   end
 end
 ```

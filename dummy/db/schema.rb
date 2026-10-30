@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,7 +76,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_150000) do
     t.jsonb "background_options", default: {}, null: false
     t.string "text_color"
     t.bigint "featured_image_blob_id"
+    t.datetime "published_at"
     t.index [ "featured_image_blob_id" ], name: "index_macron_cms_articles_on_featured_image_blob_id"
+    t.index [ "published_at" ], name: "index_macron_cms_articles_on_published_at"
     t.index [ "slug" ], name: "index_macron_cms_articles_on_slug", unique: true
   end
 

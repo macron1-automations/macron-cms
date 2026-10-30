@@ -13,6 +13,7 @@
         </span>
       </div>
       <div class="text-xs text-zinc-500 space-y-0.5">
+        <p>Published: <%= (@article.published_at || @article.created_at).strftime("%B %d, %Y at %H:%M UTC") %></p>
         <p>Created: <%= @article.created_at.strftime("%B %d, %Y at %H:%M UTC") %></p>
         <p>Updated: <%= time_ago_in_words(@article.updated_at) %> ago</p>
       </div>

@@ -4,7 +4,7 @@ module Macron
       before_action :set_article, only: %i[show edit update destroy purge_background_image]
 
       def index
-        @articles = Article.order(created_at: :desc)
+        @articles = Article.all
       end
 
       def show
@@ -57,6 +57,7 @@ module Macron
         params.require(:article).permit(
           :title,
           :slug,
+          :published_at,
           :meta_title,
           :meta_description,
           :background_color,

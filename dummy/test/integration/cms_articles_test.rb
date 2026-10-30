@@ -32,7 +32,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     # Verify table headers and absence of identifier/slug column
     assert_select "table thead th", text: "Title"
-    assert_select "table thead th", text: "Created At"
+    assert_select "table thead th", text: "Published At"
     assert_select "table thead th", text: "Actions"
     assert_select "table thead th", text: /Identifier|Slug/, count: 0
 
@@ -172,7 +172,7 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
 
     # Verify table headers and absence of slug column
     assert_select "table thead th", text: "Title"
-    assert_select "table thead th", text: "Created At"
+    assert_select "table thead th", text: "Published At"
     assert_select "table thead th", text: "Actions"
     assert_select "table thead th", text: /Slug/, count: 0
 
@@ -1206,5 +1206,47 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action='update'][target='flash-messages']"
     assert_includes response.body, "Failed to convert content block"
     assert_equal image_type, block.reload.content
+  end
+
+  test "admin can create and update article with custom published_at to alter sort order" do
+    sign_in @admin
+
+    post "/cms/articles", params: {
+      article: {
+        title: "Earlier Article",
+        published_at: "2025-01-01T12:00"
+      }
+    }
+    earlier = Macron::Cms::Article.find_by!(title: "Earlier Article")
+    assert_equal 2025, earlier.published_at.year
+
+    post "/cms/articles", params: {
+      article: {
+        title: "Later Article",
+        published_at: "2026-06-01T12:00"
+      }
+    }
+    later = Macron::Cms::Article.find_by!(title: "Later Article")
+    assert_equal 2026, later.published_at.year
+
+    get "/cms/articles"
+    assert_response :success
+    # Later article should appear before earlier article in table rows
+    body = response.body
+    assert body.index("Later Article") < body.index("Earlier Article")
+
+    # Update earlier article to a future date
+    patch "/cms/articles/#{earlier.slug}", params: {
+      article: {
+        published_at: "2027-01-01T12:00"
+      }
+    }
+    earlier.reload
+    assert_equal 2027, earlier.published_at.year
+
+    get "/cms/articles"
+    assert_response :success
+    body = response.body
+    assert body.index("Earlier Article") < body.index("Later Article")
   end
 end
