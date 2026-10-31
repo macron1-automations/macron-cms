@@ -3,6 +3,7 @@ module Macron
     class ArticleContentsController < ApplicationController
       before_action :set_article
       before_action :set_article_content, only: %i[update destroy move convert]
+      after_action :touch_article_on_reorder, only: [ :reorder, :move ]
 
       def create
         content = Content.find(params.dig(:article_content, :content_id))
@@ -249,6 +250,10 @@ module Macron
         end
 
         render turbo_stream: turbo_stream_actions
+      end
+
+      def touch_article_on_reorder
+        @article&.touch
       end
     end
   end
