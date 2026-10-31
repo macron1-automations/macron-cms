@@ -256,4 +256,28 @@ class ArticleContentTest < ActiveSupport::TestCase
 
     assert_equal 0, queries, "Expected zero database queries when accessing preloaded content and attachments"
   end
+
+  test "changes to article_content touch parent article updated_at for cache invalidation" do
+    article = Macron::Cms::Article.create!(title: "Touch Test Article")
+    content = Macron::Cms::Content.create!(name: "heading-touch", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+
+    # 1. Create touches article
+    block = Macron::Cms::ArticleContent.create!(article: article, content: content, payload: { "title" => "Initial" })
+    assert article.reload.updated_at > original_updated_at
+
+    # 2. Update touches article
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+    block.update!(payload: { "title" => "Updated" })
+    assert article.reload.updated_at > original_updated_at
+
+    # 3. Destroy touches article
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+    block.destroy!
+    assert article.reload.updated_at > original_updated_at
+  end
 end

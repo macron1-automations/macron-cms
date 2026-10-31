@@ -1,7 +1,7 @@
 module Macron
   module Cms
     class ArticleContent < ApplicationRecord
-      belongs_to :article, class_name: "Macron::Cms::Article"
+      belongs_to :article, class_name: "Macron::Cms::Article", touch: true
       belongs_to :content, class_name: "Macron::Cms::Content"
 
       has_many_attached :files

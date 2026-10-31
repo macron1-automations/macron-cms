@@ -443,6 +443,41 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_equal [ 1, 2, 3 ], [ block3.reload.sort_order, block1.reload.sort_order, block2.reload.sort_order ]
   end
 
+  test "move action touches article updated_at" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Movable Touch Article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1, payload: { "title" => "One" })
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2, payload: { "title" => "Two" })
+
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block1.id}/move", params: { direction: "down" }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    assert article.reload.updated_at > original_updated_at
+  end
+
+  test "reorder action touches article updated_at" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Reorder Touch Article")
+    ct = Macron::Cms::Content.create!(name: "heading", fields: [ { "name" => "title", "kind" => "string" } ])
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 1)
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: ct, sort_order: 2)
+
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+
+    patch "/cms/articles/#{article.slug}/article_contents/reorder",
+          params: { ordered_ids: [ block2.id, block1.id ] }.to_json,
+          headers: { "Content-Type" => "application/json", "Accept" => "application/json" }
+
+    assert_response :success
+    assert article.reload.updated_at > original_updated_at
+  end
+
   test "admin sees in-place '+' block inserters above, between, and below content blocks" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Inserter UI Article")
