@@ -1,7 +1,13 @@
+<p align="center">
+  <img src="docs/images/logo.jpg" alt="MacronCMS Logo" width="600" />
+</p>
+
 # MacronCMS
 
 [![Gem Version](https://img.shields.io/badge/version-5.0.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
+[![Live Demo](https://img.shields.io/badge/live_demo-blog.macron1.io-4F46E5.svg)](https://blog.macron1.io/)
+[![Host Starter](https://img.shields.io/badge/host_starter-macron--cms--host-blue.svg)](https://github.com/macron1-automations/macron-cms-host)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-black?logo=three.js&logoColor=white)](https://threejs.org)
 [![MCP Server](https://img.shields.io/badge/MCP-Server-purple.svg)](https://github.com/macron1-automations/macron-cms-mcp)
@@ -9,11 +15,35 @@
 
 A simple, flexible CMS engine for Ruby on Rails, designed for building highly interactive content with dynamic content blocks, declarative schemas, and ViewComponent widgets.
 
+> [!TIP]
+> **Experience it live:** Visit **[blog.macron1.io](https://blog.macron1.io/)** to see a production publication built on MacronCMS featuring 3D Three.js widgets, dynamic KaTeX mathematical notation, and a zero-CLS magazine layout.
+>
+> Setting up a new host application? Use the [**MacronCMS Host Master Prompt**](https://github.com/macron1-automations/macron-cms-host) (`macron-cms-host`) with Google Antigravity, Claude Code, or Cursor to scaffold a complete, production-ready Rails 8.1+ host application in minutes.
+
 ---
 
 ## Overview
 
 **MacronCMS** brings simplicity and developer joy back to content management, without sacrificing the power needed to create dynamic digital experiences. Built natively for Ruby on Rails 8, it gives developers total freedom to define content structures with Rails models while effortlessly powering modern front-end presentations.
+
+---
+
+## 🚀 Live Demo & Host Application Starter
+
+### 🌐 Live Production Demo: [blog.macron1.io](https://blog.macron1.io/)
+
+See MacronCMS running in production at [**blog.macron1.io**](https://blog.macron1.io/):
+- **Dynamic Content Blocks**: GitHub-Flavored Markdown, customizable headings, responsive images with Active Storage, blockquotes, and sandboxed embeds.
+- **Interactive 3D WebGL**: Three.js quotes with CRT scanlines, 3D post-processed shader images, and holographic tilt cards.
+- **Mathematical Typesetting**: CodeMirror-backed LaTeX equations with real-time KaTeX rendering.
+- **Magazine Layout & Performance**: Zero-CLS editorial frontend with on-demand widget hydration, Russian-doll caching, and automated image variant warming.
+
+### ⚡ Build Your Host App with AI: [macron-cms-host](https://github.com/macron1-automations/macron-cms-host)
+
+Rather than manually configuring content schemas, ViewComponent widgets, Hotwire streaming, and CDN settings from scratch, use the official **[MacronCMS Host Master Prompt](https://github.com/macron1-automations/macron-cms-host)** repository:
+- **Turnkey AI Scaffolding**: Contains a self-contained master prompt ([`PROMPT.md`](https://github.com/macron1-automations/macron-cms-host/blob/main/PROMPT.md)) designed for agentic AI coding harnesses like **Google Antigravity**, **Claude Code**, and **Cursor**.
+- **Interactive Interview**: The AI agent interviews you on your branding, layout preferences, widget tiers, and storage stack, then builds and verifies a tailored Rails 8.1+ host application.
+- **Production-Ready Stack**: Configures PostgreSQL, Devise admin auth, Solid Cache/Queue, Active Storage with libvips WebP processing, Terser JS minification, and optional [`macron-cms-mcp`](https://github.com/macron1-automations/macron-cms-mcp) publishing integration.
 
 ---
 
@@ -121,6 +151,12 @@ A simple, flexible CMS engine for Ruby on Rails, designed for building highly in
 ---
 
 ## Installation
+
+> [!TIP]
+> **Starting a new project from scratch?**
+> Instead of manually configuring models, widgets, and layout templates, use the [**MacronCMS Host Master Prompt**](https://github.com/macron1-automations/macron-cms-host) (`macron-cms-host`) to have your AI coding agent scaffold a complete, production-ready Rails 8.1+ host application with ViewComponent widgets, Devise authentication, and magazine layouts.
+>
+> To integrate MacronCMS into an existing Rails application, follow the manual installation steps below:
 
 Add this line to your application's `Gemfile`:
 
