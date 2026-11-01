@@ -4,7 +4,7 @@
 
 # MacronCMS
 
-[![Gem Version](https://img.shields.io/badge/version-5.0.0-emerald.svg)](#version)
+[![Gem Version](https://img.shields.io/badge/version-5.1.0-emerald.svg)](#version)
 [![Rails 8+](https://img.shields.io/badge/rails-8%2B-red.svg)](https://rubyonrails.org)
 [![Live Demo](https://img.shields.io/badge/live_demo-blog.macron1.io-4F46E5.svg)](https://blog.macron1.io/)
 [![Host Starter](https://img.shields.io/badge/host_starter-macron--cms--host-blue.svg)](https://github.com/macron1-automations/macron-cms-host)
@@ -113,9 +113,10 @@ Rather than manually configuring content schemas, ViewComponent widgets, Hotwire
 - **Seamless Rendering Helpers**: Render all article content blocks ordered by `sort_order` with `<%= cms_render_article_contents(@article) %>`, or render individual blocks via `<%= cms_render_widget(article_content) %>`.
 - **Informative Error Handling**: Raises `Macron::Cms::MissingWidgetError` if a content type does not have a corresponding `Widgets::<Name>Component` in the host application.
 
-### ⚡ High-Performance Preloading & O(1) Queries
+### ⚡ High-Performance Preloading, O(1) Queries & Russian-Doll Caching
 - **Zero N+1 Query Overhead**: Built-in `ArticleContent.for_display` scope combines Active Storage's `with_attached_files` with `.includes(:content)` to preload associations in constant-time batches.
 - **Bounded Query Execution**: Admin show views, high-frequency Turbo Stream inserts/reorders, and public host rendering (`cms_render_article_contents`) run in bounded O(1) database queries regardless of article length or attached media count.
+- **Automatic Russian-Doll Cache Invalidation**: `ArticleContent` associations automatically touch the parent `Article` on all operations (block creation, edits, deletions, relative moves, and drag-and-drop batch reorders). Host applications can safely wrap article views in standard Rails fragment caching (`<% cache @article do %>`) with zero monkey-patching and guaranteed cache freshness.
 
 ### 🔒 Devise Authentication & Authorization
 - **Configurable Access Guard**: Protect the `/cms` engine namespace behind host application authentication.
@@ -573,7 +574,7 @@ end
 
 #### Host Application View (`app/views/articles/show.html.erb`)
 
-Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply custom background colors, images, and text colors directly to the layout:
+Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply custom background colors, images, and text colors directly to the layout. Because all block operations automatically touch the parent article's timestamp, you can wrap article rendering in standard Rails fragment caching (`<% cache @article do %>`) for optimal performance:
 
 ```erb
 <% cms_seo_meta(@article) %>
@@ -581,18 +582,21 @@ Use `cms_seo_meta` for SEO metadata and `cms_article_background_style` to apply 
   <% content_for :body_style, cms_article_background_style(@article) %>
 <% end %>
 
-<article class="max-w-4xl mx-auto px-4 py-12">
-  <header class="pb-8 mb-8 border-b border-zinc-200">
-    <h1 class="text-4xl font-bold" style="<%= "color: #{@article.text_color};" if @article.text_color.present? %>">
-      <%= @article.title %>
-    </h1>
-  </header>
+<%# Automatically invalidated on block creation, edits, moves, reorders, or deletion %>
+<% cache @article do %>
+  <article class="max-w-4xl mx-auto px-4 py-12">
+    <header class="pb-8 mb-8 border-b border-zinc-200">
+      <h1 class="text-4xl font-bold" style="<%= "color: #{@article.text_color};" if @article.text_color.present? %>">
+        <%= @article.title %>
+      </h1>
+    </header>
 
-  <!-- Render all content blocks in order -->
-  <div class="space-y-6">
-    <%= cms_render_article_contents(@article) %>
-  </div>
-</article>
+    <!-- Render all content blocks in order -->
+    <div class="space-y-6">
+      <%= cms_render_article_contents(@article) %>
+    </div>
+  </article>
+<% end %>
 ```
 
 In your application layout (`app/views/layouts/application.html.erb`), apply the `:body_style` slot and include the KaTeX and 3D widget assets:
