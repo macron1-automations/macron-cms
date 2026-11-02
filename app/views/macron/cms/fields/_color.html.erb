@@ -27,7 +27,7 @@
     <button
       type="button"
       class="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-2xs hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
-      onclick="document.getElementById('<%= input_id %>').value = ''; document.getElementById('<%= input_id %>_label').textContent = 'Default (theme color)';"
+      onclick="document.getElementById('<%= input_id %>').value = ''; document.getElementById('<%= input_id %>_label').textContent = 'Default (theme color)'; document.getElementById('<%= input_id %>_picker').value = '#000000';"
     >
       Reset to default
     </button>
