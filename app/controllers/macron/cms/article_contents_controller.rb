@@ -64,8 +64,9 @@ module Macron
           end
         end
 
+        file_fields = @article_content.content&.fields&.select { |f| f["kind"] == "file" }&.map { |f| f["name"].to_s } || %w[upload file]
         @article_content.payload.each do |k, v|
-          if filtered.key?(k) && filtered[k].blank? && v.present? && !remove_files.include?(k)
+          if file_fields.include?(k) && filtered.key?(k) && filtered[k].blank? && v.present? && !remove_files.include?(k)
             filtered[k] = v
           end
         end

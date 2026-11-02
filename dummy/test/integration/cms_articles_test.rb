@@ -1016,6 +1016,41 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert_equal "lg", block.payload["size"]
   end
 
+  test "updating article content block with blank color resets field and does not restore previous value" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Color Reset Test Article")
+    quote_type = Macron::Cms::Content.find_or_create_by!(name: "three_js_quote") do |c|
+      c.fields = [
+        { "name" => "text", "kind" => "string" },
+        { "name" => "color", "kind" => "color" }
+      ]
+    end
+
+    block = Macron::Cms::ArticleContent.create!(
+      article: article,
+      content: quote_type,
+      payload: {
+        "text" => "Quote text",
+        "color" => "#ff0000"
+      },
+      sort_order: 1
+    )
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block.id}",
+          params: {
+            article_content: {
+              payload: {
+                text: "Quote text",
+                color: ""
+              }
+            }
+          }
+
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    block.reload
+    assert_equal "", block.payload["color"], "Expected color field to be updated to empty string"
+  end
+
   test "admin can view article with compact block view toggle" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Compact View Article")
