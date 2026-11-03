@@ -9,7 +9,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     env:
-      RUBY_VERSION: 3.4.4
+      RUBY_VERSION: "3.4"
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
       - name: Checkout code
