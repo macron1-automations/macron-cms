@@ -254,7 +254,10 @@ module Macron
       end
 
       def touch_article_on_reorder
-        @article&.touch
+        return unless @article
+
+        @article.sync_featured_image!
+        @article.touch unless @article.saved_change_to_updated_at?
       end
     end
   end

@@ -31,6 +31,7 @@ module Macron
 
       def update
         if @article.update(article_params)
+          @article.sync_featured_image!
           redirect_to article_path(@article), notice: "Article was successfully updated."
         else
           render :edit, status: :unprocessable_entity

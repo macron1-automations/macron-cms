@@ -53,8 +53,7 @@ module Macron
           .pick(Arel.sql("active_storage_attachments.blob_id"))
 
         if featured_image_blob_id != next_blob_id
-          update_column(:featured_image_blob_id, next_blob_id)
-          self.featured_image_blob_id = next_blob_id
+          update!(featured_image_blob_id: next_blob_id)
         end
       end
 

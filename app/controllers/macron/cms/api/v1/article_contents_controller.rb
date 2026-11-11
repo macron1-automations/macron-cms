@@ -114,6 +114,7 @@ module Macron
                 existing_blocks[id].update_column(:sort_order, idx + 1)
               end
               @article.sync_featured_image!
+              @article.touch unless @article.saved_change_to_updated_at?
             end
 
             @article.reload
@@ -141,6 +142,7 @@ module Macron
                   item.update_column(:sort_order, idx + 1)
                 end
                 @article.sync_featured_image!
+                @article.touch unless @article.saved_change_to_updated_at?
               end
             end
 
