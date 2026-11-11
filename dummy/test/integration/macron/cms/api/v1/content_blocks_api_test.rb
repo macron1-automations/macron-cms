@@ -157,6 +157,42 @@ class ContentBlocksApiTest < ActionDispatch::IntegrationTest
     assert_equal [ b3.id, b1.id, b2.id ], new_order_ids
   end
 
+  test "PATCH /cms/api/v1/articles/:article_id/content_blocks/reorder syncs featured image and touches article" do
+    b1 = @article.article_contents.create!(content: @heading_type, sort_order: 1, payload: { "title" => "A" })
+    b2 = @article.article_contents.create!(content: @heading_type, sort_order: 2, payload: { "title" => "B" })
+
+    @article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = @article.reload.updated_at
+
+    travel 2.seconds do
+      patch "/cms/api/v1/articles/#{@article.slug}/content_blocks/reorder",
+            params: { ordered_ids: [ b2.id, b1.id ] }.to_json,
+            headers: @auth_headers
+      assert_response :ok
+      assert_operator @article.reload.updated_at, :>, original_updated_at
+    end
+
+    png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    img1 = @article.article_contents.create!(content: @image_type, sort_order: 3)
+    Macron::Cms::InlineAssetAttacher.attach(
+      article_content: img1,
+      upload_data: { filename: "one.png", content_type: "image/png", data_base64: png_base64 }
+    )
+    img2 = @article.article_contents.create!(content: @image_type, sort_order: 4)
+    Macron::Cms::InlineAssetAttacher.attach(
+      article_content: img2,
+      upload_data: { filename: "two.png", content_type: "image/png", data_base64: png_base64 }
+    )
+
+    assert_equal img1.reload.upload.blob_id, @article.reload.featured_image_blob_id
+
+    patch "/cms/api/v1/articles/#{@article.slug}/content_blocks/reorder",
+          params: { ordered_ids: [ b2.id, b1.id, img2.id, img1.id ] }.to_json,
+          headers: @auth_headers
+    assert_response :ok
+    assert_equal img2.reload.upload.blob_id, @article.reload.featured_image_blob_id
+  end
+
   test "PATCH /cms/api/v1/articles/:article_id/content_blocks/:id/convert converts block type in-place" do
     png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
     block = @article.article_contents.create!(

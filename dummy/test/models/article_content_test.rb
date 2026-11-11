@@ -231,6 +231,34 @@ class ArticleContentTest < ActiveSupport::TestCase
     assert_nil article.reload.featured_image_blob_id
   end
 
+  test "sync_featured_image! updates updated_at and records saved_change_to_featured_image_blob_id?" do
+    article = Macron::Cms::Article.create!(title: "Sync Callback Article")
+    image_type = Macron::Cms::Content.create!(
+      name: "image-sync-callback",
+      fields: [ { "name" => "upload", "kind" => "file" } ],
+      featured_image: true
+    )
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 1)
+    block1.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img1"), "image/png", original_filename: "img1.png"))
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 2)
+    block2.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img2"), "image/png", original_filename: "img2.png"))
+
+    article.reload
+    assert_equal block1.upload.blob_id, article.featured_image_blob_id
+
+    block2.update_column(:sort_order, 0)
+    article.update_column(:updated_at, 1.day.ago)
+    original_updated_at = article.reload.updated_at
+
+    travel 2.seconds do
+      article.sync_featured_image!
+      assert_equal block2.upload.blob_id, article.featured_image_blob_id
+      assert article.saved_change_to_featured_image_blob_id?
+      assert_operator article.reload.updated_at, :>, original_updated_at
+    end
+  end
+
   test "for_display eager loads content, files_attachments, and blobs without N+1 queries" do
     article = Macron::Cms::Article.create!(title: "Display Scope Test")
     image_type = Macron::Cms::Content.create!(

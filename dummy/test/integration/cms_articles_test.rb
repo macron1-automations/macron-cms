@@ -478,6 +478,56 @@ class CmsArticlesTest < ActionDispatch::IntegrationTest
     assert article.reload.updated_at > original_updated_at
   end
 
+  test "move and reorder actions update featured_image_blob_id when image blocks change order" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Image Order Article")
+    image_type = Macron::Cms::Content.find_or_initialize_by(name: "three_js_image")
+    image_type.fields = [ { "name" => "upload", "kind" => "file" } ]
+    image_type.featured_image = true
+    image_type.save!
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 1)
+    block1.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img1"), "image/png", original_filename: "first.png"))
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 2)
+    block2.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img2"), "image/png", original_filename: "second.png"))
+
+    first_blob_id = block1.reload.upload.blob_id
+    second_blob_id = block2.reload.upload.blob_id
+    assert_equal first_blob_id, article.reload.featured_image_blob_id
+
+    patch "/cms/articles/#{article.slug}/article_contents/#{block2.id}/move", params: { direction: "up" }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    assert_equal second_blob_id, article.reload.featured_image_blob_id
+
+    patch "/cms/articles/#{article.slug}/article_contents/reorder",
+          params: { ordered_ids: [ block1.id, block2.id ] }.to_json,
+          headers: { "Content-Type" => "application/json", "Accept" => "application/json" }
+    assert_response :success
+    assert_equal first_blob_id, article.reload.featured_image_blob_id
+  end
+
+  test "updating article itself resyncs stale featured_image_blob_id" do
+    sign_in @admin
+    article = Macron::Cms::Article.create!(title: "Article Update Resync")
+    image_type = Macron::Cms::Content.find_or_initialize_by(name: "image")
+    image_type.fields = [ { "name" => "upload", "kind" => "file" } ]
+    image_type.featured_image = true
+    image_type.save!
+
+    block1 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 1)
+    block1.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img1"), "image/png", original_filename: "first.png"))
+    block2 = Macron::Cms::ArticleContent.create!(article: article, content: image_type, sort_order: 2)
+    block2.files.attach(Rack::Test::UploadedFile.new(StringIO.new("img2"), "image/png", original_filename: "second.png"))
+
+    first_blob_id = block1.reload.upload.blob_id
+    second_blob_id = block2.reload.upload.blob_id
+    article.update_column(:featured_image_blob_id, second_blob_id)
+
+    patch "/cms/articles/#{article.slug}", params: { article: { title: article.title } }
+    assert_redirected_to "/cms/articles/#{article.slug}"
+    assert_equal first_blob_id, article.reload.featured_image_blob_id
+  end
+
   test "admin sees in-place '+' block inserters above, between, and below content blocks" do
     sign_in @admin
     article = Macron::Cms::Article.create!(title: "Inserter UI Article")
